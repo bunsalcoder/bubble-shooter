@@ -1,0 +1,200 @@
+@import 'base';
+
+$color_white: #ffffff;
+$color_black: #000000;
+
+// 強調色
+$color_accent-dark: #3d32be;
+$color_accent: #2c45c4;
+$color_accent-light: #6c8ec3;
+
+$radius-size_base: 6px;
+
+@mixin layoutSpaceLeft($size: $layout-size_small) {
+  margin-left: $size;
+
+  &:nth-child(1) {
+    margin-left: 0;
+  }
+}
+
+@mixin layoutSpaceBottom($size: $layout-size_small) {
+  margin-top: $size;
+
+  &:nth-child(1) {
+    margin-top: 0;
+  }
+}
+%flex-center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+%layout-container {
+  margin-right: auto;
+  margin-left: auto;
+  width: 80%;
+}
+
+%flex-column {
+  display: flex;
+  flex-direction: column;
+}
+
+%flex-row-center {
+  display: flex;
+  align-items: center;
+  flex-direction: row;
+}
+
+%flex-column-center {
+  display: flex;
+  align-items: center;
+  flex-direction: column;
+}
+%flex-row-between {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+}
+.bubble-shooter {
+  // 遊戲首頁 UI
+  &__home {
+    min-height: 100vh;
+    background-image: url('/bubble-shooter/background/home-background.jpg');
+    background-size: cover;
+
+    @extend %flex-column;
+  }
+
+  &__navbar,
+  &__header {
+    @extend %layout-container;
+  }
+
+  &__navbar {
+    justify-content: space-between;
+    padding-top: 60px;
+
+    @extend %flex-row-center;
+  }
+
+  &__buttons {
+    @extend %flex-row-center;
+    > li {
+      @include layoutSpaceLeft(20px);
+
+      a {
+        padding: 1em 2em;
+        border: $color_accent solid 1px;
+        border-radius: $radius-size_base;
+        background-color: $color_white;
+        color: $color_accent;
+      }
+    }
+  }
+
+  &__header {
+    flex: 1;
+    justify-content: center;
+
+    @extend %flex-column-center;
+  }
+
+  &__btn {
+    margin-top: 50px;
+    padding: 0.3em 2em;
+    border: 1px solid $color_white;
+    border-radius: 60px;
+    background-color: rgba($color: #ff458b, $alpha: 0.5);
+    color: $color_white;
+    letter-spacing: 10px;
+    font-size: 2.5em;
+  }
+
+  // 遊戲進行 UI
+  &__game {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 30px 70px;
+    height: 100vh;
+    background-image: url('/bubble-shooter/background/game-background.jpg');
+    background-size: cover;
+  }
+  
+  &__game-header,
+  &__game-footer {
+    position: absolute;
+    width: calc(100% - 140px);
+    #score{
+      position:absolute;
+      top:30px;
+      left: 110px;
+      font-size:2rem;
+      color:white;
+    }
+    #time{
+      position:absolute;
+      top:40px;
+      right: 40px;
+      font-size:2rem;
+      color:white;
+    }
+    @extend %flex-row-between;
+  }
+
+  &__game-header {
+    top: 30px;
+  }
+
+  &__game-main {
+    position: relative;
+    z-index:1;
+    @extend %flex-center;
+    &:before {
+      position: absolute;
+      bottom: -50px;
+      left: calc(50% - 73px);
+      z-index: -1;
+      display: block;
+      width: 146px;
+      height: 180px;
+      background-image: url("/bubble-shooter/background/shooter.png");
+      content: "";
+    }
+    #viewport {
+      width: 642px;
+      height: 562px;
+    }
+  }
+
+  &__game-aside {
+    position: absolute;
+    left: 70px;
+    z-index: 2;
+    li {
+      cursor: pointer;
+      @include layoutSpaceBottom(20px);
+    }
+  }
+
+  &__game-footer {
+    bottom: 30px;
+    align-items: flex-end;
+    #nextBubble{
+      position: absolute;
+      right:33px;
+      bottom:33px;
+      width: 60px;
+      height: 60px;
+      border-radius: 60px;
+      img{
+        width: 60px;
+        height:60px;
+      }
+    }
+    
+  }
+}
