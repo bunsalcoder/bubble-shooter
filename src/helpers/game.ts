@@ -435,7 +435,7 @@ export const getHeight = (gridBubble: Record<string, Bubble>) => {
   return max - min + 1;
 };
 
-const getDeviceType = (width: number): string => {
+export const getDeviceType = (width: number): string => {
   if (width <= 480 || isMobile) {
     return DeviceType.SMALL;
   } else if (width <= 1024) {

@@ -6,6 +6,7 @@ import {
   createListBubbleNext,
   getAdjacentForSpecialBubble,
   getAllColors,
+  getDeviceType,
   getHeight,
   getLocation,
   getSize,
@@ -19,7 +20,7 @@ import {
   updateDirectionBubbleNext,
   verifyGrid,
 } from "@/helpers/game";
-import { Answer, Bubble, GameState, Grid } from "@/models/game";
+import { Answer, Bubble, DeviceType, GameState, Grid } from "@/models/game";
 import {
   BUBBLE_SPEED,
   GRID_COLUMNS,
@@ -39,6 +40,7 @@ import pause from "@public/bubble-shooter/icon/pause.png";
 import play from "@public/bubble-shooter/icon/play.png";
 import setting from "@public/bubble-shooter/icon/setting.png";
 import Image from "next/image";
+import { isMobile } from "react-device-detect";
 
 const Board: React.FC = () => {
   let gameState: GameState = {
@@ -378,9 +380,11 @@ const Board: React.FC = () => {
   };
 
   const drawArrow = (p5: p5Types, bubble: Bubble) => {
+    const deviceType = getDeviceType(window.innerWidth);
     const arrowLength: number = 150;
     const startX: number = gameWidth / 2;
-    const startY: number = gameHeight - 130;
+    const startY: number =
+      deviceType === DeviceType.SMALL ? gameHeight - 100 : gameHeight - 130;
     const dx: number = p5.mouseX - startX;
     const dy: number = p5.mouseY - startY;
     const angle: number = p5.atan2(dy, dx);
@@ -391,10 +395,10 @@ const Board: React.FC = () => {
     const y1: number = endY - arrowSize * p5.sin(angle - p5.PI / 6);
     const x2: number = endX - arrowSize * p5.cos(angle + p5.PI / 6);
     const y2: number = endY - arrowSize * p5.sin(angle + p5.PI / 6);
-
     if (p5.drawingContext instanceof CanvasRenderingContext2D) {
       p5.drawingContext.setLineDash([5, 10]);
     }
+
     p5.stroke(bubble.isSpecial ? "blue" : bubble.color);
     p5.strokeWeight(3);
     p5.line(startX, startY, endX, endY);
