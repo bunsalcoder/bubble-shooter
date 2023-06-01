@@ -1,4 +1,4 @@
-@import 'base';
+@import "base";
 
 $color_white: #ffffff;
 $color_black: #000000;
@@ -61,7 +61,7 @@ $radius-size_base: 6px;
   // 遊戲首頁 UI
   &__home {
     min-height: 100vh;
-    background-image: url('/bubble-shooter/background/home-background.jpg');
+    background-image: url("/bubble-shooter/background/home-background.jpg");
     background-size: cover;
 
     @extend %flex-column;
@@ -120,27 +120,27 @@ $radius-size_base: 6px;
     justify-content: center;
     padding: 30px 70px;
     height: 100vh;
-    background-image: url('/bubble-shooter/background/game-background.jpg');
+    background-image: url("/bubble-shooter/background/game-background.jpg");
     background-size: cover;
   }
-  
+
   &__game-header,
   &__game-footer {
     position: absolute;
     width: calc(100% - 140px);
-    #score{
-      position:absolute;
-      top:30px;
+    #score {
+      position: absolute;
+      top: 30px;
       left: 110px;
-      font-size:2rem;
-      color:white;
+      font-size: 2rem;
+      color: white;
     }
-    #time{
-      position:absolute;
-      top:40px;
+    #time {
+      position: absolute;
+      top: 40px;
       right: 40px;
-      font-size:2rem;
-      color:white;
+      font-size: 2rem;
+      color: white;
     }
     @extend %flex-row-between;
   }
@@ -151,7 +151,7 @@ $radius-size_base: 6px;
 
   &__game-main {
     position: relative;
-    z-index:1;
+    z-index: 1;
     @extend %flex-center;
     &:before {
       position: absolute;
@@ -183,18 +183,78 @@ $radius-size_base: 6px;
   &__game-footer {
     bottom: 30px;
     align-items: flex-end;
-    #nextBubble{
+    #nextBubble {
       position: absolute;
-      right:33px;
-      bottom:33px;
+      right: 33px;
+      bottom: 33px;
       width: 60px;
       height: 60px;
       border-radius: 60px;
-      img{
+      img {
         width: 60px;
-        height:60px;
+        height: 60px;
       }
     }
-    
+  }
+}
+
+@media only screen and (max-width: 576px) {
+  aside {
+    display: none;
+  }
+  .bubble-shooter {
+    &__game {
+      padding: 0;
+      &-header {
+        width: 100% !important;
+        img {
+          width: 100px !important;
+          height: 50px !important;
+        }
+        p {
+          font-size: 1.2rem !important;
+          &#score {
+            top: 15px;
+            left: 60px;
+          }
+          &#time {
+            top: 20px;
+            right: 20px;
+          }
+        }
+      }
+      &-main {
+        &:before {
+          left: calc(50% - 50px);
+          width: 100px;
+          height: 150px;
+          background-image: url("/bubble-shooter/background/shooter.png");
+          background-size: contain;
+          background-repeat: no-repeat;
+          content: "";
+        }
+      }
+      &-footer {
+        width: 100%;
+        img {
+          width: 100px;
+          height: 60px;
+          &:first-child {
+            width: 100px;
+            height: 100px;
+          }
+        }
+        #nextBubble {
+          right: 16px;
+          bottom: 15px;
+          width: 30px;
+          height: 30px;
+          img {
+            width: 30px;
+            height: 30px;
+          }
+        }
+      }
+    }
   }
 }

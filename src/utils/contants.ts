@@ -1,16 +1,29 @@
-export const GAME_WIDTH: number = 800;
+export const GAME_WIDTH = 800;
 export const GAME_HEIGHT: number = 600;
-export const GRID_BORDER_WIDTH: number = GAME_WIDTH - 160;
-export const GRID_BORDER_HEIGHT: number = GAME_HEIGHT - 230;
+export const GAME_WIDTH_SMALL = 360;
+export const GAME_HEIGHT_SMALL: number = 500;
+export const GAME_WIDTH_MEDIUM = 560;
+export const GAME_HEIGHT_MEDIUM: number = 700;
 export const GRID_BORDER_START: number = 80;
 export const BUBBLE_RADIUS: number = 25;
 export const BUBBLE_DIAMETER: number = 50;
+export const BUBBLE_RADIUS_SMALL: number = 15;
+export const BUBBLE_DIAMETER_SMALL: number = 30;
+export const BUBBLE_RADIUS_MEDIUM: number = 25;
+export const BUBBLE_DIAMETER_MEDIUM: number = 50;
 export const BUBBLE_SPEED: number = 30;
-export const BUBBLE_START_X: number = 400;
+export const BUBBLE_START_X: number = GAME_WIDTH / 2;
 export const BUBBLE_START_Y: number = GAME_HEIGHT - BUBBLE_RADIUS;
-export const ROW_HEIGHT: number = BUBBLE_DIAMETER * Math.sin(Math.PI / 3);
+export const BUBBLE_START_X_SMALL: number = GAME_WIDTH_SMALL / 2;
+export const BUBBLE_START_Y_SMALL: number = GAME_HEIGHT_SMALL - BUBBLE_RADIUS;
+export const BUBBLE_START_X_MEDIUM: number = GAME_WIDTH_MEDIUM / 2;
+export const BUBBLE_START_Y_MEDIUM: number = GAME_HEIGHT_MEDIUM - BUBBLE_RADIUS;
 export const GRID_ROWS: number = 4;
-export const GRID_COLUMNS: number = GAME_WIDTH / BUBBLE_DIAMETER - 1; // it must be intergers or u have to manually calculate the number of columns based on the game width and ball diameter.
+export const GRID_COLUMNS: number = GAME_WIDTH / BUBBLE_DIAMETER - 1; // GAME_WIDTH / BUBBLE_DIAMETER must be intergers or u have to manually calculate the number of columns based on the game width and ball diameter.
+export const GRID_COLUMNS_SMALL: number =
+  GAME_WIDTH_SMALL / BUBBLE_DIAMETER_SMALL - 1;
+export const GRID_COLUMNS_MEDIUM: number =
+  GAME_WIDTH_MEDIUM / BUBBLE_DIAMETER_MEDIUM - 1;
 export const ARROW_LENGTH: number = 150;
 export const ARROW_SIZE: number = 30;
 export const LIMIT_HEIGHT: number = 9; // for checking game over

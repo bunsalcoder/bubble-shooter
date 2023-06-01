@@ -1,7 +1,24 @@
+import { isMobile } from "react-device-detect";
 import {
   BUBBLE_DIAMETER,
+  BUBBLE_DIAMETER_MEDIUM,
+  BUBBLE_DIAMETER_SMALL,
+  BUBBLE_RADIUS_MEDIUM,
+  BUBBLE_RADIUS_SMALL,
   BUBBLE_SPEED,
+  BUBBLE_START_X_MEDIUM,
+  BUBBLE_START_X_SMALL,
+  BUBBLE_START_Y_MEDIUM,
+  BUBBLE_START_Y_SMALL,
+  GAME_HEIGHT,
+  GAME_HEIGHT_MEDIUM,
+  GAME_HEIGHT_SMALL,
+  GAME_WIDTH,
+  GAME_WIDTH_MEDIUM,
+  GAME_WIDTH_SMALL,
   GRID_COLUMNS,
+  GRID_COLUMNS_MEDIUM,
+  GRID_COLUMNS_SMALL,
   GRID_ROWS,
 } from "./../utils/contants";
 import {
@@ -10,7 +27,7 @@ import {
   BUBBLE_START_Y,
   NUM_NEXT_BUBBLES,
 } from "@/utils/contants";
-import { Bubble, Grid } from "@/models/game";
+import { Bubble, DeviceType, Grid } from "@/models/game";
 
 export const randomColor = (arrayColor: string[]) => {
   return arrayColor[Math.floor(Math.random() * arrayColor.length)];
@@ -48,7 +65,7 @@ export const createGridBubble = (grid: Grid, arrayColor: string[]) => {
         speed: BUBBLE_SPEED,
         speedX: 0,
         speedY: 0,
-        r: BUBBLE_RADIUS,
+        r: grid.bubbleDiameter / 2,
         color: randomColor(arrayColor),
         isMoving: false,
         isSpecial: false,
@@ -59,18 +76,23 @@ export const createGridBubble = (grid: Grid, arrayColor: string[]) => {
   return bubbleObject;
 };
 
-export const createListBubbleNext = (arrayColor: string[]) => {
+export const createListBubbleNext = (
+  grid: Grid,
+  bubbleStartX: number,
+  bubbleStartY: number,
+  arrayColor: string[]
+) => {
   const bubbles = [];
   const bubbleQueue = [];
   for (let i = 0; i < NUM_NEXT_BUBBLES; i++) {
-    const bubbleX = BUBBLE_START_X - i * BUBBLE_RADIUS * 2;
+    const bubbleX = bubbleStartX - i * grid.bubbleDiameter;
     const bubble: Bubble = {
       x: bubbleX,
-      y: BUBBLE_START_Y,
+      y: bubbleStartY,
       speed: BUBBLE_SPEED,
       speedX: 0,
       speedY: 0,
-      r: BUBBLE_RADIUS,
+      r: grid.bubbleDiameter / 2,
       color: randomColor(arrayColor),
       isMoving: false,
       isSpecial: false,
@@ -84,9 +106,9 @@ export const randomInt = (min: number, max: number) => {
   return Math.floor(Math.random() * (max - min + 1) + min);
 };
 
-export const updateDirectionBubbleNext = (bubbleQueue: any) => {
+export const updateDirectionBubbleNext = (bubbleQueue: any, grid: Grid) => {
   for (let i in bubbleQueue) {
-    bubbleQueue[i].x += BUBBLE_DIAMETER;
+    bubbleQueue[i].x += grid.bubbleDiameter;
   }
 };
 
@@ -115,13 +137,13 @@ export const addRowBubbleList = (
       speed: BUBBLE_SPEED,
       speedX: 0,
       speedY: 0,
-      r: BUBBLE_RADIUS,
+      r: grid.bubbleDiameter / 2,
       color: randomColor(arrayColor),
       isMoving: false,
       isSpecial: false,
     };
   }
-  grid.movement += BUBBLE_DIAMETER;
+  grid.movement += grid.bubbleDiameter;
 };
 
 export const inGrid = (
@@ -280,7 +302,7 @@ export const checkCollision = (
         if (
           !inGrid(gridBubble, loc[0], loc[1]) &&
           loc[1] > 0 &&
-          loc[1] <= GRID_COLUMNS
+          loc[1] <= grid.numCols
         ) {
           return [true, loc];
         }
@@ -321,7 +343,7 @@ export const getLocation = (row: number, col: number, grid: Grid) => {
   const y: number =
     grid.bubbleMargin -
     (grid.bubbleMargin + grid.bubbleDiameter) * row +
-    BUBBLE_RADIUS +
+    grid.bubbleDiameter / 2 +
     grid.movement;
 
   return [x, y];
@@ -411,4 +433,70 @@ export const getHeight = (gridBubble: Record<string, Bubble>) => {
     if (loc[0] > max) max = loc[0];
   }
   return max - min + 1;
+};
+
+const getDeviceType = (width: number): string => {
+  if (width <= 480 || isMobile) {
+    return DeviceType.SMALL;
+  } else if (width <= 1024) {
+    return DeviceType.MEDIUM;
+  } else {
+    return DeviceType.LARGE; // default = large
+  }
+};
+
+export const setBubbleSize = (): [number, number] => {
+  if (typeof window !== "undefined") {
+    const deviceType = getDeviceType(window.innerWidth);
+    if (deviceType === DeviceType.SMALL) {
+      return [BUBBLE_RADIUS_SMALL, BUBBLE_DIAMETER_SMALL];
+    } else if (deviceType === DeviceType.MEDIUM) {
+      return [BUBBLE_RADIUS_MEDIUM, BUBBLE_DIAMETER_MEDIUM];
+    } else {
+      return [BUBBLE_RADIUS, BUBBLE_DIAMETER];
+    }
+  }
+  return [BUBBLE_RADIUS, BUBBLE_DIAMETER];
+};
+
+export const setGameSize = (): [number, number] => {
+  if (typeof window !== "undefined") {
+    const deviceType = getDeviceType(window.innerWidth);
+    if (deviceType === DeviceType.SMALL) {
+      return [GAME_WIDTH_SMALL, GAME_HEIGHT_SMALL];
+    } else if (deviceType === DeviceType.MEDIUM) {
+      return [GAME_WIDTH_MEDIUM, GAME_HEIGHT_MEDIUM];
+    } else {
+      return [GAME_WIDTH, GAME_HEIGHT];
+    }
+  }
+  return [GAME_WIDTH, GAME_HEIGHT];
+};
+
+export const setBubblePosition = (): [number, number] => {
+  if (typeof window !== "undefined") {
+    const deviceType = getDeviceType(window.innerWidth);
+    if (deviceType === DeviceType.SMALL) {
+      return [BUBBLE_START_X_SMALL, BUBBLE_START_Y_SMALL];
+    } else if (deviceType === DeviceType.MEDIUM) {
+      return [BUBBLE_START_X_MEDIUM, BUBBLE_START_Y_MEDIUM];
+    } else {
+      return [BUBBLE_START_X, BUBBLE_START_Y];
+    }
+  }
+  return [BUBBLE_START_X, BUBBLE_START_Y];
+};
+
+export const setGridCols = (): number => {
+  if (typeof window !== "undefined") {
+    const deviceType = getDeviceType(window.innerWidth);
+    if (deviceType === DeviceType.SMALL) {
+      return GRID_COLUMNS_SMALL;
+    } else if (deviceType === DeviceType.MEDIUM) {
+      return GRID_COLUMNS_MEDIUM;
+    } else {
+      return GRID_COLUMNS;
+    }
+  }
+  return GRID_COLUMNS;
 };

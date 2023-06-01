@@ -32,3 +32,9 @@ export enum Answer {
   CORRECT = "CORRECT",
   NOT_YET = "NOT_YET",
 }
+
+export enum DeviceType {
+  SMALL = "SMALL",
+  MEDIUM = "MEDIUM",
+  LARGE = "LARGE",
+}

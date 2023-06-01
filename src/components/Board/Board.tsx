@@ -12,18 +12,16 @@ import {
   inGrid,
   randomColor,
   randomInt,
+  setBubblePosition,
+  setBubbleSize,
+  setGameSize,
+  setGridCols,
   updateDirectionBubbleNext,
   verifyGrid,
 } from "@/helpers/game";
 import { Answer, Bubble, GameState, Grid } from "@/models/game";
 import {
-  BUBBLE_DIAMETER,
-  BUBBLE_RADIUS,
   BUBBLE_SPEED,
-  BUBBLE_START_X,
-  BUBBLE_START_Y,
-  GAME_HEIGHT,
-  GAME_WIDTH,
   GRID_COLUMNS,
   GRID_ROWS,
   LIMIT_HEIGHT,
@@ -36,7 +34,7 @@ import React, { useRef, useState } from "react";
 import nextBubble from "@public/bubble-shooter/background/next-bubble.png";
 import score from "@public/bubble-shooter/background/score.png";
 import time from "@public/bubble-shooter/background/time.png";
-import role from "@public/bubble-shooter/element/role_cat.png";
+import role from "@public/bubble-shooter/element/role.png";
 import pause from "@public/bubble-shooter/icon/pause.png";
 import play from "@public/bubble-shooter/icon/play.png";
 import setting from "@public/bubble-shooter/icon/setting.png";
@@ -51,13 +49,17 @@ const Board: React.FC = () => {
     defaultTime: TIME_COUNT_DOWN,
   };
 
+  const [bubbleRadius, bubbleDiameter] = setBubbleSize();
+  const [bubbleStartX, bubbleStartY] = setBubblePosition();
+  const [gameWidth, gameHeight] = setGameSize();
+  const girdColumns = setGridCols();
   let grid: Grid = {
     numRows: GRID_ROWS,
-    numCols: GRID_COLUMNS,
-    bubbleDiameter: BUBBLE_DIAMETER,
+    numCols: girdColumns,
+    bubbleDiameter: bubbleDiameter,
     bubbleMargin: 0,
-    startX: BUBBLE_RADIUS + 10,
-    startY: BUBBLE_RADIUS,
+    startX: bubbleRadius + 10,
+    startY: bubbleRadius,
     movement: 0,
   };
 
@@ -89,12 +91,19 @@ const Board: React.FC = () => {
   const specialBubble = useRef({
     isAnswered: Answer.NOT_YET,
   });
-  const bubbleNext = useRef(createListBubbleNext(gameProperties.current.color));
+  const bubbleNext = useRef(
+    createListBubbleNext(
+      grid,
+      bubbleStartX,
+      bubbleStartY,
+      gameProperties.current.color
+    )
+  );
   const bubble = useRef(bubbleNext.current[0]);
   const isGenerateSpecialBall = useRef<boolean>(false);
   const removeBubbles: any[] = [];
   const arrayTime: any = [];
-
+  console.log(bubbleNext.current);
   const handleOk = () => {
     specialBubble.current.isAnswered = Answer.CORRECT;
     setIsModalOpen(false);
@@ -104,7 +113,7 @@ const Board: React.FC = () => {
     specialBubble.current.isAnswered = Answer.WRONG;
     bubbleNext.current.shift()!;
     addBubbleNext(gridBubble.current, bubbleNext.current);
-    updateDirectionBubbleNext(bubbleNext.current);
+    updateDirectionBubbleNext(bubbleNext.current, grid);
 
     bubble.current = bubbleNext.current[0];
     setIsModalOpen(false);
@@ -131,7 +140,12 @@ const Board: React.FC = () => {
     gameState.isGameOver = false;
     gameState.isWin = false;
     gameState.countShoot = 0;
-    bubbleNext.current = createListBubbleNext(gameProperties.current.color);
+    bubbleNext.current = createListBubbleNext(
+      grid,
+      bubbleStartX,
+      bubbleStartY,
+      gameProperties.current.color
+    );
     gridBubble.current = createGridBubble(
       gridRef.current,
       gameProperties.current.color
@@ -255,17 +269,22 @@ const Board: React.FC = () => {
     gridBubble: Record<string, Bubble>,
     bubbleQueue: any
   ) => {
-    const bubbleX = BUBBLE_START_X - (bubbleQueue.length + 1) * BUBBLE_DIAMETER;
+    const bubbleX = bubbleStartX - (bubbleQueue.length + 1) * bubbleDiameter;
     const bubble: Bubble = {
       x: bubbleX,
-      y: BUBBLE_START_Y,
+      y: bubbleStartY,
       speed: BUBBLE_SPEED,
       speedX: 0,
       speedY: 0,
-      r: BUBBLE_RADIUS,
+      r: grid.bubbleDiameter / 2,
       color: randomColor(getAllColors(gridBubble)),
       isMoving: false,
-      isSpecial: false,
+      isSpecial:
+        isGenerateSpecialBall.current === true
+          ? false
+          : randomInt(1, 20) % 3 === 0
+          ? true
+          : false,
     };
     if (bubble.isSpecial) {
       isGenerateSpecialBall.current = true;
@@ -349,10 +368,10 @@ const Board: React.FC = () => {
       bubble.x -= bubble.vx;
       bubble.y += bubble.vy;
 
-      if (bubble.x - bubble.r <= 0 || bubble.x + bubble.r >= GAME_WIDTH) {
+      if (bubble.x - bubble.r <= 0 || bubble.x + bubble.r >= gameWidth) {
         bubble.x += bubble.vx;
       }
-      if (bubble.y >= GAME_HEIGHT) {
+      if (bubble.y >= gameHeight) {
         delete removeBubbles[key];
       }
     }
@@ -360,8 +379,8 @@ const Board: React.FC = () => {
 
   const drawArrow = (p5: p5Types, bubble: Bubble) => {
     const arrowLength: number = 150;
-    const startX: number = 400;
-    const startY: number = GAME_HEIGHT - 130;
+    const startX: number = gameWidth / 2;
+    const startY: number = gameHeight - 130;
     const dx: number = p5.mouseX - startX;
     const dy: number = p5.mouseY - startY;
     const angle: number = p5.atan2(dy, dx);
@@ -388,9 +407,9 @@ const Board: React.FC = () => {
     const nextBubble = document.getElementById("nextBubble");
     if (nextBubble) {
       if (bubble.isSpecial) {
-        nextBubble.innerHTML = `<img src="/bubble-shooter/element/special-ball.png"  />`;
+        nextBubble.innerHTML = `<img  src="/bubble-shooter/element/special-ball.png"  />`;
       } else {
-        nextBubble.innerHTML = `<img src="/bubble-shooter/background/bubble-mask.png"  />`;
+        nextBubble.innerHTML = `<img  src="/bubble-shooter/background/bubble-mask.png"  />`;
         nextBubble.style.background = bubble.color;
       }
     }
@@ -400,19 +419,19 @@ const Board: React.FC = () => {
     image.imageSpecialBall = p5.loadImage(
       "/bubble-shooter/element/special-ball.png",
       () => {
-        image.imageSpecialBall.resize(BUBBLE_DIAMETER, BUBBLE_DIAMETER);
+        image.imageSpecialBall.resize(bubbleDiameter, bubbleDiameter);
       }
     );
     image.imageDraw = p5.loadImage(
       "/bubble-shooter/background/bubble-mask.png",
       () => {
-        image.imageDraw.resize(BUBBLE_DIAMETER, BUBBLE_DIAMETER);
+        image.imageDraw.resize(bubbleDiameter, bubbleDiameter);
       }
     );
   };
 
   const setup = (p5: p5Types, canvasParentRef: Element) => {
-    p5.createCanvas(GAME_WIDTH, GAME_HEIGHT).parent(canvasParentRef);
+    p5.createCanvas(gameWidth, gameHeight).parent(canvasParentRef);
   };
 
   const draw = (p5: p5Types) => {
@@ -436,7 +455,7 @@ const Board: React.FC = () => {
     //check the bubble hit the wall
     if (
       bubble.current.x - bubble.current.r <= 0 ||
-      bubble.current.x + bubble.current.r >= GAME_WIDTH
+      bubble.current.x + bubble.current.r >= gameWidth
     ) {
       bubble.current.speedX = -bubble.current.speedX;
     }
@@ -470,11 +489,11 @@ const Board: React.FC = () => {
         specialBubble.current.isAnswered = Answer.NOT_YET;
         bubbleNext.current.shift()!;
         addBubbleNext(gridBubble.current, bubbleNext.current);
-        updateDirectionBubbleNext(bubbleNext.current);
+        updateDirectionBubbleNext(bubbleNext.current, grid);
 
         bubble.current = bubbleNext.current[0];
-        bubble.current.x = BUBBLE_START_X;
-        bubble.current.y = BUBBLE_START_Y;
+        bubble.current.x = bubbleStartX;
+        bubble.current.y = bubbleStartY;
         bubble.current.speedX = 0;
         bubble.current.speedY = 0;
       }
@@ -522,9 +541,9 @@ const Board: React.FC = () => {
     if (!checkGamePause()) {
       if (p5.mouseX !== 0 && p5.mouseY !== 0) {
         if (
-          p5.mouseY <= GAME_HEIGHT &&
+          p5.mouseY <= gameHeight &&
           p5.mouseX >= 0 &&
-          p5.mouseX <= GAME_WIDTH
+          p5.mouseX <= gameWidth
         ) {
           if (bubble.current.isMoving) return;
           if (
