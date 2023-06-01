@@ -34,7 +34,7 @@ import React, { useRef, useState } from "react";
 import nextBubble from "@public/bubble-shooter/background/next-bubble.png";
 import score from "@public/bubble-shooter/background/score.png";
 import time from "@public/bubble-shooter/background/time.png";
-import role from "@public/bubble-shooter/element/role.png";
+import role from "@public/bubble-shooter/element/role_cat.png";
 import pause from "@public/bubble-shooter/icon/pause.png";
 import play from "@public/bubble-shooter/icon/play.png";
 import setting from "@public/bubble-shooter/icon/setting.png";
@@ -103,7 +103,7 @@ const Board: React.FC = () => {
   const isGenerateSpecialBall = useRef<boolean>(false);
   const removeBubbles: any[] = [];
   const arrayTime: any = [];
-  console.log(bubbleNext.current);
+
   const handleOk = () => {
     specialBubble.current.isAnswered = Answer.CORRECT;
     setIsModalOpen(false);
