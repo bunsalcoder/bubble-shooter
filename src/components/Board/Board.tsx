@@ -23,7 +23,6 @@ import {
 import { Answer, Bubble, DeviceType, GameState, Grid } from "@/models/game";
 import {
   BUBBLE_SPEED,
-  GRID_COLUMNS,
   GRID_ROWS,
   LIMIT_HEIGHT,
   TIME_COUNT_DOWN,
@@ -135,7 +134,7 @@ const Board: React.FC = () => {
 
   const resetGame = () => {
     gridRef.current.numRows = GRID_ROWS;
-    gridRef.current.numCols = GRID_COLUMNS;
+    gridRef.current.numCols = girdColumns;
     gridRef.current.movement = 0;
     gameProperties.current.score = 0;
     gameProperties.current.time = gameState.defaultTime;
@@ -281,12 +280,7 @@ const Board: React.FC = () => {
       r: grid.bubbleDiameter / 2,
       color: randomColor(getAllColors(gridBubble)),
       isMoving: false,
-      isSpecial:
-        isGenerateSpecialBall.current === true
-          ? false
-          : randomInt(1, 20) % 3 === 0
-          ? true
-          : false,
+      isSpecial: false,
     };
     if (bubble.isSpecial) {
       isGenerateSpecialBall.current = true;
