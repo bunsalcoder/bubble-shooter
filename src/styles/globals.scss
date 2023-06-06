@@ -240,6 +240,7 @@ $radius-size_base: 6px;
           width: 100px;
           height: 60px;
           &:first-child {
+            visibility: hidden;
             width: 100px;
             height: 100px;
           }
@@ -250,6 +251,7 @@ $radius-size_base: 6px;
           width: 30px;
           height: 30px;
           img {
+            visibility: visible;
             width: 30px;
             height: 30px;
           }
