@@ -28,4 +28,4 @@ export const ARROW_LENGTH: number = 150;
 export const ARROW_SIZE: number = 30;
 export const LIMIT_HEIGHT: number = 9; // for checking game over
 export const NUM_NEXT_BUBBLES: number = 2;
-export const TIME_COUNT_DOWN: number = 60;
+export const TIME_COUNT_DOWN: number = 120;
