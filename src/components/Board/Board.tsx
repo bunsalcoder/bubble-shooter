@@ -631,7 +631,7 @@ const Board: React.FC = () => {
     `;
 
     alertBox.innerHTML = `
-      <p style="margin-bottom: 20px; font-size: 18px;">${message}</p>
+      <p style="margin-bottom: 20px; font-size: 20px;">${message}</p>
       <button id="alert-ok-btn" style="
         padding: 8px 16px;
         background: #4CAF50;
@@ -639,6 +639,7 @@ const Board: React.FC = () => {
         border: none;
         border-radius: 4px;
         cursor: pointer;
+        font-size: 16px;
       ">OK</button>
     `;
 
