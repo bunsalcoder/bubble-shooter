@@ -66,6 +66,18 @@ const Board: React.FC = () => {
 
   const gridRef = useRef<Grid>(grid);
 
+  let alertActive = false;
+
+  const freezeGame = () => {
+    gameState.isPause = true;
+    gameState.isGameOver = true;
+  };
+
+  const unfreezeGame = () => {
+    gameState.isPause = false;
+    gameState.isGameOver = false;
+  };
+
   let image: any = {
     imageDraw: "",
     imageSpecialBall: "",
@@ -138,6 +150,7 @@ const Board: React.FC = () => {
     gridRef.current.movement = 0;
     gameProperties.current.score = 0;
     gameProperties.current.time = gameState.defaultTime;
+    gameState.isPause = false;
     gameState.isGameOver = false;
     gameState.isWin = false;
     gameState.countShoot = 0;
@@ -155,11 +168,29 @@ const Board: React.FC = () => {
     isGenerateSpecialBall.current = false;
   };
 
+  // const checkIsWin = (gridBubble: Record<string, Bubble>) => {
+  //   if (getSize(gridBubble) === 0 && getSize(removeBubbles) === 0) {
+  //     gameState.isWin = true;
+  //     showAlert('Win!')
+  //     resetGame();
+  //   }
+  // };
+
+  // const checkGameOVer = (gridBubble: Record<string, Bubble>) => {
+  //   if (
+  //     gameProperties.current.time <= 0 ||
+  //     getHeight(gridBubble) >= LIMIT_HEIGHT
+  //   ) {
+  //     gameState.isGameOver = true;
+  //     showAlert('Game over')
+  //     resetGame();
+  //   }
+  // };
+
   const checkIsWin = (gridBubble: Record<string, Bubble>) => {
     if (getSize(gridBubble) === 0 && getSize(removeBubbles) === 0) {
-      gameState.isWin = true;
-      alert("Win!");
-      resetGame();
+      freezeGame();
+      showAlert('You Win!');
     }
   };
 
@@ -168,9 +199,8 @@ const Board: React.FC = () => {
       gameProperties.current.time <= 0 ||
       getHeight(gridBubble) >= LIMIT_HEIGHT
     ) {
-      gameState.isGameOver = true;
-      alert("Game Over!");
-      resetGame();
+      freezeGame();
+      showAlert('Game Over!');
     }
   };
 
@@ -568,6 +598,67 @@ const Board: React.FC = () => {
   const Sketch = dynamic(() => import("react-p5").then((mod) => mod.default), {
     ssr: false,
   });
+
+  const showAlert = (message: string) => {
+    if (alertActive) return;
+    
+    alertActive = true;
+    freezeGame();
+
+    const overlay = document.createElement("div");
+    overlay.style.cssText = `
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 9998;
+    `;
+
+    const alertBox = document.createElement("div");
+    alertBox.style.cssText = `
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: white;
+      padding: 20px;
+      border-radius: 10px;
+      z-index: 9999;
+      box-shadow: 0 0 10px rgba(0,0,0,0.3);
+      text-align: center;
+      min-width: 200px;
+    `;
+
+    alertBox.innerHTML = `
+      <p style="margin-bottom: 20px; font-size: 18px;">${message}</p>
+      <button id="alert-ok-btn" style="
+        padding: 8px 16px;
+        background: #4CAF50;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+      ">OK</button>
+    `;
+
+    document.body.appendChild(overlay);
+    document.body.appendChild(alertBox);
+
+    const okBtn = document.getElementById("alert-ok-btn");
+    okBtn?.addEventListener("click", () => {
+      alertBox.style.display = 'none';
+      overlay.style.display = 'none';
+      
+      setTimeout(() => {
+        document.body.removeChild(alertBox);
+        document.body.removeChild(overlay);
+        alertActive = false;
+        unfreezeGame();
+        resetGame();
+      }, 10);
+    }, { once: true });
+  };
 
   return (
     <main className="bubble-shooter__game">
