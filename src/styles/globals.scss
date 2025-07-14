@@ -223,6 +223,10 @@ $radius-size_base: 6px;
           }
         }
       }
+      &-score-bar,
+      &-time-bar {
+        margin-top: 60px;
+      }
       &-main {
         &:before {
           left: calc(50% - 50px);
@@ -235,6 +239,77 @@ $radius-size_base: 6px;
         }
       }
       &-footer {
+        bottom: 90px;
+        width: 100%;
+        img {
+          width: 100px;
+          height: 60px;
+          &:first-child {
+            visibility: hidden;
+            width: 100px;
+            height: 100px;
+          }
+        }
+        #nextBubble {
+          right: 16px;
+          bottom: 15px;
+          width: 30px;
+          height: 30px;
+          img {
+            visibility: visible;
+            width: 30px;
+            height: 30px;
+          }
+        }
+      }
+    }
+  }
+}
+
+
+@media only screen and (max-width: 385px) {
+  aside {
+    display: none;
+  }
+  .bubble-shooter {
+    &__game {
+      padding: 0;
+      &-header {
+        width: 100% !important;
+        img {
+          width: 100px !important;
+          height: 50px !important;
+        }
+        p {
+          font-size: 1.2rem !important;
+          &#score {
+            top: 46px;
+            left: 60px;
+          }
+          &#time {
+            top: 52px;
+            right: 20px;
+          }
+        }
+      }
+      &-score-bar,
+      &-time-bar {
+        margin-top: 30px;
+      }
+      &-main {
+        top: 55px;
+        &:before {
+          left: calc(50% - 50px);
+          width: 100px;
+          height: 150px;
+          background-image: url("/bubble-shooter/background/shooter.png");
+          background-size: contain;
+          background-repeat: no-repeat;
+          content: "";
+        }
+      }
+      &-footer {
+        bottom: 30px;
         width: 100%;
         img {
           width: 100px;
