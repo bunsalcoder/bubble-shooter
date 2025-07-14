@@ -572,10 +572,14 @@ const Board: React.FC = () => {
   return (
     <main className="bubble-shooter__game">
       <header className="bubble-shooter__game-header">
-        <Image width={198} height={90} src={score} alt="遊戲積分" />
-        <p id="score"></p>
-        <Image width={198} height={90} src={time} alt="遊戲時間" />
-        <p id="time"></p>
+        <div style={{ marginTop: '60px' }}>
+          <Image width={198} height={90} src={score} alt="遊戲積分" />
+          <p id="score"></p>
+        </div>
+        <div style={{ marginTop: '60px' }}>
+          <Image width={198} height={90} src={time} alt="遊戲時間" />
+          <p id="time"></p>
+        </div>
       </header>
       <aside className="bubble-shooter__game-aside">
         <ul>
@@ -683,7 +687,7 @@ const Board: React.FC = () => {
         </Modal>
       </article>
 
-      <footer className="bubble-shooter__game-footer">
+      <footer className="bubble-shooter__game-footer" style={{ bottom: '90px' }}>
         <Image width={230} height={220} src={role} alt="存保象" />
         <Image width={195} height={125} src={nextBubble} alt="下一個泡泡" />
         <div id="nextBubble"></div>
