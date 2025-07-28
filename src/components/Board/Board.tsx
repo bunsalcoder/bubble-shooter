@@ -425,52 +425,14 @@ const Board: React.FC = () => {
       const centerX: number = bubble.x;
       const centerY: number = bubble.y;
       
-      // Add movement animation properties
-      if (bubble.isMoving && !bubble.animationProps) {
-        bubble.animationProps = {
-          startTime: p5.millis(),
-          startScale: 1,
-          pulsePhase: 0,
-          glowIntensity: 0
-        };
-      }
-      
-      let scale = 1;
-      let glowIntensity = 0;
-      
-      // Animate moving bubble
-      if (bubble.isMoving && bubble.animationProps) {
-        const elapsed = p5.millis() - bubble.animationProps.startTime;
-        const duration = 400; // Shorter animation duration
-        const progress = Math.min(elapsed / duration, 1);
-        
-        // Smooth easing function (cubic ease-out)
-        const easeOut = 1 - Math.pow(1 - progress, 3);
-        
-        // Enhanced scale and pulse effect with easing
-        scale = 1 + 0.3 * Math.sin(progress * Math.PI * 6) * easeOut; // Smaller scale effect
-        glowIntensity = 0.4 * easeOut; // Reduced glow
-        bubble.animationProps.pulsePhase += 0.4; // Slightly reduced pulse
-      }
-      
       if (bubble.isSpecial === true) {
         const imgWidth: number = image.imageSpecialBall.width;
         const imgHeight: number = image.imageSpecialBall.height;
         const imgX: number = centerX - imgWidth / 2;
         const imgY: number = centerY - imgHeight / 2;
         
-        // Draw glow effect for special bubbles
-        if (glowIntensity > 0) {
-          p5.push();
-          p5.noStroke();
-          p5.fill(bubble.color + Math.floor(glowIntensity * 255).toString(16).padStart(2, '0'));
-          p5.ellipse(bubble.x, bubble.y, bubble.r * 2 * scale + 10); // Reduced glow
-          p5.pop();
-        }
-        
         p5.push();
         p5.translate(bubble.x, bubble.y);
-        p5.scale(scale);
         p5.noFill();
         p5.image(image.imageSpecialBall, imgX - bubble.x, imgY - bubble.y);
         p5.ellipse(0, 0, bubble.r * 2);
@@ -482,28 +444,11 @@ const Board: React.FC = () => {
         const imgHeight: number = image.imageDraw.height;
         const imgDiameter: number = Math.max(imgWidth, imgHeight);
         const imgScale: number = (bubble.r * 2) / imgDiameter;
-        const imgX: number = centerX - (imgWidth / 2) * imgScale * scale;
-        const imgY: number = centerY - (imgHeight / 2) * imgScale * scale;
-        
-        // Draw enhanced shadow for depth
-        p5.push();
-        p5.noStroke();
-        p5.fill(0, 0, 0, 50); // Reduced shadow opacity
-        p5.ellipse(bubble.x + 2, bubble.y + 2, bubble.r * 2 * scale);
-        p5.pop();
-        
-        // Draw enhanced glow effect for moving bubbles
-        if (glowIntensity > 0) {
-          p5.push();
-          p5.noStroke();
-          p5.fill(bubble.color + Math.floor(glowIntensity * 255).toString(16).padStart(2, '0'));
-          p5.ellipse(bubble.x, bubble.y, bubble.r * 2 * scale + 8); // Reduced glow
-          p5.pop();
-        }
+        const imgX: number = centerX - (imgWidth / 2) * imgScale;
+        const imgY: number = centerY - (imgHeight / 2) * imgScale;
         
         p5.push();
         p5.translate(bubble.x, bubble.y);
-        p5.scale(scale);
         p5.noStroke();
         p5.fill(bubble.color);
         p5.ellipse(0, 0, bubble.r * 2);
@@ -929,6 +874,7 @@ const Board: React.FC = () => {
   };
 
   const mouseMoved = (p5: p5Types) => {};
+
   const Sketch = dynamic(() => import("react-p5").then((mod) => mod.default), {
     ssr: false,
   });
@@ -946,7 +892,8 @@ const Board: React.FC = () => {
       left: 0;
       width: 100%;
       height: 100%;
-      z-index: 9998;
+      background-color: rgba(0, 0, 0, 0.5);
+      z-index: 1000;
     `;
 
     const alertBox = document.createElement("div");
@@ -955,25 +902,22 @@ const Board: React.FC = () => {
       top: 50%;
       left: 50%;
       transform: translate(-50%, -50%);
-      background: white;
+      background-color: white;
       padding: 20px;
       border-radius: 10px;
-      z-index: 9999;
-      box-shadow: 0 0 10px rgba(0,0,0,0.3);
+      z-index: 1001;
       text-align: center;
-      min-width: 200px;
     `;
-
     alertBox.innerHTML = `
-      <p style="margin-bottom: 20px; font-size: 20px;">${message}</p>
+      <h3>${message}</h3>
       <button id="alert-ok-btn" style="
-        padding: 8px 16px;
-        background: #4CAF50;
+        margin-top: 10px;
+        padding: 10px 20px;
+        background-color: #4CAF50;
         color: white;
         border: none;
-        border-radius: 4px;
+        border-radius: 5px;
         cursor: pointer;
-        font-size: 16px;
       ">OK</button>
     `;
 
