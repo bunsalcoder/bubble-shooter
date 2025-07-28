@@ -82,9 +82,113 @@ const Board: React.FC = () => {
     imageDraw: "",
     imageSpecialBall: "",
   };
+  
+  // Particle system for explosion effects
+  let particles: any[] = [];
+  
+  const createParticles = (x: number, y: number, color: string, p5: p5Types) => {
+    const particleCount = 16; // Reduced particles
+    for (let i = 0; i < particleCount; i++) {
+      const angle = (p5.TWO_PI * i) / particleCount;
+      const speed = p5.random(6, 14); // Reduced speed
+      particles.push({
+        x: x,
+        y: y,
+        vx: p5.cos(angle) * speed,
+        vy: p5.sin(angle) * speed,
+        life: 1,
+        maxLife: 1,
+        color: color,
+        size: p5.random(5, 12), // Smaller particles
+        rotation: 0,
+        rotationSpeed: p5.random(-0.4, 0.4), // Reduced rotation
+        scale: 1.1, // Smaller starting scale
+        scaleSpeed: -0.01, // Slower scale reduction
+        pulse: 0,
+        pulseSpeed: 0.3,
+        trail: [] // Initialize trail array
+      });
+    }
+  };
+  
+  const updateAndDrawParticles = (p5: p5Types) => {
+    for (let i = particles.length - 1; i >= 0; i--) {
+      const particle = particles[i];
+      
+      // Update particle
+      particle.x += particle.vx;
+      particle.y += particle.vy;
+      particle.life -= 0.015; // Slightly faster fade
+      particle.rotation += particle.rotationSpeed;
+      particle.scale += particle.scaleSpeed;
+      particle.scale = Math.max(0.25, particle.scale); // Don't get too small
+      particle.pulse += particle.pulseSpeed;
+      
+      // Add trail effect for particles
+      particle.trail.push({ x: particle.x, y: particle.y, fade: 1 });
+      if (particle.trail.length > 4) { // Reduced trail length
+        particle.trail.shift();
+      }
+      
+      // Draw particle with enhanced effects
+      if (particle.life > 0 && particle.scale > 0.25) {
+        const pulseGlow = 1 + 0.3 * Math.sin(particle.pulse); // Reduced glow
+        
+        // Draw trail effect
+        for (let j = 0; j < particle.trail.length; j++) {
+          const trailPoint = particle.trail[j];
+          const trailFade = trailPoint.fade * particle.life;
+          const trailScale = particle.scale * (j / particle.trail.length);
+          
+          p5.push();
+          p5.translate(trailPoint.x, trailPoint.y);
+          p5.rotate(particle.rotation * 0.3);
+          p5.scale(trailScale);
+          
+          p5.push();
+          p5.noStroke();
+          p5.fill(particle.color + Math.floor(trailFade * 120).toString(16).padStart(2, '0'));
+          p5.ellipse(0, 0, particle.size * trailFade + 4); // Reduced trail glow
+          p5.pop();
+          
+          p5.push();
+          p5.tint(255, trailFade * 255);
+          p5.noStroke();
+          p5.fill(particle.color);
+          p5.ellipse(0, 0, particle.size * trailFade);
+          p5.pop();
+          
+          p5.pop();
+          
+          trailPoint.fade -= 0.18;
+        }
+        
+        p5.push();
+        p5.translate(particle.x, particle.y);
+        p5.rotate(particle.rotation);
+        p5.scale(particle.scale);
+        
+        // Draw glow effect
+        p5.push();
+        p5.noStroke();
+        p5.fill(particle.color + Math.floor(particle.life * 200).toString(16).padStart(2, '0'));
+        p5.ellipse(0, 0, particle.size * particle.life + 8 * pulseGlow); // Reduced glow
+        p5.pop();
+        
+        // Draw main particle
+        p5.noStroke();
+        p5.fill(particle.color + Math.floor(particle.life * 255).toString(16).padStart(2, '0'));
+        p5.ellipse(0, 0, particle.size * particle.life);
+        
+        p5.pop();
+      } else {
+        particles.splice(i, 1);
+      }
+    }
+  };
   const gameProperties = useRef({
     score: 0,
-    time: gameState.defaultTime,
+    shotsInRound: 0, // Shots taken in current round (0-5)
     color: [
       "#e74815",
       "#1b9c09",
@@ -149,7 +253,7 @@ const Board: React.FC = () => {
     gridRef.current.numCols = girdColumns;
     gridRef.current.movement = 0;
     gameProperties.current.score = 0;
-    gameProperties.current.time = gameState.defaultTime;
+    gameProperties.current.shotsInRound = 0;
     gameState.isPause = false;
     gameState.isGameOver = false;
     gameState.isWin = false;
@@ -195,10 +299,7 @@ const Board: React.FC = () => {
   };
 
   const checkGameOVer = (gridBubble: Record<string, Bubble>) => {
-    if (
-      gameProperties.current.time <= 0 ||
-      getHeight(gridBubble) >= LIMIT_HEIGHT
-    ) {
+    if (getHeight(gridBubble) >= LIMIT_HEIGHT) {
       freezeGame();
       showAlert('Game Over!');
     }
@@ -211,21 +312,9 @@ const Board: React.FC = () => {
     return false;
   };
 
-  const moveDown = (gridBubble: Record<string, Bubble>) => {
-    if (
-      gameProperties.current.time !== gameState.defaultTime &&
-      gameProperties.current.time % gameProperties.current.moveDownInterval ===
-        0 &&
-      !arrayTime.includes(gameProperties.current.time)
-    ) {
-      gridRef.current.numRows++;
-      addRowBubbleList(
-        gridBubble,
-        gridRef.current,
-        gameProperties.current.color
-      );
-      arrayTime.push(gameProperties.current.time);
-    }
+  const moveDown = (gridBubble: Record<string, Bubble>, p5: p5Types) => {
+    // Grid dropping is now handled by the 5-shot system
+    // This function is kept for compatibility but doesn't do anything
   };
 
   const renderBubbleList = (
@@ -335,40 +424,104 @@ const Board: React.FC = () => {
     if (getSize(gridBubble.current) !== 0) {
       const centerX: number = bubble.x;
       const centerY: number = bubble.y;
+      
+      // Add movement animation properties
+      if (bubble.isMoving && !bubble.animationProps) {
+        bubble.animationProps = {
+          startTime: p5.millis(),
+          startScale: 1,
+          pulsePhase: 0,
+          glowIntensity: 0
+        };
+      }
+      
+      let scale = 1;
+      let glowIntensity = 0;
+      
+      // Animate moving bubble
+      if (bubble.isMoving && bubble.animationProps) {
+        const elapsed = p5.millis() - bubble.animationProps.startTime;
+        const duration = 400; // Shorter animation duration
+        const progress = Math.min(elapsed / duration, 1);
+        
+        // Smooth easing function (cubic ease-out)
+        const easeOut = 1 - Math.pow(1 - progress, 3);
+        
+        // Enhanced scale and pulse effect with easing
+        scale = 1 + 0.3 * Math.sin(progress * Math.PI * 6) * easeOut; // Smaller scale effect
+        glowIntensity = 0.4 * easeOut; // Reduced glow
+        bubble.animationProps.pulsePhase += 0.4; // Slightly reduced pulse
+      }
+      
       if (bubble.isSpecial === true) {
         const imgWidth: number = image.imageSpecialBall.width;
         const imgHeight: number = image.imageSpecialBall.height;
         const imgX: number = centerX - imgWidth / 2;
         const imgY: number = centerY - imgHeight / 2;
+        
+        // Draw glow effect for special bubbles
+        if (glowIntensity > 0) {
+          p5.push();
+          p5.noStroke();
+          p5.fill(bubble.color + Math.floor(glowIntensity * 255).toString(16).padStart(2, '0'));
+          p5.ellipse(bubble.x, bubble.y, bubble.r * 2 * scale + 10); // Reduced glow
+          p5.pop();
+        }
+        
+        p5.push();
+        p5.translate(bubble.x, bubble.y);
+        p5.scale(scale);
         p5.noFill();
-        p5.image(image.imageSpecialBall, imgX, imgY);
-        p5.ellipse(bubble.x, bubble.y, bubble.r * 2);
+        p5.image(image.imageSpecialBall, imgX - bubble.x, imgY - bubble.y);
+        p5.ellipse(0, 0, bubble.r * 2);
+        p5.pop();
       } else {
         const centerX: number = bubble.x;
         const centerY: number = bubble.y;
         const imgWidth: number = image.imageDraw.width;
         const imgHeight: number = image.imageDraw.height;
         const imgDiameter: number = Math.max(imgWidth, imgHeight);
-        const scale: number = (bubble.r * 2) / imgDiameter;
-        const imgX: number = centerX - (imgWidth / 2) * scale;
-        const imgY: number = centerY - (imgHeight / 2) * scale;
+        const imgScale: number = (bubble.r * 2) / imgDiameter;
+        const imgX: number = centerX - (imgWidth / 2) * imgScale * scale;
+        const imgY: number = centerY - (imgHeight / 2) * imgScale * scale;
+        
+        // Draw enhanced shadow for depth
+        p5.push();
+        p5.noStroke();
+        p5.fill(0, 0, 0, 50); // Reduced shadow opacity
+        p5.ellipse(bubble.x + 2, bubble.y + 2, bubble.r * 2 * scale);
+        p5.pop();
+        
+        // Draw enhanced glow effect for moving bubbles
+        if (glowIntensity > 0) {
+          p5.push();
+          p5.noStroke();
+          p5.fill(bubble.color + Math.floor(glowIntensity * 255).toString(16).padStart(2, '0'));
+          p5.ellipse(bubble.x, bubble.y, bubble.r * 2 * scale + 8); // Reduced glow
+          p5.pop();
+        }
+        
+        p5.push();
+        p5.translate(bubble.x, bubble.y);
+        p5.scale(scale);
         p5.noStroke();
         p5.fill(bubble.color);
-        p5.ellipse(bubble.x, bubble.y, bubble.r * 2);
+        p5.ellipse(0, 0, bubble.r * 2);
         p5.image(
           image.imageDraw,
-          imgX,
-          imgY,
-          imgWidth * scale,
-          imgHeight * scale
+          -imgWidth * imgScale / 2,
+          -imgHeight * imgScale / 2,
+          imgWidth * imgScale,
+          imgHeight * imgScale
         );
+        p5.pop();
       }
     }
   };
 
   const drawBubblePopping = (removeBubbles: any[], p5: p5Types) => {
-    for (let key in removeBubbles) {
-      const bubble = removeBubbles[key];
+    for (let i = removeBubbles.length - 1; i >= 0; i--) {
+      const bubble = removeBubbles[i];
       const imageBubble = bubble.isSpecial
         ? image.imageSpecialBall
         : image.imageDraw;
@@ -380,25 +533,120 @@ const Board: React.FC = () => {
       const scale: number = (bubble.r * 2) / imgDiameter;
       const imgX: number = centerX - (imgWidth / 2) * scale;
       const imgY: number = centerY - (imgHeight / 2) * scale;
+      
       if (bubble.vy == undefined) {
-        bubble.vy = -10;
-        bubble.vx = p5.random(-5, 5);
-        bubble.g = 1;
+        bubble.vy = -18; // Reduced initial velocity
+        bubble.vx = p5.random(-10, 10); // Reduced horizontal movement
+        bubble.g = 0.6; // Gentler gravity for longer animation
+        bubble.rotation = 0;
+        bubble.rotationSpeed = p5.random(-0.6, 0.6); // Slightly reduced rotation
+        bubble.scale = 1.1; // Smaller starting scale
+        bubble.scaleSpeed = -0.012; // Slower scale reduction
+        bubble.fade = 1; // Opacity for fade effect
+        bubble.fadeSpeed = -0.012; // Slower fade for longer animation
+        bubble.pulse = 0; // For pulsing effect
+        bubble.pulseSpeed = 0.5; // Slightly reduced pulse
+        bubble.bounceCount = 0; // Track bounces
+        bubble.maxBounces = 3; // Reduced bounces
+        bubble.trail = []; // For trail effect
       }
-      p5.noStroke();
-      p5.fill(bubble.color);
-      p5.ellipse(bubble.x, bubble.y, bubble.r * 2);
-      p5.image(imageBubble, imgX, imgY, imgWidth * scale, imgHeight * scale);
-
-      bubble.vy += bubble.g;
-      bubble.x -= bubble.vx;
-      bubble.y += bubble.vy;
-
-      if (bubble.x - bubble.r <= 0 || bubble.x + bubble.r >= gameWidth) {
-        bubble.x += bubble.vx;
+      
+      // Update animation properties
+      bubble.rotation += bubble.rotationSpeed;
+      bubble.scale += bubble.scaleSpeed;
+      bubble.scale = Math.max(0.35, bubble.scale); // Don't get too small
+      bubble.fade += bubble.fadeSpeed;
+      bubble.fade = Math.max(0, bubble.fade);
+      bubble.pulse += bubble.pulseSpeed;
+      
+      // Add trail effect
+      bubble.trail.push({ x: bubble.x, y: bubble.y, fade: 1 });
+      if (bubble.trail.length > 6) { // Reduced trail length
+        bubble.trail.shift();
       }
-      if (bubble.y >= gameHeight) {
-        delete removeBubbles[key];
+      
+      if (bubble.scale > 0.35 && bubble.fade > 0) {
+        // Create pulsing glow effect
+        const pulseGlow = 1 + 0.4 * Math.sin(bubble.pulse); // Reduced glow intensity
+        
+        // Draw trail effect
+        for (let j = 0; j < bubble.trail.length; j++) {
+          const trailPoint = bubble.trail[j];
+          const trailFade = trailPoint.fade * bubble.fade;
+          const trailScale = bubble.scale * (j / bubble.trail.length);
+          
+          p5.push();
+          p5.translate(trailPoint.x, trailPoint.y);
+          p5.rotate(bubble.rotation * 0.5);
+          p5.scale(trailScale);
+          
+          p5.push();
+          p5.noStroke();
+          p5.fill(bubble.color + Math.floor(trailFade * 80).toString(16).padStart(2, '0'));
+          p5.ellipse(0, 0, bubble.r * 2 + 8); // Reduced trail glow
+          p5.pop();
+          
+          p5.push();
+          p5.tint(255, trailFade * 255);
+          p5.noStroke();
+          p5.fill(bubble.color);
+          p5.ellipse(0, 0, bubble.r * 2);
+          p5.image(imageBubble, -imgWidth * scale / 2, -imgHeight * scale / 2, imgWidth * scale, imgHeight * scale);
+          p5.pop();
+          
+          p5.pop();
+          
+          trailPoint.fade -= 0.12;
+        }
+        
+        p5.push();
+        p5.translate(bubble.x, bubble.y);
+        p5.rotate(bubble.rotation);
+        p5.scale(bubble.scale);
+        
+        // Draw enhanced glow effect
+        p5.push();
+        p5.noStroke();
+        p5.fill(bubble.color + Math.floor(bubble.fade * 150).toString(16).padStart(2, '0'));
+        p5.ellipse(0, 0, bubble.r * 2 + 18 * pulseGlow); // Reduced glow size
+        p5.pop();
+        
+        // Draw main bubble with enhanced fade
+        p5.push();
+        p5.tint(255, bubble.fade * 255);
+        p5.noStroke();
+        p5.fill(bubble.color);
+        p5.ellipse(0, 0, bubble.r * 2);
+        p5.image(imageBubble, -imgWidth * scale / 2, -imgHeight * scale / 2, imgWidth * scale, imgHeight * scale);
+        p5.pop();
+        
+        p5.pop();
+
+        // Update physics with bounce logic
+        bubble.vy += bubble.g;
+        bubble.x -= bubble.vx;
+        bubble.y += bubble.vy;
+
+        // Enhanced bounce off walls with energy loss
+        if (bubble.x - bubble.r <= 0 || bubble.x + bubble.r >= gameWidth) {
+          bubble.x += bubble.vx;
+          bubble.vx = -bubble.vx * 0.65; // More energy loss on bounce
+          bubble.bounceCount++;
+        }
+        
+        // Bounce off bottom with energy loss
+        if (bubble.y + bubble.r >= gameHeight && bubble.vy > 0) {
+          bubble.y = gameHeight - bubble.r;
+          bubble.vy = -bubble.vy * 0.55; // Bounce off bottom
+          bubble.bounceCount++;
+        }
+        
+        // Remove when off screen, fully faded, or too many bounces
+        if (bubble.y >= gameHeight + 80 || bubble.scale <= 0.35 || bubble.fade <= 0 || bubble.bounceCount >= bubble.maxBounces) {
+          removeBubbles.splice(i, 1);
+        }
+      } else {
+        removeBubbles.splice(i, 1);
       }
     }
   };
@@ -460,10 +708,23 @@ const Board: React.FC = () => {
 
   const setup = (p5: p5Types, canvasParentRef: Element) => {
     p5.createCanvas(gameWidth, gameHeight).parent(canvasParentRef);
+    
+    // Initial check for disconnected bubbles
+    verifyGrid(gridBubble.current, removeBubbles);
+  };
+
+  const checkDisconnectedBubbles = (p5: p5Types) => {
+    // Check for disconnected bubbles every 60 frames (about once per second)
+    if (p5.frameCount % 60 === 0) {
+      verifyGrid(gridBubble.current, removeBubbles);
+    }
   };
 
   const draw = (p5: p5Types) => {
     p5.clear();
+
+    // Update and draw particles
+    updateAndDrawParticles(p5);
 
     // draw when ball fall down
     drawBubblePopping(removeBubbles, p5);
@@ -474,8 +735,8 @@ const Board: React.FC = () => {
     // game over
     checkGameOVer(gridBubble.current);
 
-    // move down grid bubble
-    moveDown(gridBubble.current);
+    // Check for disconnected bubbles periodically
+    checkDisconnectedBubbles(p5);
 
     // render bubble list
     renderBubbleList(p5, gridBubble.current);
@@ -501,6 +762,7 @@ const Board: React.FC = () => {
       );
 
       if (collision && Array.isArray(loc)) {
+        // Shot hit and attached to grid - check if it broke any bubbles
         const pop = insertBubble(
           gridBubble.current,
           gridRef.current,
@@ -508,9 +770,54 @@ const Board: React.FC = () => {
           loc[0],
           loc[1]
         );
+        
         if (pop > 0) {
+          // Shot broke bubbles - DON'T reset the round counter, just keep it as is
+          console.log("Broke bubbles, counter stays at:", gameProperties.current.shotsInRound);
+          
           let extra = verifyGrid(gridBubble.current, removeBubbles);
           gameProperties.current.score += caculateScore(pop + extra);
+          
+          // Create enhanced explosion particles at collision point
+          createParticles(bubble.current.x, bubble.current.y, bubble.current.color, p5);
+          
+          // Add impact effect - create a ripple effect at collision point
+          const impactParticles = [];
+          for (let i = 0; i < 8; i++) {
+            const angle = (p5.TWO_PI * i) / 8;
+            const speed = p5.random(3, 8);
+            impactParticles.push({
+              x: bubble.current.x,
+              y: bubble.current.y,
+              vx: p5.cos(angle) * speed,
+              vy: p5.sin(angle) * speed,
+              life: 1,
+              maxLife: 1,
+              color: bubble.current.color,
+              size: p5.random(3, 6),
+              rotation: 0,
+              rotationSpeed: p5.random(-0.2, 0.2),
+              scale: 1.0,
+              scaleSpeed: -0.015,
+              pulse: 0,
+              pulseSpeed: 0.2,
+              trail: [] // Initialize trail array
+            });
+          }
+          
+          // Add impact particles to main particle array
+          particles.push(...impactParticles);
+          
+          // Create additional particles for each popped bubble with easing
+          for (let i = 0; i < Math.min(pop + extra, 3); i++) {
+            const randomX = bubble.current.x + p5.random(-15, 15);
+            const randomY = bubble.current.y + p5.random(-15, 15);
+            createParticles(randomX, randomY, bubble.current.color, p5);
+          }
+        } else {
+          // Shot attached but didn't break bubbles - count this shot
+          gameProperties.current.shotsInRound++;
+          console.log("No bubbles broken, shots in round:", gameProperties.current.shotsInRound);
         }
 
         renderBubbleList(p5, gridBubble.current);
@@ -524,6 +831,35 @@ const Board: React.FC = () => {
         bubble.current.y = bubbleStartY;
         bubble.current.speedX = 0;
         bubble.current.speedY = 0;
+        bubble.current.isMoving = false;
+        bubble.current.animationProps = undefined; // Reset animation
+      } else if (bubble.current.isMoving && bubble.current.y <= 0) {
+        // Shot missed completely (went off screen) - count this shot
+        gameProperties.current.shotsInRound++;
+        console.log("Shot missed (off screen), shots in round:", gameProperties.current.shotsInRound);
+        
+        // Reset bubble
+        bubble.current.x = bubbleStartX;
+        bubble.current.y = bubbleStartY;
+        bubble.current.speedX = 0;
+        bubble.current.speedY = 0;
+        bubble.current.isMoving = false;
+        bubble.current.animationProps = undefined;
+      }
+      
+      // Check if we've used all 5 shots without breaking bubbles (moved outside collision detection)
+      if (gameProperties.current.shotsInRound >= 5) {
+        console.log("5 shots without breaking bubbles, dropping grid");
+        // Drop the entire grid down
+        gridRef.current.numRows++;
+        addRowBubbleList(
+          gridBubble.current,
+          gridRef.current,
+          gameProperties.current.color
+        );
+        
+        // Reset shots remaining to 5 for next round
+        gameProperties.current.shotsInRound = 0;
       }
     }
 
@@ -542,17 +878,15 @@ const Board: React.FC = () => {
       scoreText.innerHTML = ` ${gameProperties.current.score} `;
     }
 
-    //time countdown
-    if (
-      p5.frameCount % 70 == 0 &&
-      gameProperties.current.time > 0 &&
-      !gameState.isPause
-    ) {
-      gameProperties.current.time--;
+    // Display shots remaining (for debugging and player info)
+    const timeText = document.getElementById("time");
+    if (timeText) {
+      timeText.innerHTML = ` ${5 - gameProperties.current.shotsInRound} `;
     }
-    const countdownText = document.getElementById("time");
-    if (countdownText) {
-      countdownText.innerHTML = ` ${p5.round(gameProperties.current.time)} `;
+
+    // Check for disconnected bubbles more frequently
+    if (p5.frameCount % 15 === 0) {
+      verifyGrid(gridBubble.current, removeBubbles);
     }
 
     if (
@@ -730,7 +1064,6 @@ const Board: React.FC = () => {
                 gameProperties.current.color[index] = colorValue;
               }
               gameProperties.current.moveDownInterval = values.moveDown;
-              gameState.defaultTime = values.time;
               resetGame();
             }}
           >
@@ -756,13 +1089,6 @@ const Board: React.FC = () => {
                 </Form.Item>
               );
             })}
-            <label htmlFor="">Time:</label>
-            <Form.Item
-              name="time"
-              rules={[{ required: true, message: "Please input time!" }]}
-            >
-              <Input />
-            </Form.Item>
             <label htmlFor="">Move down after (second):</label>
             <Form.Item
               name="moveDown"

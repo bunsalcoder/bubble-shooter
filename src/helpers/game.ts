@@ -376,6 +376,9 @@ export const verifyGrid = (
   let index = 0;
   let removed = 0;
   let marked: any = {};
+  let connectedGroups: any[] = [];
+  
+  // First pass: find all connected groups
   while (index < locs.length) {
     let loc = locs[index];
     loc = [
@@ -385,24 +388,37 @@ export const verifyGrid = (
     index++;
     if (!(loc in marked)) {
       let group = flood(gridBubble, loc[0], loc[1]);
-      let maxRow = group[0][0];
-      for (let index2 = 1; index2 < group.length; index2++) {
-        if (group[index2][0] > maxRow) {
-          maxRow = group[index2][0];
-        }
-      }
-
-      if (maxRow < GRID_ROWS) {
-        for (let index2 = 0; index2 < group.length; index2++) {
-          removeBubbles.push(
-            gridBubble[`${group[index2][0]},${group[index2][1]}`]
-          );
-          removeBubble(gridBubble, group[index2][0], group[index2][1]);
-          removed++;
-        }
-      }
+      connectedGroups.push(group);
       for (let index2 = 0; index2 < group.length; index2++) {
         marked[group[index2]] = 0;
+      }
+    }
+  }
+  
+  // Second pass: check which groups are connected to the top
+  for (let groupIndex = 0; groupIndex < connectedGroups.length; groupIndex++) {
+    let group = connectedGroups[groupIndex];
+    let isConnectedToTop = false;
+    
+    // Check if any bubble in this group is in the top row (GRID_ROWS)
+    for (let bubbleIndex = 0; bubbleIndex < group.length; bubbleIndex++) {
+      if (group[bubbleIndex][0] >= GRID_ROWS) {
+        isConnectedToTop = true;
+        break;
+      }
+    }
+    
+    // If not connected to top, remove all bubbles in this group
+    if (!isConnectedToTop) {
+      for (let bubbleIndex = 0; bubbleIndex < group.length; bubbleIndex++) {
+        let bubbleLoc = group[bubbleIndex];
+        if (gridBubble[`${bubbleLoc[0]},${bubbleLoc[1]}`]) {
+          removeBubbles.push(
+            gridBubble[`${bubbleLoc[0]},${bubbleLoc[1]}`]
+          );
+          removeBubble(gridBubble, bubbleLoc[0], bubbleLoc[1]);
+          removed++;
+        }
       }
     }
   }

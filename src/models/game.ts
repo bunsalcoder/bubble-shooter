@@ -8,6 +8,12 @@ export interface Bubble {
   color: string;
   isMoving: boolean;
   isSpecial: boolean;
+  animationProps?: {
+    startTime: number;
+    startScale: number;
+    pulsePhase: number;
+    glowIntensity: number;
+  };
 }
 export interface Grid {
   numRows: number;
