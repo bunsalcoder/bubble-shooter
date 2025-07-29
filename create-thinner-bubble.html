@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create Thinner Border Bubble</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #333;
+            color: white;
+            text-align: center;
+            padding: 20px;
+        }
+        canvas {
+            border: 1px solid #666;
+            margin: 10px;
+        }
+        .controls {
+            margin: 20px;
+        }
+        button {
+            background: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: #45a049;
+        }
+        input[type="range"] {
+            width: 200px;
+            margin: 10px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Create Bubble with Thinner Border</h1>
+    
+    <div class="controls">
+        <label>Border Thickness: <span id="borderValue">2</span>px</label><br>
+        <input type="range" id="borderThickness" min="0.5" max="4" step="0.1" value="2">
+        <br>
+        <button onclick="generateBubble()">Generate Bubble</button>
+        <button onclick="downloadBubble()">Download PNG</button>
+    </div>
+    
+    <canvas id="bubbleCanvas" width="64" height="64"></canvas>
+    
+    <script>
+        const canvas = document.getElementById('bubbleCanvas');
+        const ctx = canvas.getContext('2d');
+        const borderSlider = document.getElementById('borderThickness');
+        const borderValue = document.getElementById('borderValue');
+        
+        borderSlider.addEventListener('input', function() {
+            borderValue.textContent = this.value;
+            generateBubble();
+        });
+        
+        function generateBubble() {
+            const borderThickness = parseFloat(borderSlider.value);
+            const size = 64;
+            const radius = size / 2;
+            
+            // Clear canvas
+            ctx.clearRect(0, 0, size, size);
+            
+            // Create gradient for main bubble
+            const gradient = ctx.createRadialGradient(radius, radius, 0, radius, radius, radius);
+            gradient.addColorStop(0, 'rgba(255, 255, 255, 0.9)');
+            gradient.addColorStop(0.7, 'rgba(255, 255, 255, 0.3)');
+            gradient.addColorStop(1, 'rgba(255, 255, 255, 0.1)');
+            
+            // Draw main bubble with thinner border
+            ctx.beginPath();
+            ctx.arc(radius, radius, radius - borderThickness, 0, 2 * Math.PI);
+            ctx.fillStyle = gradient;
+            ctx.fill();
+            
+            // Draw thin border
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.8)';
+            ctx.lineWidth = borderThickness;
+            ctx.stroke();
+            
+            // Add highlights
+            // Primary highlight (top-left)
+            const highlightGradient1 = ctx.createRadialGradient(
+                radius - radius * 0.3, radius - radius * 0.3, 0,
+                radius - radius * 0.3, radius - radius * 0.3, radius * 0.4
+            );
+            highlightGradient1.addColorStop(0, 'rgba(255, 255, 255, 0.9)');
+            highlightGradient1.addColorStop(1, 'rgba(255, 255, 255, 0)');
+            
+            ctx.beginPath();
+            ctx.arc(radius - radius * 0.3, radius - radius * 0.3, radius * 0.4, 0, 2 * Math.PI);
+            ctx.fillStyle = highlightGradient1;
+            ctx.fill();
+            
+            // Secondary highlight (smaller)
+            const highlightGradient2 = ctx.createRadialGradient(
+                radius - radius * 0.2, radius - radius * 0.15, 0,
+                radius - radius * 0.2, radius - radius * 0.15, radius * 0.25
+            );
+            highlightGradient2.addColorStop(0, 'rgba(255, 255, 255, 0.7)');
+            highlightGradient2.addColorStop(1, 'rgba(255, 255, 255, 0)');
+            
+            ctx.beginPath();
+            ctx.arc(radius - radius * 0.2, radius - radius * 0.15, radius * 0.25, 0, 2 * Math.PI);
+            ctx.fillStyle = highlightGradient2;
+            ctx.fill();
+            
+            // Add subtle shadow (bottom-right)
+            const shadowGradient = ctx.createRadialGradient(
+                radius + radius * 0.2, radius + radius * 0.2, 0,
+                radius + radius * 0.2, radius + radius * 0.2, radius * 0.3
+            );
+            shadowGradient.addColorStop(0, 'rgba(0, 0, 0, 0.2)');
+            shadowGradient.addColorStop(1, 'rgba(0, 0, 0, 0)');
+            
+            ctx.beginPath();
+            ctx.arc(radius + radius * 0.2, radius + radius * 0.2, radius * 0.3, 0, 2 * Math.PI);
+            ctx.fillStyle = shadowGradient;
+            ctx.fill();
+        }
+        
+        function downloadBubble() {
+            const link = document.createElement('a');
+            link.download = 'bubble-thinner-border.png';
+            link.href = canvas.toDataURL();
+            link.click();
+        }
+        
+        // Generate initial bubble
+        generateBubble();
+    </script>
+</body>
+</html> 

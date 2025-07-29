@@ -120,8 +120,9 @@ $radius-size_base: 6px;
     justify-content: center;
     padding: 30px 70px;
     height: 100vh;
-    background: linear-gradient(180deg, #87CEEB 0%, #DDA0DD 100%);
+    background-image: url("/bubble-shooter/background/game-background.jpg");
     background-size: cover;
+    background-position: center;
   }
 
   &__game-header,
@@ -161,7 +162,7 @@ $radius-size_base: 6px;
       display: block;
       width: 146px;
       height: 180px;
-      background-image: url("/bubble-shooter/background/shooter.png");
+      // background-image: url("/bubble-shooter/background/shooter.png");
       content: "";
     }
     #viewport {
@@ -232,7 +233,7 @@ $radius-size_base: 6px;
           left: calc(50% - 50px);
           width: 100px;
           height: 150px;
-          background-image: url("/bubble-shooter/background/shooter.png");
+          // background-image: url("/bubble-shooter/background/shooter.png");
           background-size: contain;
           background-repeat: no-repeat;
           content: "";
@@ -302,7 +303,7 @@ $radius-size_base: 6px;
           left: calc(50% - 50px);
           width: 100px;
           height: 150px;
-          background-image: url("/bubble-shooter/background/shooter.png");
+          // background-image: url("/bubble-shooter/background/shooter.png");
           background-size: contain;
           background-repeat: no-repeat;
           content: "";

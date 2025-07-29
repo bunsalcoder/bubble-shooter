@@ -31,10 +31,8 @@ import { Button, Form, Input, Modal } from "antd";
 import dynamic from "next/dynamic";
 import p5Types from "p5";
 import React, { useRef, useState } from "react";
-import nextBubble from "@public/bubble-shooter/background/next-bubble.png";
 import score from "@public/bubble-shooter/background/score.png";
 import time from "@public/bubble-shooter/background/time.png";
-import role from "@public/bubble-shooter/element/role_cat.png";
 import pause from "@public/bubble-shooter/icon/pause.png";
 import play from "@public/bubble-shooter/icon/play.png";
 import setting from "@public/bubble-shooter/icon/setting.png";
@@ -190,13 +188,13 @@ const Board: React.FC = () => {
     score: 0,
     shotsInRound: 0, // Shots taken in current round (0-5)
     color: [
-      "#e74815",
-      "#1b9c09",
-      "#1f65eb",
-      "#31d7e0",
-      "#c33dce",
-      "#ed9810",
-      "#FDE2F3",
+      "#FF0000", // Pure red
+      "#00FF00", // Pure green
+      "#2196F3", // More colorful blue
+      "#FFD700", // More colorful yellow
+      "#FF00FF", // Magenta
+      "#00FFFF", // Cyan
+      "#FF6600", // Bright orange
     ],
     moveDownInterval: 20,
   });
@@ -216,7 +214,11 @@ const Board: React.FC = () => {
       gameProperties.current.color
     )
   );
-  const bubble = useRef(bubbleNext.current[0]);
+  const activeBubble = useRef(bubbleNext.current[0]);
+  const secondaryBubble = useRef(bubbleNext.current[1] || bubbleNext.current[0]);
+  const tertiaryBubble = useRef(bubbleNext.current[2] || bubbleNext.current[0]);
+  const isSwapping = useRef<boolean>(false);
+  const swapAnimation = useRef<number>(0);
   const isGenerateSpecialBall = useRef<boolean>(false);
   const removeBubbles: any[] = [];
   const arrayTime: any = [];
@@ -232,7 +234,7 @@ const Board: React.FC = () => {
     addBubbleNext(gridBubble.current, bubbleNext.current);
     updateDirectionBubbleNext(bubbleNext.current, grid);
 
-    bubble.current = bubbleNext.current[0];
+    activeBubble.current = bubbleNext.current[0];
     setIsModalOpen(false);
   };
 
@@ -268,7 +270,9 @@ const Board: React.FC = () => {
       gridRef.current,
       gameProperties.current.color
     );
-    bubble.current = bubbleNext.current[0];
+    activeBubble.current = bubbleNext.current[0];
+    secondaryBubble.current = bubbleNext.current[1] || bubbleNext.current[0];
+    tertiaryBubble.current = bubbleNext.current[2] || bubbleNext.current[0];
     isGenerateSpecialBall.current = false;
   };
 
@@ -449,8 +453,8 @@ const Board: React.FC = () => {
         
         p5.push();
         p5.translate(bubble.x, bubble.y);
-        p5.noStroke();
         p5.fill(bubble.color);
+        p5.noStroke();
         p5.ellipse(0, 0, bubble.r * 2);
         p5.image(
           image.imageDraw,
@@ -533,8 +537,8 @@ const Board: React.FC = () => {
           
           p5.push();
           p5.tint(255, trailFade * 255);
-          p5.noStroke();
           p5.fill(bubble.color);
+          p5.noStroke();
           p5.ellipse(0, 0, bubble.r * 2);
           p5.image(imageBubble, -imgWidth * scale / 2, -imgHeight * scale / 2, imgWidth * scale, imgHeight * scale);
           p5.pop();
@@ -559,8 +563,8 @@ const Board: React.FC = () => {
         // Draw main bubble with enhanced fade
         p5.push();
         p5.tint(255, bubble.fade * 255);
-        p5.noStroke();
         p5.fill(bubble.color);
+        p5.noStroke();
         p5.ellipse(0, 0, bubble.r * 2);
         p5.image(imageBubble, -imgWidth * scale / 2, -imgHeight * scale / 2, imgWidth * scale, imgHeight * scale);
         p5.pop();
@@ -596,32 +600,331 @@ const Board: React.FC = () => {
     }
   };
 
-  const drawArrow = (p5: p5Types, bubble: Bubble) => {
-    const deviceType = getDeviceType(window.innerWidth);
-    const arrowLength: number = 150;
-    const startX: number = gameWidth / 2;
-    const startY: number =
-      deviceType === DeviceType.SMALL ? gameHeight - 100 : gameHeight - 130;
-    const dx: number = p5.mouseX - startX;
-    const dy: number = p5.mouseY - startY;
-    const angle: number = p5.atan2(dy, dx);
-    const endX: number = startX + arrowLength * p5.cos(angle);
-    const endY: number = startY + arrowLength * p5.sin(angle);
-    const arrowSize: number = 30;
-    const x1: number = endX - arrowSize * p5.cos(angle - p5.PI / 6);
-    const y1: number = endY - arrowSize * p5.sin(angle - p5.PI / 6);
-    const x2: number = endX - arrowSize * p5.cos(angle + p5.PI / 6);
-    const y2: number = endY - arrowSize * p5.sin(angle + p5.PI / 6);
-    if (p5.drawingContext instanceof CanvasRenderingContext2D) {
-      p5.drawingContext.setLineDash([5, 10]);
-    }
+  // Animation state for swap elements
+  const swapAnimationTime = useRef<number>(0);
+  const arcAnimationPhase = useRef<number>(0);
+  const dashAnimationPhase = useRef<number>(0);
+  const swapAnimationProgress = useRef<number>(0);
+  const isSwapAnimating = useRef<boolean>(false);
 
-    p5.stroke(bubble.isSpecial ? "blue" : bubble.color);
-    p5.strokeWeight(3);
-    p5.line(startX, startY, endX, endY);
-    p5.noStroke();
-    p5.fill(bubble.isSpecial ? "blue" : bubble.color);
-    p5.triangle(endX, endY, x1, y1, x2, y2);
+  const drawSwapArrow = (p5: p5Types) => {
+    const launcherX = gameWidth / 2;
+    const launcherY = gameHeight - 80;
+    
+    // Animate dash positions
+    dashAnimationPhase.current += 0.1;
+    const dashOffset = Math.sin(dashAnimationPhase.current) * 3;
+    
+    // Get current bubble color for the arrow
+    const currentColor = activeBubble.current.color;
+    
+    // Draw vertical dashed line with arrowhead
+    p5.push();
+    p5.stroke(currentColor); // Use current bubble color
+    p5.strokeWeight(4);
+    p5.noFill();
+    
+    // Remove the vertical arrow - not needed for this design
+    p5.pop();
+  };
+
+  const drawSwapArc = (p5: p5Types) => {
+    const launcherX = gameWidth / 2;
+    const launcherY = gameHeight - 80;
+    
+    // Animate arc
+    arcAnimationPhase.current += 0.05;
+    const arcOffset = Math.sin(arcAnimationPhase.current) * 2;
+    
+    // Get current bubble color for the arc
+    const currentColor = activeBubble.current.color;
+    
+    // Draw circular arc with arrowhead
+    p5.push();
+    p5.stroke(currentColor); // Use current bubble color
+    p5.strokeWeight(4);
+    p5.noFill();
+    
+    // Draw animated arc connecting both bubbles from their centers
+    const currentBubbleX = launcherX - 20;
+    const currentBubbleY = launcherY - 15;
+    const nextBubbleX = launcherX + 20;
+    const nextBubbleY = launcherY + 15;
+    
+    // Calculate center point between bubbles
+    const centerX = (currentBubbleX + nextBubbleX) / 2;
+    const centerY = (currentBubbleY + nextBubbleY) / 2;
+    
+    // Calculate radius to connect from middle of each bubble
+    const distance = Math.sqrt(Math.pow(nextBubbleX - currentBubbleX, 2) + Math.pow(nextBubbleY - currentBubbleY, 2));
+    const circleRadius = distance / 2 + 5; // Small padding while maintaining center connection
+    
+    // Animate the circle going around
+    const circleOffset = arcAnimationPhase.current * 2; // Full rotation
+    
+    // Draw complete circle with rotation animation
+    p5.arc(centerX, centerY, circleRadius * 2, circleRadius * 2, circleOffset, circleOffset + p5.TWO_PI);
+    
+    // Handle swap animation
+    if (isSwapAnimating.current) {
+      swapAnimationProgress.current += 0.035;
+      if (swapAnimationProgress.current >= 1) {
+        isSwapAnimating.current = false;
+        swapAnimationProgress.current = 0;
+      }
+      
+      // Draw animated bubbles flowing through the arc
+      const progress = swapAnimationProgress.current;
+      const easeProgress = 1 - Math.pow(1 - progress, 2); // Ease out
+      
+      // Calculate the exact radius needed to connect from bubble centers
+      const bubbleRadius = 15; // Same as in drawDualBubbleLauncher
+      const actualDistance = Math.sqrt(Math.pow(nextBubbleX - currentBubbleX, 2) + Math.pow(nextBubbleY - currentBubbleY, 2));
+      const arcRadius = actualDistance / 2; // This ensures connection from bubble centers
+      
+      // Current bubble flows through arc clockwise
+      const currentStartAngle = Math.atan2(currentBubbleY - centerY, currentBubbleX - centerX);
+      const currentEndAngle = Math.atan2(nextBubbleY - centerY, nextBubbleX - centerX);
+      const currentAngle = p5.lerp(currentStartAngle, currentEndAngle, easeProgress);
+      const currentFlowX = centerX + arcRadius * Math.cos(currentAngle);
+      const currentFlowY = centerY + arcRadius * Math.sin(currentAngle);
+      
+      // Next bubble flows through arc in the same direction as current
+      const nextStartAngle = Math.atan2(nextBubbleY - centerY, nextBubbleX - centerX);
+      const nextEndAngle = Math.atan2(currentBubbleY - centerY, currentBubbleX - centerX);
+      // Add 2*PI to make it flow in the same direction
+      const nextAngle = p5.lerp(nextStartAngle, nextEndAngle + 2 * Math.PI, easeProgress);
+      const nextFlowX = centerX + arcRadius * Math.cos(nextAngle);
+      const nextFlowY = centerY + arcRadius * Math.sin(nextAngle);
+      
+      // Draw flowing bubbles with opposite colors during animation
+      p5.push();
+      
+      // Current bubble flowing to next position (shows opposite color during animation)
+      p5.fill(secondaryBubble.current.color); // Opposite color
+      p5.noStroke();
+      p5.ellipse(currentFlowX, currentFlowY, 30); // 15 * 2
+      
+      // Overlay bubble.png image
+      const imgWidth = image.imageDraw.width;
+      const imgHeight = image.imageDraw.height;
+      const imgScale = 30 / Math.max(imgWidth, imgHeight);
+      p5.image(
+        image.imageDraw,
+        currentFlowX - imgWidth * imgScale / 2,
+        currentFlowY - imgHeight * imgScale / 2,
+        imgWidth * imgScale,
+        imgHeight * imgScale
+      );
+      
+      // Next bubble flowing to current position (shows opposite color during animation)
+      p5.fill(activeBubble.current.color); // Opposite color
+      p5.noStroke();
+      p5.ellipse(nextFlowX, nextFlowY, 30);
+      
+      // Overlay bubble.png image
+      p5.image(
+        image.imageDraw,
+        nextFlowX - imgWidth * imgScale / 2,
+        nextFlowY - imgHeight * imgScale / 2,
+        imgWidth * imgScale,
+        imgHeight * imgScale
+      );
+      
+      p5.pop();
+    }
+    
+
+    p5.pop();
+  };
+
+  const swapBubbles = () => {
+    // Rotate all three bubbles in a triangle pattern
+    const temp = activeBubble.current;
+    activeBubble.current = secondaryBubble.current;
+    secondaryBubble.current = tertiaryBubble.current;
+    tertiaryBubble.current = temp;
+    isSwapping.current = true;
+    swapAnimation.current = Date.now();
+    isSwapAnimating.current = true;
+    swapAnimationProgress.current = 0;
+  };
+
+  const drawCircleArc = (p5: p5Types) => {
+    const launcherX = gameWidth / 2;
+    const launcherY = gameHeight - 80;
+    
+    // Animate arc
+    arcAnimationPhase.current += 0.05;
+    const arcOffset = Math.sin(arcAnimationPhase.current) * 2;
+    
+    // Get current bubble color for the arc
+    const currentColor = activeBubble.current.color;
+    
+    // Calculate circle center and radius
+    const topBubbleX = launcherX;
+    const topBubbleY = launcherY - 35;
+    const leftBubbleX = launcherX - 30;
+    const leftBubbleY = launcherY + 20;
+    const rightBubbleX = launcherX + 30;
+    const rightBubbleY = launcherY + 20;
+    
+    const centerX = (topBubbleX + leftBubbleX + rightBubbleX) / 3;
+    const centerY = (topBubbleY + leftBubbleY + rightBubbleY) / 3;
+    
+    // Calculate the exact radius to connect from bubble centers
+    const bubbleRadius = 18; // Same as launcher bubble radius
+    const distance1 = Math.sqrt(Math.pow(topBubbleX - centerX, 2) + Math.pow(topBubbleY - centerY, 2));
+    const distance2 = Math.sqrt(Math.pow(leftBubbleX - centerX, 2) + Math.pow(leftBubbleY - centerY, 2));
+    const distance3 = Math.sqrt(Math.pow(rightBubbleX - centerX, 2) + Math.pow(rightBubbleY - centerY, 2));
+    const maxDistance = Math.max(distance1, distance2, distance3);
+    const circleRadius = maxDistance; // No padding - exact connection
+    
+    // Simple stroke weight
+    const strokeWeight = 4;
+    
+    // Draw simple circular outline connecting bubble centers
+    p5.push();
+    p5.stroke(currentColor);
+    p5.strokeWeight(strokeWeight);
+    p5.noFill();
+    p5.ellipse(centerX, centerY, circleRadius * 2);
+    p5.pop();
+    
+    // Handle swap animation
+    if (isSwapAnimating.current) {
+      swapAnimationProgress.current += 0.035;
+      if (swapAnimationProgress.current >= 1) {
+        isSwapAnimating.current = false;
+        swapAnimationProgress.current = 0;
+      }
+      
+      // Draw animated bubbles flowing through the triangle
+      const progress = swapAnimationProgress.current;
+      const easeProgress = 1 - Math.pow(1 - progress, 2); // Ease out
+      
+      // Calculate triangle center
+      const centerX = (topBubbleX + leftBubbleX + rightBubbleX) / 3;
+      const centerY = (topBubbleY + leftBubbleY + rightBubbleY) / 3;
+      
+      // Draw flowing bubbles with opposite colors during animation
+      p5.push();
+      
+      // Top bubble flowing to left position
+      p5.fill(secondaryBubble.current.color);
+      p5.noStroke();
+      const topToLeftX = p5.lerp(topBubbleX, leftBubbleX, easeProgress);
+      const topToLeftY = p5.lerp(topBubbleY, leftBubbleY, easeProgress);
+      p5.ellipse(topToLeftX, topToLeftY, 36);
+      
+      // Left bubble flowing to right position
+      p5.fill(tertiaryBubble.current.color);
+      p5.noStroke();
+      const leftToRightX = p5.lerp(leftBubbleX, rightBubbleX, easeProgress);
+      const leftToRightY = p5.lerp(leftBubbleY, rightBubbleY, easeProgress);
+      p5.ellipse(leftToRightX, leftToRightY, 36);
+      
+      // Right bubble flowing to top position
+      p5.fill(activeBubble.current.color);
+      p5.noStroke();
+      const rightToTopX = p5.lerp(rightBubbleX, topBubbleX, easeProgress);
+      const rightToTopY = p5.lerp(rightBubbleY, topBubbleY, easeProgress);
+      p5.ellipse(rightToTopX, rightToTopY, 36);
+      
+      // Overlay bubble images
+      const imgWidth = image.imageDraw.width;
+      const imgHeight = image.imageDraw.height;
+      const imgScale = 36 / Math.max(imgWidth, imgHeight);
+      
+      p5.image(
+        image.imageDraw,
+        topToLeftX - imgWidth * imgScale / 2,
+        topToLeftY - imgHeight * imgScale / 2,
+        imgWidth * imgScale,
+        imgHeight * imgScale
+      );
+      
+      p5.image(
+        image.imageDraw,
+        leftToRightX - imgWidth * imgScale / 2,
+        leftToRightY - imgHeight * imgScale / 2,
+        imgWidth * imgScale,
+        imgHeight * imgScale
+      );
+      
+      p5.image(
+        image.imageDraw,
+        rightToTopX - imgWidth * imgScale / 2,
+        rightToTopY - imgHeight * imgScale / 2,
+        imgWidth * imgScale,
+        imgHeight * imgScale
+      );
+      
+      p5.pop();
+    }
+  };
+
+  const drawTripleBubbleLauncher = (p5: p5Types) => {
+    const launcherX = gameWidth / 2;
+    const launcherY = gameHeight - 80;
+    const bubbleRadius = 18; // Slightly bigger bubbles for better visibility
+    
+    // Draw circular outline first (behind bubbles - lower z-index)
+    drawCircleArc(p5);
+    
+    // Draw static bubbles only when not animating
+    if (!isSwapAnimating.current) {
+      // Draw active bubble (top)
+      p5.push();
+      p5.translate(launcherX, launcherY - 35);
+      p5.fill(activeBubble.current.color);
+      p5.noStroke();
+      p5.ellipse(0, 0, bubbleRadius * 2);
+      // Overlay bubble image
+      const imgWidth = image.imageDraw.width;
+      const imgHeight = image.imageDraw.height;
+      const imgScale = (bubbleRadius * 2) / Math.max(imgWidth, imgHeight);
+      p5.image(
+        image.imageDraw,
+        -imgWidth * imgScale / 2,
+        -imgHeight * imgScale / 2,
+        imgWidth * imgScale,
+        imgHeight * imgScale
+      );
+      p5.pop();
+      
+      // Draw secondary bubble (bottom-left)
+      p5.push();
+      p5.translate(launcherX - 30, launcherY + 20);
+      p5.fill(secondaryBubble.current.color);
+      p5.noStroke();
+      p5.ellipse(0, 0, bubbleRadius * 2);
+      // Overlay bubble image
+      p5.image(
+        image.imageDraw,
+        -imgWidth * imgScale / 2,
+        -imgHeight * imgScale / 2,
+        imgWidth * imgScale,
+        imgHeight * imgScale
+      );
+      p5.pop();
+      
+      // Draw tertiary bubble (bottom-right)
+      p5.push();
+      p5.translate(launcherX + 30, launcherY + 20);
+      p5.fill(tertiaryBubble.current.color);
+      p5.noStroke();
+      p5.ellipse(0, 0, bubbleRadius * 2);
+      // Overlay bubble image
+      p5.image(
+        image.imageDraw,
+        -imgWidth * imgScale / 2,
+        -imgHeight * imgScale / 2,
+        imgWidth * imgScale,
+        imgHeight * imgScale
+      );
+      p5.pop();
+    }
   };
 
   const loadNextBall = (bubble: any) => {
@@ -630,7 +933,7 @@ const Board: React.FC = () => {
       if (bubble.isSpecial) {
         nextBubble.innerHTML = `<img  src="/bubble-shooter/element/special-ball.png"  />`;
       } else {
-        nextBubble.innerHTML = `<img  src="/bubble-shooter/background/bubble-mask.png"  />`;
+        nextBubble.innerHTML = `<img  src="/bubble-shooter/background/bubble.png"  />`;
         nextBubble.style.background = bubble.color;
       }
     }
@@ -644,7 +947,7 @@ const Board: React.FC = () => {
       }
     );
     image.imageDraw = p5.loadImage(
-      "/bubble-shooter/background/bubble-mask.png",
+      "/bubble-shooter/background/bubble.png",
       () => {
         image.imageDraw.resize(bubbleDiameter, bubbleDiameter);
       }
@@ -688,20 +991,20 @@ const Board: React.FC = () => {
 
     //check the bubble hit the wall
     if (
-      bubble.current.x - bubble.current.r <= 0 ||
-      bubble.current.x + bubble.current.r >= gameWidth
+      activeBubble.current.x - activeBubble.current.r <= 0 ||
+      activeBubble.current.x + activeBubble.current.r >= gameWidth
     ) {
-      bubble.current.speedX = -bubble.current.speedX;
+      activeBubble.current.speedX = -activeBubble.current.speedX;
     }
 
     if (specialBubble.current.isAnswered === Answer.WRONG) {
-      bubble.current.isSpecial = false;
+      activeBubble.current.isSpecial = false;
     }
 
     // check when the bubble collides with the grid and insert bubble
-    if (bubble.current.isMoving === true) {
+    if (activeBubble.current.isMoving === true) {
       const [collision, loc] = checkCollision(
-        bubble.current,
+        activeBubble.current,
         gridBubble.current,
         gridRef.current
       );
@@ -711,7 +1014,7 @@ const Board: React.FC = () => {
         const pop = insertBubble(
           gridBubble.current,
           gridRef.current,
-          bubble.current,
+          activeBubble.current,
           loc[0],
           loc[1]
         );
@@ -724,7 +1027,7 @@ const Board: React.FC = () => {
           gameProperties.current.score += caculateScore(pop + extra);
           
           // Create enhanced explosion particles at collision point
-          createParticles(bubble.current.x, bubble.current.y, bubble.current.color, p5);
+          createParticles(activeBubble.current.x, activeBubble.current.y, activeBubble.current.color, p5);
           
           // Add impact effect - create a ripple effect at collision point
           const impactParticles = [];
@@ -732,13 +1035,13 @@ const Board: React.FC = () => {
             const angle = (p5.TWO_PI * i) / 8;
             const speed = p5.random(3, 8);
             impactParticles.push({
-              x: bubble.current.x,
-              y: bubble.current.y,
+              x: activeBubble.current.x,
+              y: activeBubble.current.y,
               vx: p5.cos(angle) * speed,
               vy: p5.sin(angle) * speed,
               life: 1,
               maxLife: 1,
-              color: bubble.current.color,
+              color: activeBubble.current.color,
               size: p5.random(3, 6),
               rotation: 0,
               rotationSpeed: p5.random(-0.2, 0.2),
@@ -755,9 +1058,9 @@ const Board: React.FC = () => {
           
           // Create additional particles for each popped bubble with easing
           for (let i = 0; i < Math.min(pop + extra, 3); i++) {
-            const randomX = bubble.current.x + p5.random(-15, 15);
-            const randomY = bubble.current.y + p5.random(-15, 15);
-            createParticles(randomX, randomY, bubble.current.color, p5);
+            const randomX = activeBubble.current.x + p5.random(-15, 15);
+            const randomY = activeBubble.current.y + p5.random(-15, 15);
+            createParticles(randomX, randomY, activeBubble.current.color, p5);
           }
         } else {
           // Shot attached but didn't break bubbles - count this shot
@@ -771,25 +1074,26 @@ const Board: React.FC = () => {
         addBubbleNext(gridBubble.current, bubbleNext.current);
         updateDirectionBubbleNext(bubbleNext.current, grid);
 
-        bubble.current = bubbleNext.current[0];
-        bubble.current.x = bubbleStartX;
-        bubble.current.y = bubbleStartY;
-        bubble.current.speedX = 0;
-        bubble.current.speedY = 0;
-        bubble.current.isMoving = false;
-        bubble.current.animationProps = undefined; // Reset animation
-      } else if (bubble.current.isMoving && bubble.current.y <= 0) {
+        activeBubble.current = bubbleNext.current[0];
+        secondaryBubble.current = bubbleNext.current[1] || bubbleNext.current[0];
+        activeBubble.current.x = bubbleStartX;
+        activeBubble.current.y = bubbleStartY;
+        activeBubble.current.speedX = 0;
+        activeBubble.current.speedY = 0;
+        activeBubble.current.isMoving = false;
+        activeBubble.current.animationProps = undefined; // Reset animation
+      } else if (activeBubble.current.isMoving && activeBubble.current.y <= 0) {
         // Shot missed completely (went off screen) - count this shot
         gameProperties.current.shotsInRound++;
         console.log("Shot missed (off screen), shots in round:", gameProperties.current.shotsInRound);
         
         // Reset bubble
-        bubble.current.x = bubbleStartX;
-        bubble.current.y = bubbleStartY;
-        bubble.current.speedX = 0;
-        bubble.current.speedY = 0;
-        bubble.current.isMoving = false;
-        bubble.current.animationProps = undefined;
+        activeBubble.current.x = bubbleStartX;
+        activeBubble.current.y = bubbleStartY;
+        activeBubble.current.speedX = 0;
+        activeBubble.current.speedY = 0;
+        activeBubble.current.isMoving = false;
+        activeBubble.current.animationProps = undefined;
       }
       
       // Check if we've used all 5 shots without breaking bubbles (moved outside collision detection)
@@ -808,14 +1112,15 @@ const Board: React.FC = () => {
       }
     }
 
-    // load next bubble
-    loadNextBall(bubbleNext.current[1]);
+    // Draw dual-bubble launcher
+    drawTripleBubbleLauncher(p5);
 
-    //draw bubble
-    drawBubble(bubbleNext.current[0], p5);
+    // Arrow trajectory removed - will be re-implemented later
 
-    // draw arrow
-    drawArrow(p5, bubbleNext.current[0]);
+    // Draw the active bubble when it's moving
+    if (activeBubble.current.isMoving) {
+      drawBubble(activeBubble.current, p5);
+    }
 
     //score
     const scoreText = document.getElementById("score");
@@ -835,38 +1140,57 @@ const Board: React.FC = () => {
     }
 
     if (
-      bubble.current.isSpecial &&
+      activeBubble.current.isSpecial &&
       specialBubble.current.isAnswered === Answer.NOT_YET
     ) {
       return;
     }
-    bubble.current.x += bubble.current.speedX;
-    bubble.current.y += bubble.current.speedY;
+    activeBubble.current.x += activeBubble.current.speedX;
+    activeBubble.current.y += activeBubble.current.speedY;
   };
 
   const mouseClicked = (p5: p5Types) => {
     if (!checkGamePause()) {
       if (p5.mouseX !== 0 && p5.mouseY !== 0) {
+        // Check if click is on swap area (around the bubbles)
+        const launcherX = gameWidth / 2;
+        const launcherY = gameHeight - 80;
+        const swapAreaX = launcherX - 50;
+        const swapAreaY = launcherY - 50;
+        const swapAreaWidth = 100;
+        const swapAreaHeight = 100;
+        
+        if (
+          p5.mouseX >= swapAreaX &&
+          p5.mouseX <= swapAreaX + swapAreaWidth &&
+          p5.mouseY >= swapAreaY &&
+          p5.mouseY <= swapAreaY + swapAreaHeight
+        ) {
+          // Swap bubbles
+          swapBubbles();
+          return;
+        }
+        
         if (
           p5.mouseY <= gameHeight &&
           p5.mouseX >= 0 &&
           p5.mouseX <= gameWidth
         ) {
-          if (bubble.current.isMoving) return;
+          if (activeBubble.current.isMoving) return;
           if (
-            bubble.current.isSpecial &&
+            activeBubble.current.isSpecial &&
             specialBubble.current.isAnswered === Answer.NOT_YET
           ) {
             setIsModalOpen(true);
           }
 
-          let dx = p5.mouseX - bubble.current.x;
-          let dy = p5.mouseY - bubble.current.y;
+          let dx = p5.mouseX - activeBubble.current.x;
+          let dy = p5.mouseY - activeBubble.current.y;
           let magnitude = Math.sqrt(dx * dx + dy * dy);
-          let speed = bubble.current.speed;
-          bubble.current.speedX = (speed * dx) / magnitude;
-          bubble.current.speedY = (speed * dy) / magnitude;
-          bubble.current.isMoving = true;
+          let speed = activeBubble.current.speed;
+          activeBubble.current.speedX = (speed * dx) / magnitude;
+          activeBubble.current.speedY = (speed * dy) / magnitude;
+          activeBubble.current.isMoving = true;
           gameState.countShoot++;
         }
       }
@@ -1050,9 +1374,8 @@ const Board: React.FC = () => {
       </article>
 
       <footer className="bubble-shooter__game-footer">
-        <Image width={230} height={220} src={role} alt="存保象" />
-        <Image width={195} height={125} src={nextBubble} alt="下一個泡泡" />
-        <div id="nextBubble"></div>
+        <div id="activeBubble"></div>
+        <div id="secondaryBubble"></div>
       </footer>
     </main>
   );
