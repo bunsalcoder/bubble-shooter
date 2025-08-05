@@ -400,9 +400,12 @@ export const verifyGrid = (
     let group = connectedGroups[groupIndex];
     let isConnectedToTop = false;
     
-    // Check if any bubble in this group is in the top row (GRID_ROWS)
+    // Find the actual top row of the current grid
+    const maxRow = getMaxCurrentRow(gridBubble);
+    
+    // Check if any bubble in this group is in the top row (highest row in grid)
     for (let bubbleIndex = 0; bubbleIndex < group.length; bubbleIndex++) {
-      if (group[bubbleIndex][0] >= GRID_ROWS) {
+      if (group[bubbleIndex][0] === maxRow) {
         isConnectedToTop = true;
         break;
       }

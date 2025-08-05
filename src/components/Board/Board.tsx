@@ -429,6 +429,27 @@ const Board: React.FC = () => {
       const centerX: number = bubble.x;
       const centerY: number = bubble.y;
       
+      // Handle bounce animation
+      let bounceOffset = 0;
+      let bounceScale = 1;
+      if (bubble.animationProps) {
+        const timeSinceStart = p5.frameCount - bubble.animationProps.startTime;
+        const progress = timeSinceStart / 30; // 30 frames duration
+        
+        if (progress < 1) {
+          // More bouncy effect using multiple sine waves
+          const bounce = Math.sin(progress * Math.PI * 4) * Math.exp(-progress * 2.5) + 
+                        Math.sin(progress * Math.PI * 6) * Math.exp(-progress * 4) * 0.5;
+          bounceOffset = bounce * 15; // 15px bounce height (increased from 8px)
+          bounceScale = 1 + bounce * 0.3; // 30% scale effect (increased from 20%)
+          
+          // Clear animation when done
+          if (progress >= 1) {
+            bubble.animationProps = undefined;
+          }
+        }
+      }
+      
       if (bubble.isSpecial === true) {
         const imgWidth: number = image.imageSpecialBall.width;
         const imgHeight: number = image.imageSpecialBall.height;
@@ -436,7 +457,8 @@ const Board: React.FC = () => {
         const imgY: number = centerY - imgHeight / 2;
         
         p5.push();
-        p5.translate(bubble.x, bubble.y);
+        p5.translate(bubble.x, bubble.y + bounceOffset);
+        p5.scale(bounceScale);
         p5.noFill();
         p5.image(image.imageSpecialBall, imgX - bubble.x, imgY - bubble.y);
         p5.ellipse(0, 0, bubble.r * 2);
@@ -452,7 +474,8 @@ const Board: React.FC = () => {
         const imgY: number = centerY - (imgHeight / 2) * imgScale;
         
         p5.push();
-        p5.translate(bubble.x, bubble.y);
+        p5.translate(bubble.x, bubble.y + bounceOffset);
+        p5.scale(bounceScale);
         p5.fill(bubble.color);
         p5.noStroke();
         p5.ellipse(0, 0, bubble.r * 2);
@@ -540,7 +563,8 @@ const Board: React.FC = () => {
           p5.fill(bubble.color);
           p5.noStroke();
           p5.ellipse(0, 0, bubble.r * 2);
-          p5.image(imageBubble, -imgWidth * scale / 2, -imgHeight * scale / 2, imgWidth * scale, imgHeight * scale);
+          // Use a simple circle instead of image to avoid canvas performance issues
+          p5.ellipse(0, 0, bubble.r * 2 * 0.8);
           p5.pop();
           
           p5.pop();
@@ -566,7 +590,8 @@ const Board: React.FC = () => {
         p5.fill(bubble.color);
         p5.noStroke();
         p5.ellipse(0, 0, bubble.r * 2);
-        p5.image(imageBubble, -imgWidth * scale / 2, -imgHeight * scale / 2, imgWidth * scale, imgHeight * scale);
+        // Use a simple circle instead of image to avoid canvas performance issues
+        p5.ellipse(0, 0, bubble.r * 2 * 0.8);
         p5.pop();
         
         p5.pop();
@@ -606,6 +631,11 @@ const Board: React.FC = () => {
   const dashAnimationPhase = useRef<number>(0);
   const swapAnimationProgress = useRef<number>(0);
   const isSwapAnimating = useRef<boolean>(false);
+  
+  // Hover target state for arrow
+  const hoverTarget = useRef<{x: number, y: number}>({x: 0, y: 0});
+  const isHolding = useRef<boolean>(false);
+  const isInSwapArea = useRef<boolean>(false);
 
   const drawSwapArrow = (p5: p5Types) => {
     const launcherX = gameWidth / 2;
@@ -748,6 +778,11 @@ const Board: React.FC = () => {
     swapAnimation.current = Date.now();
     isSwapAnimating.current = true;
     swapAnimationProgress.current = 0;
+    
+    // Reset the swap area flag after animation completes
+    setTimeout(() => {
+      isInSwapArea.current = false;
+    }, 1000); // Animation takes about 1 second
   };
 
   const drawCircleArc = (p5: p5Types) => {
@@ -757,6 +792,11 @@ const Board: React.FC = () => {
     // Animate arc
     arcAnimationPhase.current += 0.05;
     const arcOffset = Math.sin(arcAnimationPhase.current) * 2;
+    
+    // Safety check: ensure active bubble exists and has valid color
+    if (!activeBubble.current || !activeBubble.current.color) {
+      return; // Don't draw if bubble is undefined
+    }
     
     // Get current bubble color for the arc
     const currentColor = activeBubble.current.color;
@@ -807,25 +847,30 @@ const Board: React.FC = () => {
       const centerX = (topBubbleX + leftBubbleX + rightBubbleX) / 3;
       const centerY = (topBubbleY + leftBubbleY + rightBubbleY) / 3;
       
+      // Safety check for animation bubbles
+      if (!secondaryBubble.current || !tertiaryBubble.current || !activeBubble.current) {
+        return; // Don't draw animation if bubbles are undefined
+      }
+      
       // Draw flowing bubbles with opposite colors during animation
       p5.push();
       
       // Top bubble flowing to left position
-      p5.fill(secondaryBubble.current.color);
+      p5.fill(secondaryBubble.current.color || '#ffffff');
       p5.noStroke();
       const topToLeftX = p5.lerp(topBubbleX, leftBubbleX, easeProgress);
       const topToLeftY = p5.lerp(topBubbleY, leftBubbleY, easeProgress);
       p5.ellipse(topToLeftX, topToLeftY, 36);
       
       // Left bubble flowing to right position
-      p5.fill(tertiaryBubble.current.color);
+      p5.fill(tertiaryBubble.current.color || '#ffffff');
       p5.noStroke();
       const leftToRightX = p5.lerp(leftBubbleX, rightBubbleX, easeProgress);
       const leftToRightY = p5.lerp(leftBubbleY, rightBubbleY, easeProgress);
       p5.ellipse(leftToRightX, leftToRightY, 36);
       
       // Right bubble flowing to top position
-      p5.fill(activeBubble.current.color);
+      p5.fill(activeBubble.current.color || '#ffffff');
       p5.noStroke();
       const rightToTopX = p5.lerp(rightBubbleX, topBubbleX, easeProgress);
       const rightToTopY = p5.lerp(rightBubbleY, topBubbleY, easeProgress);
@@ -864,6 +909,109 @@ const Board: React.FC = () => {
     }
   };
 
+  const drawGameOverWarningLine = (p5: p5Types) => {
+    // Calculate the Y position for the game-over warning line
+    // This should be at row 9 (LIMIT_HEIGHT) from the top
+    const warningLineY = grid.startY + (LIMIT_HEIGHT * grid.bubbleDiameter * 0.866); // Hexagonal grid spacing
+    
+    p5.push();
+    
+    // Draw elegant animated warning line
+    const time = p5.frameCount * 0.03;
+    const alpha = 200 + Math.sin(time) * 55; // Much more vibrant pulsing effect
+    
+    // Main warning line with saw-tooth pattern
+    const lineWidth = gameWidth;
+    const toothCount = 25; // Number of saw teeth
+    const toothWidth = lineWidth / toothCount;
+    const toothHeight = 8; // Height of each tooth
+    
+    for (let i = 0; i < toothCount; i++) {
+      const x1 = i * toothWidth;
+      const x2 = (i + 1) * toothWidth;
+      const segmentAlpha = alpha + Math.sin(time + i * 0.3) * 30;
+      
+      // Draw saw tooth pattern
+      const y1 = warningLineY - toothHeight/2;
+      const y2 = warningLineY + toothHeight/2;
+      
+      p5.stroke(255, 0, 0, segmentAlpha); // Bright vibrant red color
+      p5.strokeWeight(3); // Thicker line for more impact
+      
+      // Draw the tooth (diagonal line up, then down)
+      p5.line(x1, y2, x1 + toothWidth/2, y1); // Up diagonal
+      p5.line(x1 + toothWidth/2, y1, x2, y2); // Down diagonal
+    }
+    
+    // Add elegant animated dots along the line
+    const dotCount = 15;
+    for (let i = 0; i < dotCount; i++) {
+      const x = (i / (dotCount - 1)) * gameWidth;
+      const dotTime = time + i * 0.3;
+      const dotAlpha = alpha + Math.sin(dotTime) * 40;
+      const dotSize = 4 + Math.sin(dotTime * 2) * 1; // Slightly larger size variation
+      
+      p5.fill(255, 50, 50, dotAlpha); // More vibrant red dots
+      p5.noStroke();
+      p5.ellipse(x, warningLineY, dotSize);
+    }
+    
+    // Add vibrant glow effect above and below the line
+    p5.fill(255, 0, 0, 40); // More vibrant red glow
+    p5.noStroke();
+    p5.rect(0, warningLineY - 3, gameWidth, 6); // Thicker glow
+    
+    p5.pop();
+  };
+
+  const drawHoverArrow = (p5: p5Types, startX: number, startY: number, targetX: number, targetY: number, color: string) => {
+    // Don't draw arrow if swapping is happening or in swap area
+    if (isSwapAnimating.current || swapAnimationProgress.current > 0 || isInSwapArea.current) {
+      return;
+    }
+    
+    p5.push();
+    p5.noStroke();
+    
+    // Calculate angle from launcher to target
+    const dx = targetX - startX;
+    const dy = targetY - startY;
+    const angle = Math.atan2(dy, dx);
+    const distance = Math.sqrt(dx * dx + dy * dy);
+    
+    // Limit arrow length
+    const maxArrowLength = 150; // Even longer arrow
+    const arrowLength = Math.min(distance, maxArrowLength);
+    
+    // Draw animated dots only (no connected line or arrowhead)
+    const dotCount = 8;
+    const dotSpeed = 0.015; // Slower speed for more relaxed animation
+    const dotProgress = (p5.frameCount * dotSpeed) % 1; // Continuous loop
+    
+    for (let i = 0; i < dotCount; i++) {
+      // Calculate animated position for each dot
+      const baseProgress = i / (dotCount - 1);
+      const animatedProgress = (baseProgress + dotProgress) % 1; // Add travel offset
+      const dotDistance = animatedProgress * arrowLength;
+      
+      const x = startX + Math.cos(angle) * dotDistance;
+      const y = startY + Math.sin(angle) * dotDistance;
+      
+      // Animated dots are smaller and bright
+      const dotSize = 6;
+      
+      // Bright white animated dots
+      p5.fill(255, 255, 255, 200); // Bright white with transparency
+      p5.ellipse(x, y, dotSize);
+      
+      // Add glow effect around animated dots
+      p5.fill(color + '40'); // Bubble color with transparency
+      p5.ellipse(x, y, dotSize + 4); // Glow effect
+    }
+    
+    p5.pop();
+  };
+
   const drawTripleBubbleLauncher = (p5: p5Types) => {
     const launcherX = gameWidth / 2;
     const launcherY = gameHeight - 80;
@@ -874,10 +1022,15 @@ const Board: React.FC = () => {
     
     // Draw static bubbles only when not animating
     if (!isSwapAnimating.current) {
+      // Safety check: ensure bubbles exist and have valid colors
+      if (!activeBubble.current || !secondaryBubble.current || !tertiaryBubble.current) {
+        return; // Don't draw if bubbles are undefined
+      }
+      
       // Draw active bubble (top)
       p5.push();
       p5.translate(launcherX, launcherY - 35);
-      p5.fill(activeBubble.current.color);
+      p5.fill(activeBubble.current.color || '#ffffff'); // Fallback color
       p5.noStroke();
       p5.ellipse(0, 0, bubbleRadius * 2);
       // Overlay bubble image
@@ -896,7 +1049,7 @@ const Board: React.FC = () => {
       // Draw secondary bubble (bottom-left)
       p5.push();
       p5.translate(launcherX - 30, launcherY + 20);
-      p5.fill(secondaryBubble.current.color);
+      p5.fill(secondaryBubble.current.color || '#ffffff'); // Fallback color
       p5.noStroke();
       p5.ellipse(0, 0, bubbleRadius * 2);
       // Overlay bubble image
@@ -912,7 +1065,7 @@ const Board: React.FC = () => {
       // Draw tertiary bubble (bottom-right)
       p5.push();
       p5.translate(launcherX + 30, launcherY + 20);
-      p5.fill(tertiaryBubble.current.color);
+      p5.fill(tertiaryBubble.current.color || '#ffffff'); // Fallback color
       p5.noStroke();
       p5.ellipse(0, 0, bubbleRadius * 2);
       // Overlay bubble image
@@ -924,6 +1077,11 @@ const Board: React.FC = () => {
         imgHeight * imgScale
       );
       p5.pop();
+      
+      // Draw hover arrow if holding (but not during swap animation or in swap area)
+      if (isHolding.current && !isSwapAnimating.current && swapAnimationProgress.current === 0 && !isInSwapArea.current) {
+        drawHoverArrow(p5, launcherX, launcherY - 35, p5.mouseX, p5.mouseY, activeBubble.current.color || '#ffffff');
+      }
     }
   };
 
@@ -988,6 +1146,9 @@ const Board: React.FC = () => {
 
     // render bubble list
     renderBubbleList(p5, gridBubble.current);
+    
+    // Draw game over warning line
+    drawGameOverWarningLine(p5);
 
     //check the bubble hit the wall
     if (
@@ -1066,6 +1227,50 @@ const Board: React.FC = () => {
           // Shot attached but didn't break bubbles - count this shot
           gameProperties.current.shotsInRound++;
           console.log("No bubbles broken, shots in round:", gameProperties.current.shotsInRound);
+          
+          // Add bounce/jiggle animation to the attached bubble and nearby bubbles
+          const attachedBubble = gridBubble.current[`${loc[0]},${loc[1]}`];
+          if (attachedBubble) {
+            attachedBubble.animationProps = {
+              startTime: p5.frameCount,
+              startScale: 1.0,
+              pulsePhase: 0,
+              glowIntensity: 1.0
+            };
+            
+            // Find nearby bubbles to create ripple effect
+            const nearbyBubbles = [];
+            const row = loc[0];
+            const col = loc[1];
+            
+            // Check adjacent positions (hexagonal grid)
+            const adjacentPositions = [
+              [row-1, col], [row-1, col+1], [row, col+1], 
+              [row+1, col], [row+1, col-1], [row, col-1]
+            ];
+            
+            for (const [adjRow, adjCol] of adjacentPositions) {
+              const key = `${adjRow},${adjCol}`;
+              const nearbyBubble = gridBubble.current[key];
+              if (nearbyBubble) {
+                nearbyBubbles.push(nearbyBubble);
+              }
+            }
+            
+            // Add bounce animation to 2-3 random nearby bubbles
+            const numToBounce = Math.min(3, nearbyBubbles.length);
+            const shuffled = nearbyBubbles.sort(() => Math.random() - 0.5);
+            
+            for (let i = 0; i < numToBounce; i++) {
+              const bubble = shuffled[i];
+              bubble.animationProps = {
+                startTime: p5.frameCount + (i * 3), // Stagger the animations
+                startScale: 1.0,
+                pulsePhase: 0,
+                glowIntensity: 1.0
+              };
+            }
+          }
         }
 
         renderBubbleList(p5, gridBubble.current);
@@ -1114,6 +1319,14 @@ const Board: React.FC = () => {
 
     // Draw dual-bubble launcher
     drawTripleBubbleLauncher(p5);
+    
+    // Draw hover arrow if holding (draw it here to ensure it's always visible)
+    if (isHolding.current) {
+      const launcherX = gameWidth / 2;
+      const launcherY = gameHeight - 80;
+      // Use actual mouse position instead of hoverTarget
+      drawHoverArrow(p5, launcherX, launcherY - 35, p5.mouseX, p5.mouseY, activeBubble.current.color);
+    }
 
     // Arrow trajectory removed - will be re-implemented later
 
@@ -1155,49 +1368,86 @@ const Board: React.FC = () => {
         // Check if click is on swap area (around the bubbles)
         const launcherX = gameWidth / 2;
         const launcherY = gameHeight - 80;
-        const swapAreaX = launcherX - 50;
-        const swapAreaY = launcherY - 50;
-        const swapAreaWidth = 100;
-        const swapAreaHeight = 100;
         
+        // Define the entire launcher area as swap-only zone
+        const launcherAreaX = launcherX - 60; // Left edge of launcher area
+        const launcherAreaY = launcherY - 40; // Top edge of launcher area
+        const launcherAreaWidth = 120; // Width of launcher area
+        const launcherAreaHeight = 80; // Height of launcher area
+        
+        // Check if click is within the entire launcher area
         if (
-          p5.mouseX >= swapAreaX &&
-          p5.mouseX <= swapAreaX + swapAreaWidth &&
-          p5.mouseY >= swapAreaY &&
-          p5.mouseY <= swapAreaY + swapAreaHeight
+          p5.mouseX >= launcherAreaX &&
+          p5.mouseX <= launcherAreaX + launcherAreaWidth &&
+          p5.mouseY >= launcherAreaY &&
+          p5.mouseY <= launcherAreaY + launcherAreaHeight
         ) {
-          // Swap bubbles
+          // Set swap area flag and swap bubbles
+          isInSwapArea.current = true;
           swapBubbles();
           return;
         }
         
+        // Only allow shooting if not in swap area and bubble is not moving
         if (
           p5.mouseY <= gameHeight &&
           p5.mouseX >= 0 &&
-          p5.mouseX <= gameWidth
+          p5.mouseX <= gameWidth &&
+          !activeBubble.current.isMoving
         ) {
-          if (activeBubble.current.isMoving) return;
           if (
             activeBubble.current.isSpecial &&
             specialBubble.current.isAnswered === Answer.NOT_YET
           ) {
             setIsModalOpen(true);
+            return;
           }
 
           let dx = p5.mouseX - activeBubble.current.x;
           let dy = p5.mouseY - activeBubble.current.y;
           let magnitude = Math.sqrt(dx * dx + dy * dy);
-          let speed = activeBubble.current.speed;
-          activeBubble.current.speedX = (speed * dx) / magnitude;
-          activeBubble.current.speedY = (speed * dy) / magnitude;
-          activeBubble.current.isMoving = true;
-          gameState.countShoot++;
+          
+          // Ensure minimum distance for shooting
+          if (magnitude > 10) {
+            let speed = activeBubble.current.speed;
+            activeBubble.current.speedX = (speed * dx) / magnitude;
+            activeBubble.current.speedY = (speed * dy) / magnitude;
+            activeBubble.current.isMoving = true;
+            gameState.countShoot++;
+          }
         }
       }
     }
   };
+  
+  // Add mouse pressed and released handlers for arrow
+  const mousePressed = (p5: p5Types) => {
+    console.log('Mouse pressed');
+    isHolding.current = true;
+  };
+  
+  const mouseReleased = (p5: p5Types) => {
+    console.log('Mouse released');
+    isHolding.current = false;
+    hoverTarget.current.x = 0;
+    hoverTarget.current.y = 0;
+  };
+  
+  const keyPressed = (p5: p5Types) => {
+    console.log('Key pressed:', p5.key);
+    if (p5.key === ' ') {
+      isHolding.current = !isHolding.current;
+      console.log('Space pressed, holding:', isHolding.current);
+    }
+  };
 
-  const mouseMoved = (p5: p5Types) => {};
+  const mouseMoved = (p5: p5Types) => {
+    // Always update hover target when mouse moves
+    if (p5.mouseX !== 0 || p5.mouseY !== 0) {
+      hoverTarget.current.x = p5.mouseX;
+      hoverTarget.current.y = p5.mouseY;
+    }
+  };
 
   const Sketch = dynamic(() => import("react-p5").then((mod) => mod.default), {
     ssr: false,
@@ -1209,6 +1459,10 @@ const Board: React.FC = () => {
     alertActive = true;
     freezeGame();
 
+    // Determine if it's a win or game over
+    const isWin = message.includes('Win');
+    const isGameOver = message.includes('Over');
+
     const overlay = document.createElement("div");
     overlay.style.cssText = `
       position: fixed;
@@ -1216,8 +1470,10 @@ const Board: React.FC = () => {
       left: 0;
       width: 100%;
       height: 100%;
-      background-color: rgba(0, 0, 0, 0.5);
+      background: linear-gradient(135deg, rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.4));
       z-index: 1000;
+      opacity: 0;
+      transition: opacity 0.5s ease-in-out;
     `;
 
     const alertBox = document.createElement("div");
@@ -1225,55 +1481,161 @@ const Board: React.FC = () => {
       position: fixed;
       top: 50%;
       left: 50%;
-      transform: translate(-50%, -50%);
-      background-color: white;
-      padding: 20px;
-      border-radius: 10px;
+      transform: translate(-50%, -50%) scale(0.3);
+      background: linear-gradient(135deg, #1e3a8a, #3b82f6);
+      padding: 30px 40px;
+      border-radius: 20px;
       z-index: 1001;
       text-align: center;
-    `;
-    alertBox.innerHTML = `
-      <h3>${message}</h3>
-      <button id="alert-ok-btn" style="
-        margin-top: 10px;
-        padding: 10px 20px;
-        background-color: #4CAF50;
-        color: white;
-        border: none;
-        border-radius: 5px;
-        cursor: pointer;
-      ">OK</button>
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+      border: 3px solid #1e40af;
+      min-width: 280px;
+      opacity: 0;
+      transition: all 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55);
     `;
 
+    // Create animated background particles
+    const particlesContainer = document.createElement("div");
+    particlesContainer.style.cssText = `
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      border-radius: 20px;
+      pointer-events: none;
+    `;
+
+    // Add floating particles
+    for (let i = 0; i < 8; i++) {
+      const particle = document.createElement("div");
+      particle.style.cssText = `
+        position: absolute;
+        width: ${Math.random() * 8 + 4}px;
+        height: ${Math.random() * 8 + 4}px;
+        background: rgba(255, 255, 255, 0.7);
+        border-radius: 50%;
+        left: ${Math.random() * 100}%;
+        top: ${Math.random() * 100}%;
+        animation: float 3s ease-in-out infinite;
+        animation-delay: ${Math.random() * 2}s;
+      `;
+      particlesContainer.appendChild(particle);
+    }
+
+    // Add CSS animation for particles
+    const style = document.createElement("style");
+    style.textContent = `
+      @keyframes float {
+        0%, 100% { transform: translateY(0px) rotate(0deg); opacity: 0.3; }
+        50% { transform: translateY(-20px) rotate(180deg); opacity: 1; }
+      }
+      @keyframes pulse {
+        0%, 100% { transform: scale(1); }
+        50% { transform: scale(1.05); }
+      }
+      @keyframes bounce {
+        0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+        40% { transform: translateY(-10px); }
+        60% { transform: translateY(-5px); }
+      }
+    `;
+    document.head.appendChild(style);
+
+    alertBox.innerHTML = `
+      <div style="position: relative; z-index: 2;">
+        <div style="
+          font-size: 32px;
+          font-weight: bold;
+          color: white;
+          margin-bottom: 20px;
+          text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+          animation: bounce 1s ease-in-out;
+        ">${message}</div>
+        <div style="
+          font-size: 16px;
+          color: rgba(255, 255, 255, 0.9);
+          margin-bottom: 25px;
+          text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
+        ">${isWin ? '🎉 Congratulations! 🎉' : '💪 Try again! 💪'}</div>
+        <button id="alert-ok-btn" style="
+          padding: 12px 30px;
+          background: linear-gradient(135deg, rgba(255, 255, 255, 0.3), rgba(255, 255, 255, 0.1));
+          color: white;
+          border: 2px solid rgba(255, 255, 255, 0.4);
+          border-radius: 25px;
+          cursor: pointer;
+          font-size: 16px;
+          font-weight: bold;
+          transition: all 0.3s ease;
+          box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+          animation: pulse 2s ease-in-out infinite;
+        ">OK</button>
+      </div>
+    `;
+
+    alertBox.appendChild(particlesContainer);
     document.body.appendChild(overlay);
     document.body.appendChild(alertBox);
 
+    // Animate in
+    setTimeout(() => {
+      overlay.style.opacity = '1';
+      alertBox.style.opacity = '1';
+      alertBox.style.transform = 'translate(-50%, -50%) scale(1)';
+    }, 10);
+
+    // Add hover effects
     const okBtn = document.getElementById("alert-ok-btn");
-    okBtn?.addEventListener("click", () => {
-      alertBox.style.display = 'none';
-      overlay.style.display = 'none';
+    if (okBtn) {
+      okBtn.addEventListener("mouseenter", () => {
+        okBtn.style.transform = 'scale(1.1)';
+        okBtn.style.background = 'linear-gradient(135deg, rgba(255, 255, 255, 0.4), rgba(255, 255, 255, 0.2))';
+        okBtn.style.boxShadow = '0 6px 20px rgba(0, 0, 0, 0.4)';
+      });
       
-      setTimeout(() => {
-        document.body.removeChild(alertBox);
-        document.body.removeChild(overlay);
-        alertActive = false;
-        unfreezeGame();
-        resetGame();
-      }, 10);
-    }, { once: true });
+      okBtn.addEventListener("mouseleave", () => {
+        okBtn.style.transform = 'scale(1)';
+        okBtn.style.background = 'linear-gradient(135deg, rgba(255, 255, 255, 0.3), rgba(255, 255, 255, 0.1))';
+        okBtn.style.boxShadow = '0 4px 15px rgba(0, 0, 0, 0.3)';
+      });
+
+      okBtn.addEventListener("click", () => {
+        // Animate out
+        overlay.style.opacity = '0';
+        alertBox.style.opacity = '0';
+        alertBox.style.transform = 'translate(-50%, -50%) scale(0.3)';
+        
+        setTimeout(() => {
+          if (document.body.contains(alertBox)) {
+            document.body.removeChild(alertBox);
+          }
+          if (document.body.contains(overlay)) {
+            document.body.removeChild(overlay);
+          }
+          if (document.head.contains(style)) {
+            document.head.removeChild(style);
+          }
+          alertActive = false;
+          unfreezeGame();
+          resetGame();
+        }, 500);
+      }, { once: true });
+    }
   };
 
   return (
     <main className="bubble-shooter__game">
       <header className="bubble-shooter__game-header">
-        <div className="bubble-shooter__game-score-bar">
-          <Image width={198} height={90} src={score} alt="遊戲積分" />
-          <p id="score"></p>
-        </div>
-        <div className="bubble-shooter__game-time-bar">
-          <Image width={198} height={90} src={time} alt="遊戲時間" />
-          <p id="time"></p>
-        </div>
+                  <div className="bubble-shooter__game-score-bar">
+            <img width={198} height={90} src={score.src} alt="遊戲積分" />
+            <p id="score"></p>
+          </div>
+          <div className="bubble-shooter__game-time-bar">
+            <img width={198} height={90} src={time.src} alt="遊戲時間" />
+            <p id="time"></p>
+          </div>
       </header>
       <aside className="bubble-shooter__game-aside">
         <ul>
@@ -1303,6 +1665,9 @@ const Board: React.FC = () => {
           preload={preload}
           mouseClicked={mouseClicked}
           mouseMoved={mouseMoved}
+          mousePressed={mousePressed}
+          mouseReleased={mouseReleased}
+          keyPressed={keyPressed}
         />
         <Modal
           title="Question"
@@ -1376,6 +1741,7 @@ const Board: React.FC = () => {
       <footer className="bubble-shooter__game-footer">
         <div id="activeBubble"></div>
         <div id="secondaryBubble"></div>
+
       </footer>
     </main>
   );
