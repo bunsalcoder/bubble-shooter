@@ -135,6 +135,14 @@ $radius-size_base: 6px;
       left: 110px;
       font-size: 2rem;
       color: white;
+      
+      &.custom-score {
+        position: static !important;
+        top: auto !important;
+        left: auto !important;
+        font-size: inherit !important;
+        color: white !important;
+      }
     }
     #time {
       position: absolute;
@@ -334,5 +342,353 @@ $radius-size_base: 6px;
         }
       }
     }
+  }
+}
+
+// General leaderboard modal styles - apply gradient to outer container
+.ant-modal {
+  .ant-modal-content {
+    background: linear-gradient(135deg, rgba(135, 206, 235, 0.6) 0%, rgba(70, 130, 180, 0.6) 100%) !important;
+    border: 1px solid rgba(255, 255, 255, 0.2) !important;
+    box-shadow: 0 15px 40px rgba(0, 0, 0, 0.2) !important;
+    border-radius: 15px !important;
+    backdrop-filter: blur(10px) !important;
+    
+    .ant-modal-header {
+      background: transparent !important;
+      border: none !important;
+    }
+  }
+}
+
+// iPhone 12 Pro and similar (390px - 428px)
+@media only screen and (min-width: 390px) and (max-width: 428px) {
+  .ant-modal {
+    width: 92% !important;
+    max-width: 92% !important;
+    
+    .ant-modal-body {
+      max-height: 320px !important;
+      padding: 12px !important;
+    }
+    
+    .ant-modal-content {
+      background: linear-gradient(135deg, rgba(135, 206, 235, 0.6) 0%, rgba(70, 130, 180, 0.6) 100%) !important;
+      border: 1px solid rgba(255, 255, 255, 0.2) !important;
+      box-shadow: 0 15px 40px rgba(0, 0, 0, 0.2) !important;
+      border-radius: 15px !important;
+      backdrop-filter: blur(10px) !important;
+      
+      .ant-modal-header {
+        padding: 12px !important;
+        background: transparent !important;
+        border: none !important;
+        
+        .ant-modal-title {
+          font-size: 15px !important;
+        }
+      }
+      
+      .ant-modal-body {
+        .bubble-shooter__leaderboard-score-header {
+          padding: 7px 11px !important;
+          font-size: 13px !important;
+        }
+        
+        .bubble-shooter__leaderboard-player {
+          padding: 7px 11px !important;
+          font-size: 13px !important;
+          
+          .anticon {
+            font-size: 13px !important;
+          }
+          
+          .bubble-shooter__leaderboard-rank-circle {
+            width: 32px !important;
+            height: 32px !important;
+            font-size: 13px !important;
+          }
+          
+          // Smaller player names and scores
+          span {
+            font-size: 14px !important;
+          }
+          
+          div {
+            span {
+              font-size: 14px !important;
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+// Galaxy S9+ and similar (360px - 389px)
+@media only screen and (min-width: 360px) and (max-width: 389px) {
+  .ant-modal {
+    width: 94% !important;
+    max-width: 94% !important;
+    
+    .ant-modal-body {
+      max-height: 280px !important;
+      padding: 10px !important;
+    }
+    
+    .ant-modal-content {
+      background: linear-gradient(135deg, rgba(135, 206, 235, 0.6) 0%, rgba(70, 130, 180, 0.6) 100%) !important;
+      border: 1px solid rgba(255, 255, 255, 0.2) !important;
+      box-shadow: 0 15px 40px rgba(0, 0, 0, 0.2) !important;
+      border-radius: 15px !important;
+      backdrop-filter: blur(10px) !important;
+      
+      .ant-modal-header {
+        padding: 10px !important;
+        background: transparent !important;
+        border: none !important;
+        
+        .ant-modal-title {
+          font-size: 13px !important;
+        }
+      }
+      
+      .ant-modal-body {
+        .bubble-shooter__leaderboard-score-header {
+          padding: 6px 10px !important;
+          font-size: 11px !important;
+        }
+        
+        .bubble-shooter__leaderboard-player {
+          padding: 6px 10px !important;
+          font-size: 11px !important;
+          
+          .anticon {
+            font-size: 11px !important;
+          }
+          
+          .bubble-shooter__leaderboard-rank-circle {
+            width: 28px !important;
+            height: 28px !important;
+            font-size: 11px !important;
+          }
+          
+          // Smaller player names and scores
+          span {
+            font-size: 12px !important;
+          }
+          
+          div {
+            span {
+              font-size: 12px !important;
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+// Galaxy S8 and smaller phones (max-width: 359px)
+@media only screen and (max-width: 359px) {
+  .ant-modal {
+    width: 96% !important;
+    max-width: 96% !important;
+    
+    .ant-modal-body {
+      max-height: 240px !important;
+      padding: 8px !important;
+    }
+    
+    .ant-modal-content {
+      background: linear-gradient(135deg, rgba(135, 206, 235, 0.6) 0%, rgba(70, 130, 180, 0.6) 100%) !important;
+      border: 1px solid rgba(255, 255, 255, 0.2) !important;
+      box-shadow: 0 15px 40px rgba(0, 0, 0, 0.2) !important;
+      border-radius: 15px !important;
+      backdrop-filter: blur(10px) !important;
+      
+      .ant-modal-header {
+        padding: 8px !important;
+        background: transparent !important;
+        border: none !important;
+        
+        .ant-modal-title {
+          font-size: 12px !important;
+        }
+      }
+      
+      .ant-modal-body {
+        .bubble-shooter__leaderboard-score-header {
+          padding: 5px 8px !important;
+          font-size: 10px !important;
+        }
+        
+        .bubble-shooter__leaderboard-player {
+          padding: 5px 8px !important;
+          font-size: 10px !important;
+          
+          .anticon {
+            font-size: 10px !important;
+          }
+          
+          .bubble-shooter__leaderboard-rank-circle {
+            width: 24px !important;
+            height: 24px !important;
+            font-size: 10px !important;
+          }
+          
+          // Smaller player names and scores
+          span {
+            font-size: 11px !important;
+          }
+          
+          div {
+            span {
+              font-size: 11px !important;
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+// Large phones and small tablets (429px - 767px)
+@media only screen and (min-width: 429px) and (max-width: 767px) {
+  .ant-modal {
+    width: 88% !important;
+    max-width: 88% !important;
+    
+    .ant-modal-body {
+      max-height: 340px !important;
+      padding: 16px !important;
+    }
+    
+    .ant-modal-content {
+      .ant-modal-header {
+        padding: 16px !important;
+        
+        .ant-modal-title {
+          font-size: 17px !important;
+        }
+      }
+      
+      .ant-modal-body {
+        .bubble-shooter__leaderboard-score-header {
+          padding: 9px 13px !important;
+          font-size: 15px !important;
+        }
+        
+        .bubble-shooter__leaderboard-player {
+          padding: 9px 13px !important;
+          font-size: 15px !important;
+          
+          .anticon {
+            font-size: 15px !important;
+          }
+        }
+      }
+    }
+  }
+}
+
+// Shimmer animation for menu background
+@keyframes shimmer {
+  0% {
+    opacity: 0.3;
+    transform: translateX(-100%);
+  }
+  50% {
+    opacity: 0.6;
+  }
+  100% {
+    opacity: 0.3;
+    transform: translateX(100%);
+  }
+}
+
+// Menu modal specific styles
+.bubble-shooter__menu-modal {
+  .ant-modal {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+  }
+  
+  .ant-modal-content {
+    border-radius: 15px !important;
+    overflow: hidden !important;
+    box-shadow: 0 15px 40px rgba(0, 0, 0, 0.2) !important;
+    background: linear-gradient(135deg, rgba(135, 206, 235, 0.6) 0%, rgba(70, 130, 180, 0.6) 100%) !important;
+    border: 1px solid rgba(255, 255, 255, 0.2) !important;
+    margin: 0 auto !important;
+    backdrop-filter: blur(10px) !important;
+    
+    .ant-modal-header {
+      display: none !important;
+    }
+    
+    .ant-modal-body {
+      padding: 0 !important;
+      background: transparent !important;
+    }
+  }
+}
+
+// Responsive menu modal styles
+@media only screen and (max-width: 480px) {
+  .bubble-shooter__menu-modal {
+    .ant-modal {
+      width: 90% !important;
+      max-width: 90% !important;
+    }
+    
+    .ant-modal-content {
+      .ant-modal-body {
+        button {
+          padding: 10px 15px !important;
+          font-size: 14px !important;
+          
+          span:first-child {
+            font-size: 16px !important;
+          }
+        }
+      }
+    }
+  }
+}
+
+@media only screen and (max-width: 360px) {
+  .bubble-shooter__menu-modal {
+    .ant-modal {
+      width: 95% !important;
+      max-width: 95% !important;
+    }
+    
+    .ant-modal-content {
+      .ant-modal-body {
+        button {
+          padding: 8px 12px !important;
+          font-size: 12px !important;
+          
+          span:first-child {
+            font-size: 14px !important;
+          }
+        }
+      }
+    }
+  }
+}
+
+// Menu button hover effects
+.bubble-shooter__menu-button {
+  &:hover {
+    span:first-child {
+      transform: scale(1.1) !important;
+    }
+  }
+  
+  &:active {
+    transform: translateY(-2px) scale(0.98) !important;
   }
 }

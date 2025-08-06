@@ -19,6 +19,8 @@ import {
   setGridCols,
   updateDirectionBubbleNext,
   verifyGrid,
+  predictTrajectory,
+  calculateShootDirection,
 } from "@/helpers/game";
 import { Answer, Bubble, DeviceType, GameState, Grid } from "@/models/game";
 import {
@@ -30,9 +32,8 @@ import {
 import { Button, Form, Input, Modal } from "antd";
 import dynamic from "next/dynamic";
 import p5Types from "p5";
-import React, { useRef, useState } from "react";
+import React, { useRef, useState, useEffect } from "react";
 import score from "@public/bubble-shooter/background/score.png";
-import time from "@public/bubble-shooter/background/time.png";
 import pause from "@public/bubble-shooter/icon/pause.png";
 import play from "@public/bubble-shooter/icon/play.png";
 import setting from "@public/bubble-shooter/icon/setting.png";
@@ -186,6 +187,7 @@ const Board: React.FC = () => {
   };
   const gameProperties = useRef({
     score: 0,
+    highestScore: 0,
     shotsInRound: 0, // Shots taken in current round (0-5)
     color: [
       "#FF0000", // Pure red
@@ -200,30 +202,239 @@ const Board: React.FC = () => {
   });
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
   const [isModalSettingOpen, setIsModalSettingOpen] = useState<boolean>(false);
-  const gridBubble = useRef<Record<string, Bubble>>(
-    createGridBubble(gridRef.current, gameProperties.current.color)
-  );
+  const [isGameLoadedFromStorage, setIsGameLoadedFromStorage] = useState<boolean>(false);
+  const [isLeaderboardOpen, setIsLeaderboardOpen] = useState<boolean>(false);
+  const [isMenuVisible, setIsMenuVisible] = useState<boolean>(false);
+  const gridBubble = useRef<Record<string, Bubble>>({});
   const specialBubble = useRef({
     isAnswered: Answer.NOT_YET,
   });
-  const bubbleNext = useRef(
-    createListBubbleNext(
-      grid,
-      bubbleStartX,
-      bubbleStartY,
-      gameProperties.current.color
-    )
-  );
-  const activeBubble = useRef(bubbleNext.current[0]);
-  const secondaryBubble = useRef(bubbleNext.current[1] || bubbleNext.current[0]);
-  const tertiaryBubble = useRef(bubbleNext.current[2] || bubbleNext.current[0]);
+  const bubbleNext = useRef<any[]>([]);
+  const activeBubble = useRef<any>(null);
+  const secondaryBubble = useRef<any>(null);
+  const tertiaryBubble = useRef<any>(null);
   const isSwapping = useRef<boolean>(false);
   const swapAnimation = useRef<number>(0);
   const isGenerateSpecialBall = useRef<boolean>(false);
   const removeBubbles: any[] = [];
   const arrayTime: any = [];
 
-  const handleOk = () => {
+  // Local storage functions
+  const saveGameToLocalStorage = () => {
+    try {
+      const gameData = {
+        gridBubble: gridBubble.current,
+        gameProperties: gameProperties.current,
+        grid: gridRef.current,
+        bubbleQueue: bubbleNext.current,
+        activeBubble: activeBubble.current,
+        secondaryBubble: secondaryBubble.current,
+        tertiaryBubble: tertiaryBubble.current,
+        timestamp: new Date().toISOString()
+      };
+      localStorage.setItem('bubbleShooterGame', JSON.stringify(gameData));
+      
+      // Also save highest score separately
+      saveHighestScore();
+      
+      console.log('Game saved to localStorage');
+    } catch (error) {
+      console.error('Error saving game to localStorage:', error);
+    }
+  };
+
+  const loadGameFromLocalStorage = () => {
+    try {
+      const savedGame = localStorage.getItem('bubbleShooterGame');
+      if (savedGame) {
+        const gameData = JSON.parse(savedGame);
+        
+        // Check if saved game is not too old (24 hours)
+        const savedTime = new Date(gameData.timestamp);
+        const currentTime = new Date();
+        const hoursDiff = (currentTime.getTime() - savedTime.getTime()) / (1000 * 60 * 60);
+        
+        if (hoursDiff < 24) {
+          // Restore game state
+          gridBubble.current = gameData.gridBubble;
+          gridRef.current = gameData.grid;
+          bubbleNext.current = gameData.bubbleQueue;
+          activeBubble.current = gameData.activeBubble;
+          secondaryBubble.current = gameData.secondaryBubble;
+          tertiaryBubble.current = gameData.tertiaryBubble;
+          
+          // Load highest score first, then restore game properties
+          loadHighestScore();
+          // Merge saved game properties with current ones to preserve highestScore
+          gameProperties.current = {
+            ...gameProperties.current, // Keep current properties (including highestScore)
+            ...gameData.gameProperties // Override with saved data
+          };
+          
+          // Clear any animation props to prevent visual glitches
+          Object.keys(gridBubble.current).forEach(key => {
+            if (gridBubble.current[key].animationProps) {
+              gridBubble.current[key].animationProps = undefined;
+            }
+          });
+          
+          console.log('Game loaded from localStorage');
+          setIsGameLoadedFromStorage(true);
+          return true;
+        } else {
+          // Clear old saved game
+          localStorage.removeItem('bubbleShooterGame');
+          console.log('Old saved game cleared (older than 24 hours)');
+        }
+      }
+    } catch (error) {
+      console.error('Error loading game from localStorage:', error);
+      localStorage.removeItem('bubbleShooterGame');
+    }
+    return false;
+  };
+
+  const clearSavedGame = () => {
+    localStorage.removeItem('bubbleShooterGame');
+    console.log('Saved game cleared');
+  };
+
+  const loadHighestScore = () => {
+    try {
+      const savedHighestScore = localStorage.getItem('bubbleShooterHighestScore');
+      if (savedHighestScore) {
+        const highestScore = parseInt(savedHighestScore, 10);
+        if (!isNaN(highestScore)) {
+          gameProperties.current.highestScore = highestScore;
+          console.log('Highest score loaded:', highestScore);
+        }
+      }
+    } catch (error) {
+      console.error('Error loading highest score:', error);
+    }
+  };
+
+  const saveHighestScore = () => {
+    try {
+      localStorage.setItem('bubbleShooterHighestScore', gameProperties.current.highestScore.toString());
+      console.log('Highest score saved:', gameProperties.current.highestScore);
+    } catch (error) {
+      console.error('Error saving highest score:', error);
+    }
+  };
+
+  const updateHighestScore = () => {
+    if (gameProperties.current.score > gameProperties.current.highestScore) {
+      gameProperties.current.highestScore = gameProperties.current.score;
+      saveHighestScore();
+      console.log('New highest score achieved:', gameProperties.current.highestScore);
+    }
+  };
+
+  const syncHighestScore = () => {
+    // Ensure highest score is loaded and synced with game properties
+    loadHighestScore();
+    console.log('Highest score synced:', gameProperties.current.highestScore);
+  };
+
+  // Leaderboard data with sample players
+  const leaderboardData = [
+    { rank: 1, name: "BubbleMaster", score: 2840, avatar: "🏆" },
+    { rank: 2, name: "PopKing", score: 2650, avatar: "👑" },
+    { rank: 3, name: "ShooterPro", score: 2480, avatar: "⭐" },
+    { rank: 4, name: "BubbleQueen", score: 2320, avatar: "💎" },
+    { rank: 5, name: "PopStar", score: 2180, avatar: "🌟" },
+    { rank: 6, name: "BubbleNinja", score: 2040, avatar: "⚡" },
+    { rank: 7, name: "ShooterElite", score: 1890, avatar: "🔥" },
+    { rank: 8, name: "BubbleLegend", score: 1750, avatar: "💫" },
+    { rank: 9, name: "PopChampion", score: 1620, avatar: "🎯" },
+    { rank: 10, name: "BubbleHero", score: 1480, avatar: "🚀" }
+  ];
+
+  // Current player name (you can change this to match the actual player)
+  const currentPlayerName = "BubbleMaster"; // This should be dynamic based on actual player
+
+  const handleLeaderboardOk = () => {
+    setIsLeaderboardOpen(false);
+  };
+
+  const handleLeaderboardCancel = () => {
+    setIsLeaderboardOpen(false);
+  };
+
+  const forceNewGame = () => {
+    // Clear localStorage
+    localStorage.removeItem('bubbleShooterGame');
+    
+    // Reset all game state
+    gridRef.current.numRows = GRID_ROWS;
+    gridRef.current.numCols = girdColumns;
+    gridRef.current.movement = 0;
+    gameProperties.current.score = 0;
+    gameProperties.current.shotsInRound = 0;
+    gameState.isPause = false;
+    gameState.isGameOver = false;
+    gameState.isWin = false;
+    gameState.countShoot = 0;
+    
+    // Create completely fresh game state
+    gridBubble.current = createGridBubble(gridRef.current, gameProperties.current.color);
+    bubbleNext.current = createListBubbleNext(grid, bubbleStartX, bubbleStartY, gameProperties.current.color);
+    activeBubble.current = bubbleNext.current[0];
+    secondaryBubble.current = bubbleNext.current[1] || bubbleNext.current[0];
+    tertiaryBubble.current = bubbleNext.current[2] || bubbleNext.current[0];
+    isGenerateSpecialBall.current = false;
+    
+    // Clear any particles or animations
+    particles.length = 0;
+    removeBubbles.length = 0;
+    
+    // Reset the loaded from storage flag
+    setIsGameLoadedFromStorage(false);
+    
+    console.log('Forced new game - all state reset');
+  };
+
+  // Save game when user closes the page
+  useEffect(() => {
+    const handleBeforeUnload = () => {
+      saveGameToLocalStorage();
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    
+    // Add periodic check for localStorage changes (every 2 seconds)
+    const localStorageCheckInterval = setInterval(() => {
+      const savedGame = localStorage.getItem('bubbleShooterGame');
+      if (!savedGame && Object.keys(gridBubble.current).length > 0) {
+        console.log('localStorage was cleared, refreshing game...');
+        forceNewGame();
+        // Clear the interval after triggering to prevent loops
+        clearInterval(localStorageCheckInterval);
+      }
+    }, 2000);
+    
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+      clearInterval(localStorageCheckInterval);
+    };
+  }, []);
+
+  // Debug function to check localStorage status
+  const debugLocalStorage = () => {
+    const savedGame = localStorage.getItem('bubbleShooterGame');
+    const savedHighestScore = localStorage.getItem('bubbleShooterHighestScore');
+    console.log('localStorage status:', savedGame ? 'Has saved game' : 'No saved game');
+    console.log('Current gridBubble keys:', Object.keys(gridBubble.current).length);
+    console.log('Current score:', gameProperties.current.score);
+    console.log('Highest score:', gameProperties.current.highestScore);
+    console.log('Saved highest score:', savedHighestScore);
+    console.log('Full gameProperties object:', gameProperties.current);
+    console.log('gameProperties keys:', Object.keys(gameProperties.current));
+    return savedGame;
+  };
+
+    const handleOk = () => {
     specialBubble.current.isAnswered = Answer.CORRECT;
     setIsModalOpen(false);
   };
@@ -274,6 +485,9 @@ const Board: React.FC = () => {
     secondaryBubble.current = bubbleNext.current[1] || bubbleNext.current[0];
     tertiaryBubble.current = bubbleNext.current[2] || bubbleNext.current[0];
     isGenerateSpecialBall.current = false;
+    
+    // Clear saved game when starting new game
+    clearSavedGame();
   };
 
   // const checkIsWin = (gridBubble: Record<string, Bubble>) => {
@@ -429,7 +643,7 @@ const Board: React.FC = () => {
       const centerX: number = bubble.x;
       const centerY: number = bubble.y;
       
-      // Handle bounce animation
+      // Handle bounce animation (disabled when loaded from storage, but allow attachment animations)
       let bounceOffset = 0;
       let bounceScale = 1;
       if (bubble.animationProps) {
@@ -636,6 +850,12 @@ const Board: React.FC = () => {
   const hoverTarget = useRef<{x: number, y: number}>({x: 0, y: 0});
   const isHolding = useRef<boolean>(false);
   const isInSwapArea = useRef<boolean>(false);
+  
+  // Trajectory prediction state
+  const predictedTrajectory = useRef<{x: number, y: number}[]>([]);
+  const isShowingTrajectory = useRef<boolean>(false);
+  const isFollowingPredictedPath = useRef<boolean>(false);
+  const predictedPathIndex = useRef<number>(0);
 
   const drawSwapArrow = (p5: p5Types) => {
     const launcherX = gameWidth / 2;
@@ -964,6 +1184,117 @@ const Board: React.FC = () => {
     p5.pop();
   };
 
+  const updateTrajectoryPrediction = (p5: p5Types) => {
+    if (!isHolding.current || isSwapAnimating.current || isInSwapArea.current || activeBubble.current.isMoving) {
+      isShowingTrajectory.current = false;
+      return;
+    }
+    
+    const launcherX = gameWidth / 2;
+    const launcherY = gameHeight - 80 - 35; // Top bubble position
+    const targetX = p5.mouseX;
+    const targetY = p5.mouseY;
+    
+    // Calculate shoot direction
+    const { speedX, speedY } = calculateShootDirection(
+      launcherX,
+      launcherY,
+      targetX,
+      targetY,
+      activeBubble.current.speed
+    );
+    
+    // Predict trajectory
+    predictedTrajectory.current = predictTrajectory(
+      launcherX,
+      launcherY,
+      speedX,
+      speedY,
+      gridBubble.current,
+      gridRef.current,
+      gameWidth,
+      gameHeight
+    );
+    
+    isShowingTrajectory.current = true;
+  };
+
+  const drawTrajectoryArrow = (p5: p5Types) => {
+    if (!isShowingTrajectory.current || predictedTrajectory.current.length < 2) {
+      return;
+    }
+    
+    p5.push();
+    
+    const trajectory = predictedTrajectory.current;
+    const bubbleColor = activeBubble.current.color;
+    
+    // Calculate angle from start to end for direction
+    const startPoint = trajectory[0];
+    const endPoint = trajectory[trajectory.length - 1];
+    const dx = endPoint.x - startPoint.x;
+    const dy = endPoint.y - startPoint.y;
+    const angle = Math.atan2(dy, dx);
+    
+    // Calculate total trajectory length
+    let totalLength = 0;
+    for (let i = 1; i < trajectory.length; i++) {
+      const segmentLength = Math.sqrt(
+        Math.pow(trajectory[i].x - trajectory[i-1].x, 2) + 
+        Math.pow(trajectory[i].y - trajectory[i-1].y, 2)
+      );
+      totalLength += segmentLength;
+    }
+    
+    // Draw animated dots only (exactly like the launcher arrow)
+    const dotCount = 8; // Same as launcher arrow
+    const dotSpeed = 0.015; // Same speed as launcher arrow
+    const dotProgress = (p5.frameCount * dotSpeed) % 1; // Continuous loop
+    
+    for (let i = 0; i < dotCount; i++) {
+      // Calculate animated position for each dot along the trajectory
+      const baseProgress = i / (dotCount - 1);
+      const animatedProgress = (baseProgress + dotProgress) % 1; // Add travel offset
+      const dotDistance = animatedProgress * totalLength;
+      
+      // Find position along the trajectory path
+      let currentLength = 0;
+      let dotX = startPoint.x;
+      let dotY = startPoint.y;
+      
+      for (let j = 1; j < trajectory.length; j++) {
+        const segmentLength = Math.sqrt(
+          Math.pow(trajectory[j].x - trajectory[j-1].x, 2) + 
+          Math.pow(trajectory[j].y - trajectory[j-1].y, 2)
+        );
+        
+        if (currentLength + segmentLength >= dotDistance) {
+          // Interpolate within this segment
+          const segmentProgress = (dotDistance - currentLength) / segmentLength;
+          dotX = p5.lerp(trajectory[j-1].x, trajectory[j].x, segmentProgress);
+          dotY = p5.lerp(trajectory[j-1].y, trajectory[j].y, segmentProgress);
+          break;
+        }
+        
+        currentLength += segmentLength;
+      }
+      
+      // Animated dots are exactly the same as launcher arrow
+      const dotSize = 6; // Same size as launcher arrow
+      
+      // Bright white animated dots
+      p5.fill(255, 255, 255, 200); // Bright white with transparency
+      p5.noStroke();
+      p5.ellipse(dotX, dotY, dotSize);
+      
+      // Add glow effect around animated dots
+      p5.fill(bubbleColor + '40'); // Bubble color with transparency
+      p5.ellipse(dotX, dotY, dotSize + 4); // Same glow as launcher arrow
+    }
+    
+    p5.pop();
+  };
+
   const drawHoverArrow = (p5: p5Types, startX: number, startY: number, targetX: number, targetY: number, color: string) => {
     // Don't draw arrow if swapping is happening or in swap area
     if (isSwapAnimating.current || swapAnimationProgress.current > 0 || isInSwapArea.current) {
@@ -1079,7 +1410,7 @@ const Board: React.FC = () => {
       p5.pop();
       
       // Draw hover arrow if holding (but not during swap animation or in swap area)
-      if (isHolding.current && !isSwapAnimating.current && swapAnimationProgress.current === 0 && !isInSwapArea.current) {
+      if (isHolding.current && !isSwapAnimating.current && swapAnimationProgress.current === 0 && !isInSwapArea.current && !isShowingTrajectory.current) {
         drawHoverArrow(p5, launcherX, launcherY - 35, p5.mouseX, p5.mouseY, activeBubble.current.color || '#ffffff');
       }
     }
@@ -1115,6 +1446,24 @@ const Board: React.FC = () => {
   const setup = (p5: p5Types, canvasParentRef: Element) => {
     p5.createCanvas(gameWidth, gameHeight).parent(canvasParentRef);
     
+    // Load highest score on startup
+    loadHighestScore();
+    
+    // Try to load saved game on startup
+    const gameLoaded = loadGameFromLocalStorage();
+    if (gameLoaded) {
+      console.log('Resuming saved game');
+    } else {
+      console.log('Starting new game');
+      // Initialize fresh game state
+      gridBubble.current = createGridBubble(gridRef.current, gameProperties.current.color);
+      bubbleNext.current = createListBubbleNext(grid, bubbleStartX, bubbleStartY, gameProperties.current.color);
+      activeBubble.current = bubbleNext.current[0];
+      secondaryBubble.current = bubbleNext.current[1] || bubbleNext.current[0];
+      tertiaryBubble.current = bubbleNext.current[2] || bubbleNext.current[0];
+      setIsGameLoadedFromStorage(false);
+    }
+    
     // Initial check for disconnected bubbles
     verifyGrid(gridBubble.current, removeBubbles);
   };
@@ -1149,12 +1498,15 @@ const Board: React.FC = () => {
     
     // Draw game over warning line
     drawGameOverWarningLine(p5);
+    
+    // Update trajectory prediction
+    updateTrajectoryPrediction(p5);
 
-    //check the bubble hit the wall
-    if (
+    //check the bubble hit the wall (only for normal physics, not predicted path)
+    if (!isFollowingPredictedPath.current && (
       activeBubble.current.x - activeBubble.current.r <= 0 ||
       activeBubble.current.x + activeBubble.current.r >= gameWidth
-    ) {
+    )) {
       activeBubble.current.speedX = -activeBubble.current.speedX;
     }
 
@@ -1163,7 +1515,7 @@ const Board: React.FC = () => {
     }
 
     // check when the bubble collides with the grid and insert bubble
-    if (activeBubble.current.isMoving === true) {
+    if (activeBubble.current.isMoving === true && !isFollowingPredictedPath.current) {
       const [collision, loc] = checkCollision(
         activeBubble.current,
         gridBubble.current,
@@ -1186,6 +1538,9 @@ const Board: React.FC = () => {
           
           let extra = verifyGrid(gridBubble.current, removeBubbles);
           gameProperties.current.score += caculateScore(pop + extra);
+          
+          // Update highest score if current score is higher
+          updateHighestScore();
           
           // Create enhanced explosion particles at collision point
           createParticles(activeBubble.current.x, activeBubble.current.y, activeBubble.current.color, p5);
@@ -1287,6 +1642,9 @@ const Board: React.FC = () => {
         activeBubble.current.speedY = 0;
         activeBubble.current.isMoving = false;
         activeBubble.current.animationProps = undefined; // Reset animation
+        isShowingTrajectory.current = false; // Clear trajectory when bubble stops
+        isFollowingPredictedPath.current = false; // Reset predicted path following
+        predictedPathIndex.current = 0;
       } else if (activeBubble.current.isMoving && activeBubble.current.y <= 0) {
         // Shot missed completely (went off screen) - count this shot
         gameProperties.current.shotsInRound++;
@@ -1299,6 +1657,9 @@ const Board: React.FC = () => {
         activeBubble.current.speedY = 0;
         activeBubble.current.isMoving = false;
         activeBubble.current.animationProps = undefined;
+        isShowingTrajectory.current = false; // Clear trajectory when bubble stops
+        isFollowingPredictedPath.current = false; // Reset predicted path following
+        predictedPathIndex.current = 0;
       }
       
       // Check if we've used all 5 shots without breaking bubbles (moved outside collision detection)
@@ -1314,14 +1675,20 @@ const Board: React.FC = () => {
         
         // Reset shots remaining to 5 for next round
         gameProperties.current.shotsInRound = 0;
+        
+        // Save game after grid moves down
+        setTimeout(() => saveGameToLocalStorage(), 100);
       }
     }
 
     // Draw dual-bubble launcher
     drawTripleBubbleLauncher(p5);
     
-    // Draw hover arrow if holding (draw it here to ensure it's always visible)
-    if (isHolding.current) {
+    // Draw trajectory prediction arrow
+    drawTrajectoryArrow(p5);
+    
+    // Draw hover arrow if holding (but not when trajectory is showing)
+    if (isHolding.current && !isShowingTrajectory.current) {
       const launcherX = gameWidth / 2;
       const launcherY = gameHeight - 80;
       // Use actual mouse position instead of hoverTarget
@@ -1338,28 +1705,113 @@ const Board: React.FC = () => {
     //score
     const scoreText = document.getElementById("score");
     if (scoreText) {
-      scoreText.innerHTML = ` ${gameProperties.current.score} `;
+      scoreText.innerHTML = `${gameProperties.current.score.toLocaleString()}`;
     }
 
-    // Display shots remaining (for debugging and player info)
-    const timeText = document.getElementById("time");
-    if (timeText) {
-      timeText.innerHTML = ` ${5 - gameProperties.current.shotsInRound} `;
-    }
+
 
     // Check for disconnected bubbles more frequently
     if (p5.frameCount % 15 === 0) {
       verifyGrid(gridBubble.current, removeBubbles);
     }
 
+    // Handle bubble movement - either normal physics or follow predicted path
+    if (isFollowingPredictedPath.current && predictedTrajectory.current.length > 0) {
+      // Follow the predicted path exactly
+      const trajectory = predictedTrajectory.current;
+      const targetIndex = Math.min(predictedPathIndex.current, trajectory.length - 1);
+      const targetPoint = trajectory[targetIndex];
+      
+      // Move bubble towards the target point
+      const dx = targetPoint.x - activeBubble.current.x;
+      const dy = targetPoint.y - activeBubble.current.y;
+      const distance = Math.sqrt(dx * dx + dy * dy);
+      
+      if (distance < 1) {
+        // Reached this point, move to next
+        predictedPathIndex.current++;
+        
+        if (predictedPathIndex.current >= trajectory.length) {
+          // Reached the end of predicted path, perform collision at final position
+          isFollowingPredictedPath.current = false;
+          
+          // Set bubble to exact final position from trajectory
+          const finalPoint = trajectory[trajectory.length - 1];
+          activeBubble.current.x = finalPoint.x;
+          activeBubble.current.y = finalPoint.y;
+          
+          // Now check for collision at the final position
+          const [collision, loc] = checkCollision(
+            activeBubble.current,
+            gridBubble.current,
+            gridRef.current
+          );
+
+          if (collision && Array.isArray(loc)) {
+            // Handle collision at the predicted landing position
+            const pop = insertBubble(
+              gridBubble.current,
+              gridRef.current,
+              activeBubble.current,
+              loc[0],
+              loc[1]
+            );
+            
+            if (pop > 0) {
+              console.log("Broke bubbles, counter stays at:", gameProperties.current.shotsInRound);
+              
+              let extra = verifyGrid(gridBubble.current, removeBubbles);
+              gameProperties.current.score += caculateScore(pop + extra);
+              
+              // Update highest score if current score is higher
+              updateHighestScore();
+              
+              // Create enhanced explosion particles at collision point
+              createParticles(activeBubble.current.x, activeBubble.current.y, activeBubble.current.color, p5);
+            } else {
+              // Shot attached but didn't break bubbles - count this shot
+              gameProperties.current.shotsInRound++;
+              console.log("No bubbles broken, shots in round:", gameProperties.current.shotsInRound);
+            }
+
+            renderBubbleList(p5, gridBubble.current);
+            specialBubble.current.isAnswered = Answer.NOT_YET;
+            bubbleNext.current.shift()!;
+            addBubbleNext(gridBubble.current, bubbleNext.current);
+            updateDirectionBubbleNext(bubbleNext.current, grid);
+
+            activeBubble.current = bubbleNext.current[0];
+            secondaryBubble.current = bubbleNext.current[1] || bubbleNext.current[0];
+            activeBubble.current.x = bubbleStartX;
+            activeBubble.current.y = bubbleStartY;
+            activeBubble.current.speedX = 0;
+            activeBubble.current.speedY = 0;
+            activeBubble.current.isMoving = false;
+            activeBubble.current.animationProps = undefined;
+            isShowingTrajectory.current = false;
+            isFollowingPredictedPath.current = false;
+            predictedPathIndex.current = 0;
+          }
+        }
+      } else {
+        // Move towards target point at consistent speed
+        const speed = activeBubble.current.speed;
+        const moveSpeed = Math.min(speed * 0.6, distance); // Even slower for maximum precision
+        activeBubble.current.x += (moveSpeed * dx) / distance;
+        activeBubble.current.y += (moveSpeed * dy) / distance;
+      }
+    } else {
+      // Normal physics movement
+      activeBubble.current.x += activeBubble.current.speedX;
+      activeBubble.current.y += activeBubble.current.speedY;
+    }
+    
     if (
       activeBubble.current.isSpecial &&
       specialBubble.current.isAnswered === Answer.NOT_YET
     ) {
       return;
     }
-    activeBubble.current.x += activeBubble.current.speedX;
-    activeBubble.current.y += activeBubble.current.speedY;
   };
 
   const mouseClicked = (p5: p5Types) => {
@@ -1403,17 +1855,42 @@ const Board: React.FC = () => {
             return;
           }
 
-          let dx = p5.mouseX - activeBubble.current.x;
-          let dy = p5.mouseY - activeBubble.current.y;
-          let magnitude = Math.sqrt(dx * dx + dy * dy);
-          
-          // Ensure minimum distance for shooting
-          if (magnitude > 10) {
-            let speed = activeBubble.current.speed;
-            activeBubble.current.speedX = (speed * dx) / magnitude;
-            activeBubble.current.speedY = (speed * dy) / magnitude;
+                    // Use predicted trajectory if available, otherwise use mouse direction
+          if (isShowingTrajectory.current && predictedTrajectory.current.length >= 2) {
+            // Start following the predicted path exactly
+            isFollowingPredictedPath.current = true;
+            predictedPathIndex.current = 0;
+            
+            // Set bubble to exact starting position of trajectory
+            const launcherX = gameWidth / 2;
+            const launcherY = gameHeight - 80 - 35; // Top bubble position
+            activeBubble.current.x = launcherX;
+            activeBubble.current.y = launcherY;
+            
             activeBubble.current.isMoving = true;
+            isShowingTrajectory.current = false; // Clear trajectory when bubble starts moving
             gameState.countShoot++;
+            
+            // Save game after each shot
+            setTimeout(() => saveGameToLocalStorage(), 100);
+          } else {
+            // Fallback to mouse direction
+            let dx = p5.mouseX - activeBubble.current.x;
+            let dy = p5.mouseY - activeBubble.current.y;
+            let magnitude = Math.sqrt(dx * dx + dy * dy);
+            
+            // Ensure minimum distance for shooting
+            if (magnitude > 10) {
+              let speed = activeBubble.current.speed;
+              activeBubble.current.speedX = (speed * dx) / magnitude;
+              activeBubble.current.speedY = (speed * dy) / magnitude;
+              activeBubble.current.isMoving = true;
+              isShowingTrajectory.current = false; // Clear trajectory when bubble starts moving
+              gameState.countShoot++;
+              
+              // Save game after each shot
+              setTimeout(() => saveGameToLocalStorage(), 100);
+            }
           }
         }
       }
@@ -1431,6 +1908,7 @@ const Board: React.FC = () => {
     isHolding.current = false;
     hoverTarget.current.x = 0;
     hoverTarget.current.y = 0;
+    isShowingTrajectory.current = false;
   };
   
   const keyPressed = (p5: p5Types) => {
@@ -1438,6 +1916,22 @@ const Board: React.FC = () => {
     if (p5.key === ' ') {
       isHolding.current = !isHolding.current;
       console.log('Space pressed, holding:', isHolding.current);
+    }
+    if (p5.key === 'd' || p5.key === 'D') {
+      debugLocalStorage();
+      console.log('D key pressed - debug localStorage');
+    }
+    if (p5.key === 'r' || p5.key === 'R') {
+      forceNewGame();
+      console.log('R key pressed - forced new game');
+    }
+    if (p5.key === 's' || p5.key === 'S') {
+      syncHighestScore();
+      console.log('S key pressed - synced highest score');
+    }
+    if (p5.key === 'h' || p5.key === 'H') {
+      loadHighestScore();
+      console.log('H key pressed - forced load highest score');
     }
   };
 
@@ -1627,15 +2121,94 @@ const Board: React.FC = () => {
 
   return (
     <main className="bubble-shooter__game">
-      <header className="bubble-shooter__game-header">
-                  <div className="bubble-shooter__game-score-bar">
-            <img width={198} height={90} src={score.src} alt="遊戲積分" />
-            <p id="score"></p>
+      <header className="bubble-shooter__game-header" style={{ 
+        display: 'flex', 
+        justifyContent: 'space-between', 
+        alignItems: 'center', 
+        padding: '25px 20px 15px 20px',
+        borderRadius: '0 0 20px 20px',
+        marginTop: '30px'
+      }}>
+                <div 
+          className="bubble-shooter__game-score-container" 
+          onClick={(e) => e.stopPropagation()}
+          style={{ display: 'flex', alignItems: 'center', marginTop: '10px' }}>
+          {/* Score Display */}
+          <div 
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              background: 'linear-gradient(135deg, rgba(135, 206, 235, 0.8), rgba(70, 130, 180, 0.8))',
+              borderRadius: '20px',
+              padding: '12px 20px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '12px',
+              boxShadow: '0 6px 20px rgba(135, 206, 235, 0.3)',
+              border: '2px solid rgba(255, 255, 255, 0.3)',
+              minWidth: '140px',
+              position: 'relative',
+              overflow: 'hidden'
+            }}>
+            <span style={{ fontSize: '20px', color: '#2d3748' }}>🪙</span>
+            <span 
+              id="score" 
+              className="custom-score"
+              style={{ 
+                fontSize: '24px', 
+                color: 'white', 
+                fontWeight: 'bold',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                whiteSpace: 'nowrap',
+                maxWidth: '100%',
+                position: 'static',
+                top: 'auto',
+                left: 'auto'
+              }}
+            >Score 0</span>
           </div>
-          <div className="bubble-shooter__game-time-bar">
-            <img width={198} height={90} src={time.src} alt="遊戲時間" />
-            <p id="time"></p>
-          </div>
+        </div>
+        
+        <div 
+          className="bubble-shooter__game-hamburger-bar" 
+          onClick={(e) => e.stopPropagation()}
+          style={{ display: 'flex', alignItems: 'center', marginTop: '10px' }}>
+          <button 
+            onClick={(e) => {
+              e.stopPropagation();
+              setIsMenuVisible(true);
+            }}
+            style={{
+              background: 'linear-gradient(135deg, rgba(135, 206, 235, 0.8), rgba(70, 130, 180, 0.8))',
+              borderRadius: '15px',
+              padding: '12px',
+              color: 'white',
+              fontSize: '20px',
+              fontWeight: 'bold',
+              cursor: 'pointer',
+              boxShadow: '0 4px 15px rgba(135, 206, 235, 0.3)',
+              transition: 'all 0.3s ease',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              minWidth: '50px',
+              height: '50px',
+              border: '2px solid rgba(255, 255, 255, 0.3)',
+              position: 'relative',
+              overflow: 'hidden'
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.transform = 'scale(1.05)';
+              e.currentTarget.style.boxShadow = '0 6px 20px rgba(135, 206, 235, 0.4)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.transform = 'scale(1)';
+              e.currentTarget.style.boxShadow = '0 4px 15px rgba(135, 206, 235, 0.3)';
+            }}
+          >
+            <span style={{ fontSize: '24px', color: 'white' }}>☰</span>
+          </button>
+        </div>
       </header>
       <aside className="bubble-shooter__game-aside">
         <ul>
@@ -1735,6 +2308,448 @@ const Board: React.FC = () => {
               </Button>
             </Form.Item>
           </Form>
+        </Modal>
+
+        {/* Leaderboard Modal */}
+        <Modal
+          title={
+            <div style={{ 
+              display: 'flex', 
+              alignItems: 'center', 
+              gap: '10px',
+              fontSize: '20px',
+              fontWeight: 'bold',
+              color: '#1e3a8a'
+            }}>
+              🏆 Global Leaderboard
+            </div>
+          }
+          open={isLeaderboardOpen}
+          onOk={handleLeaderboardOk}
+          onCancel={handleLeaderboardCancel}
+          width={600}
+          centered={true}
+          bodyStyle={{
+            maxHeight: '400px',
+            overflowY: 'auto',
+            padding: '20px'
+          }}
+          okButtonProps={{
+            style: {
+              background: 'linear-gradient(135deg, #87CEEB, #4682B4)',
+              border: 'none',
+              borderRadius: '8px',
+              color: 'white',
+              fontWeight: 'bold',
+              boxShadow: '0 2px 8px rgba(135, 206, 235, 0.3)',
+              transition: 'all 0.3s ease'
+            }
+          }}
+          cancelButtonProps={{
+            style: {
+              background: 'linear-gradient(135deg, #87CEEB, #4682B4)',
+              border: 'none',
+              borderRadius: '8px',
+              color: 'white',
+              fontWeight: 'bold',
+              boxShadow: '0 2px 8px rgba(135, 206, 235, 0.3)',
+              transition: 'all 0.3s ease'
+            }
+          }}
+        >
+          <div style={{ marginBottom: '20px' }}>
+            <div 
+              className="bubble-shooter__leaderboard-score-header"
+              style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                padding: '10px 15px',
+                background: 'linear-gradient(135deg, rgba(30, 58, 138, 0.9), rgba(59, 130, 246, 0.9))',
+                borderRadius: '10px',
+                color: 'white',
+                fontWeight: 'bold',
+                marginBottom: '15px',
+                textShadow: '0 1px 2px rgba(0, 0, 0, 0.3)'
+              }}>
+              <span>Your Best Score: {gameProperties.current.highestScore}</span>
+              <span>Current Score: {gameProperties.current.score}</span>
+            </div>
+          </div>
+          
+          <div style={{ marginBottom: '15px' }}>
+            {leaderboardData.map((player, index) => {
+              const isCurrentPlayer = player.name === currentPlayerName;
+              const isTop3 = index < 3;
+              
+              return (
+                <div
+                  key={player.rank}
+                  className="bubble-shooter__leaderboard-player"
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    padding: '12px 15px',
+                    marginBottom: '8px',
+                    borderRadius: '10px',
+                    background: isCurrentPlayer 
+                      ? 'linear-gradient(135deg, rgba(135, 206, 235, 0.3), rgba(70, 130, 180, 0.3))'
+                      : isTop3 
+                        ? 'linear-gradient(135deg, rgba(255, 215, 0, 0.2), rgba(255, 165, 0, 0.2))'
+                        : 'linear-gradient(135deg, rgba(255, 255, 255, 0.15), rgba(240, 248, 255, 0.15))',
+                    border: isCurrentPlayer 
+                      ? '3px solid rgba(135, 206, 235, 0.8)'
+                      : isTop3 
+                        ? '2px solid rgba(255, 215, 0, 0.5)'
+                        : '1px solid rgba(255, 255, 255, 0.3)',
+                    transition: 'all 0.3s ease',
+                    cursor: 'pointer',
+                    position: 'relative',
+                    color: 'white',
+                    textShadow: '0 1px 2px rgba(0, 0, 0, 0.4)'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.transform = 'scale(1.02)';
+                    e.currentTarget.style.background = isCurrentPlayer 
+                      ? 'linear-gradient(135deg, rgba(135, 206, 235, 0.4), rgba(70, 130, 180, 0.4))'
+                      : isTop3 
+                        ? 'linear-gradient(135deg, rgba(255, 215, 0, 0.3), rgba(255, 165, 0, 0.3))'
+                        : 'linear-gradient(135deg, rgba(255, 255, 255, 0.25), rgba(240, 248, 255, 0.25))';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.transform = 'scale(1)';
+                    e.currentTarget.style.background = isCurrentPlayer 
+                      ? 'linear-gradient(135deg, rgba(135, 206, 235, 0.3), rgba(70, 130, 180, 0.3))'
+                      : isTop3 
+                        ? 'linear-gradient(135deg, rgba(255, 215, 0, 0.2), rgba(255, 165, 0, 0.2))'
+                        : 'linear-gradient(135deg, rgba(255, 255, 255, 0.15), rgba(240, 248, 255, 0.15))';
+                  }}
+                >
+                  {isCurrentPlayer && (
+                    <div style={{
+                      position: 'absolute',
+                      top: '-5px',
+                      right: '-5px',
+                      background: 'linear-gradient(135deg, #87CEEB, #4682B4)',
+                      color: 'white',
+                      borderRadius: '50%',
+                      width: '24px',
+                      height: '24px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      fontSize: '12px',
+                      fontWeight: 'bold',
+                      boxShadow: '0 2px 8px rgba(135, 206, 235, 0.4)',
+                      zIndex: 1
+                    }}>
+                      👤
+                    </div>
+                  )}
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '15px',
+                  flex: 1
+                }}>
+                  <div 
+                    className="bubble-shooter__leaderboard-rank-circle"
+                    style={{
+                      width: '40px',
+                      height: '40px',
+                      borderRadius: '50%',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                    fontSize: '20px',
+                    background: index < 3 
+                      ? 'linear-gradient(135deg, #FFD700, #FFA500)'
+                      : 'linear-gradient(135deg, #3b82f6, #1e3a8a)',
+                    color: 'white',
+                    fontWeight: 'bold',
+                    boxShadow: '0 2px 8px rgba(0, 0, 0, 0.2)'
+                  }}>
+                    {player.rank}
+                  </div>
+                  
+                  <div style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '10px',
+                    flex: 1
+                  }}>
+                    <span style={{ fontSize: '24px' }}>{player.avatar}</span>
+                    <span style={{
+                      fontWeight: 'bold',
+                      color: 'white',
+                      fontSize: '16px',
+                      textShadow: '0 1px 2px rgba(0, 0, 0, 0.4)'
+                    }}>
+                      {player.name}
+                    </span>
+                  </div>
+                  
+                  <div style={{
+                    fontWeight: 'bold',
+                    fontSize: '18px',
+                    color: 'white',
+                    textShadow: '0 1px 2px rgba(0, 0, 0, 0.4)'
+                  }}>
+                    {player.score.toLocaleString()}
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+          </div>
+          
+          <div style={{
+            textAlign: 'center',
+            padding: '15px',
+            background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.2), rgba(240, 248, 255, 0.2))',
+            borderRadius: '10px',
+            border: '1px solid rgba(255, 255, 255, 0.3)'
+          }}>
+            <p style={{
+              margin: '0',
+              color: 'white',
+              fontSize: '14px',
+              fontStyle: 'italic',
+              textShadow: '0 1px 2px rgba(0, 0, 0, 0.4)'
+            }}>
+              💡 Tip: Keep playing to improve your score and climb the leaderboard!
+            </p>
+          </div>
+        </Modal>
+
+        {/* Menu Modal */}
+        <Modal
+          open={isMenuVisible}
+          onOk={() => setIsMenuVisible(false)}
+          onCancel={() => setIsMenuVisible(false)}
+          width={400}
+          bodyStyle={{
+            padding: '0',
+            textAlign: 'center',
+            borderRadius: '20px',
+            overflow: 'hidden',
+            position: 'relative'
+          }}
+          footer={null}
+          className="bubble-shooter__menu-modal"
+          title={null}
+          centered={true}
+        >
+          {/* Animated background overlay */}
+          <div style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: 'linear-gradient(45deg, rgba(255,255,255,0.15) 0%, rgba(255,255,255,0.05) 100%)',
+            animation: 'shimmer 3s ease-in-out infinite',
+            pointerEvents: 'none',
+            borderRadius: '15px'
+          }} />
+          
+          <div style={{
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '15px',
+            padding: '20px 18px',
+            position: 'relative',
+            zIndex: 1
+          }}>
+            {/* Resume Button */}
+            <button
+              onClick={() => {
+                setIsMenuVisible(false);
+                gameState.isPause = false;
+              }}
+              className="bubble-shooter__menu-button"
+              style={{
+                background: 'linear-gradient(135deg, rgba(135, 206, 235, 0.9), rgba(70, 130, 180, 0.9))',
+                color: 'white',
+                borderRadius: '12px',
+                padding: '12px 18px',
+                fontSize: '16px',
+                fontWeight: 'bold',
+                cursor: 'pointer',
+                transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
+                boxShadow: '0 6px 20px rgba(135, 206, 235, 0.3)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '12px',
+                position: 'relative',
+                overflow: 'hidden',
+                border: '2px solid rgba(255, 255, 255, 0.2)'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.transform = 'translateY(-4px) scale(1.02)';
+                e.currentTarget.style.boxShadow = '0 12px 35px rgba(135, 206, 235, 0.5)';
+                e.currentTarget.style.background = 'linear-gradient(135deg, rgba(135, 206, 235, 1), rgba(70, 130, 180, 1))';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.transform = 'translateY(0) scale(1)';
+                e.currentTarget.style.boxShadow = '0 8px 25px rgba(135, 206, 235, 0.3)';
+                e.currentTarget.style.background = 'linear-gradient(135deg, rgba(135, 206, 235, 0.9), rgba(70, 130, 180, 0.9))';
+              }}
+            >
+              <span style={{ 
+                fontSize: '18px',
+                filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.3))',
+                transition: 'transform 0.3s ease'
+              }}>▶️</span>
+              <span style={{
+                textShadow: '0 2px 4px rgba(0,0,0,0.3)',
+                letterSpacing: '0.5px'
+              }}>Resume</span>
+            </button>
+
+            {/* Restart Button */}
+            <button
+              onClick={() => {
+                setIsMenuVisible(false);
+                resetGame();
+              }}
+              className="bubble-shooter__menu-button"
+              style={{
+                background: 'linear-gradient(135deg, rgba(135, 206, 235, 0.9), rgba(70, 130, 180, 0.9))',
+                color: 'white',
+                borderRadius: '12px',
+                padding: '12px 18px',
+                fontSize: '16px',
+                fontWeight: 'bold',
+                cursor: 'pointer',
+                transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
+                boxShadow: '0 6px 20px rgba(135, 206, 235, 0.3)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '12px',
+                position: 'relative',
+                overflow: 'hidden',
+                border: '2px solid rgba(255, 255, 255, 0.2)'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.transform = 'translateY(-4px) scale(1.02)';
+                e.currentTarget.style.boxShadow = '0 12px 35px rgba(135, 206, 235, 0.5)';
+                e.currentTarget.style.background = 'linear-gradient(135deg, rgba(135, 206, 235, 1), rgba(70, 130, 180, 1))';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.transform = 'translateY(0) scale(1)';
+                e.currentTarget.style.boxShadow = '0 8px 25px rgba(135, 206, 235, 0.3)';
+                e.currentTarget.style.background = 'linear-gradient(135deg, rgba(135, 206, 235, 0.9), rgba(70, 130, 180, 0.9))';
+              }}
+            >
+              <span style={{ 
+                fontSize: '18px',
+                filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.3))',
+                transition: 'transform 0.3s ease'
+              }}>🔄</span>
+              <span style={{
+                textShadow: '0 2px 4px rgba(0,0,0,0.3)',
+                letterSpacing: '0.5px'
+              }}>Restart</span>
+            </button>
+
+            {/* Leaderboard Button (3rd position) */}
+            <button
+              onClick={() => {
+                setIsMenuVisible(false);
+                setIsLeaderboardOpen(true);
+              }}
+              className="bubble-shooter__menu-button"
+              style={{
+                background: 'linear-gradient(135deg, rgba(135, 206, 235, 0.9), rgba(70, 130, 180, 0.9))',
+                color: 'white',
+                borderRadius: '12px',
+                padding: '12px 18px',
+                fontSize: '16px',
+                fontWeight: 'bold',
+                cursor: 'pointer',
+                transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
+                boxShadow: '0 6px 20px rgba(135, 206, 235, 0.3)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '12px',
+                position: 'relative',
+                overflow: 'hidden',
+                border: '2px solid rgba(255, 255, 255, 0.2)'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.transform = 'translateY(-4px) scale(1.02)';
+                e.currentTarget.style.boxShadow = '0 12px 35px rgba(135, 206, 235, 0.5)';
+                e.currentTarget.style.background = 'linear-gradient(135deg, rgba(135, 206, 235, 1), rgba(70, 130, 180, 1))';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.transform = 'translateY(0) scale(1)';
+                e.currentTarget.style.boxShadow = '0 8px 25px rgba(135, 206, 235, 0.3)';
+                e.currentTarget.style.background = 'linear-gradient(135deg, rgba(135, 206, 235, 0.9), rgba(70, 130, 180, 0.9))';
+              }}
+            >
+              <span style={{ 
+                fontSize: '18px',
+                filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.3))',
+                transition: 'transform 0.3s ease'
+              }}>🏆</span>
+              <span style={{
+                textShadow: '0 2px 4px rgba(0,0,0,0.3)',
+                letterSpacing: '0.5px'
+              }}>Leaderboard</span>
+            </button>
+
+            {/* Language Button */}
+            <button
+              onClick={() => {
+                setIsMenuVisible(false);
+                // TODO: Implement language selection
+                console.log('Language selection clicked');
+              }}
+              className="bubble-shooter__menu-button"
+              style={{
+                background: 'linear-gradient(135deg, rgba(135, 206, 235, 0.9), rgba(70, 130, 180, 0.9))',
+                color: 'white',
+                borderRadius: '12px',
+                padding: '12px 18px',
+                fontSize: '16px',
+                fontWeight: 'bold',
+                cursor: 'pointer',
+                transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
+                boxShadow: '0 6px 20px rgba(135, 206, 235, 0.3)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '12px',
+                position: 'relative',
+                overflow: 'hidden',
+                border: '2px solid rgba(255, 255, 255, 0.2)'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.transform = 'translateY(-4px) scale(1.02)';
+                e.currentTarget.style.boxShadow = '0 12px 35px rgba(135, 206, 235, 0.5)';
+                e.currentTarget.style.background = 'linear-gradient(135deg, rgba(135, 206, 235, 1), rgba(70, 130, 180, 1))';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.transform = 'translateY(0) scale(1)';
+                e.currentTarget.style.boxShadow = '0 8px 25px rgba(135, 206, 235, 0.3)';
+                e.currentTarget.style.background = 'linear-gradient(135deg, rgba(135, 206, 235, 0.9), rgba(70, 130, 180, 0.9))';
+              }}
+            >
+              <span style={{ 
+                fontSize: '18px',
+                filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.3))',
+                transition: 'transform 0.3s ease'
+              }}>🌐</span>
+              <span style={{
+                textShadow: '0 2px 4px rgba(0,0,0,0.3)',
+                letterSpacing: '0.5px'
+              }}>Language</span>
+            </button>
+          </div>
         </Modal>
       </article>
 

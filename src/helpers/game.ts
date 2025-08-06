@@ -519,3 +519,90 @@ export const setGridCols = (): number => {
   }
   return GRID_COLUMNS;
 };
+
+// Trajectory prediction functions
+export const predictTrajectory = (
+  startX: number,
+  startY: number,
+  speedX: number,
+  speedY: number,
+  gridBubble: Record<string, Bubble>,
+  grid: Grid,
+  gameWidth: number,
+  gameHeight: number
+) => {
+  const trajectory: { x: number; y: number }[] = [];
+  let x = startX;
+  let y = startY;
+  let currentSpeedX = speedX;
+  let currentSpeedY = speedY;
+  const bubbleRadius = grid.bubbleDiameter / 2;
+  
+  // Maximum steps to prevent infinite loops
+  const maxSteps = 1000;
+  let steps = 0;
+  
+  while (steps < maxSteps) {
+    // Add current position to trajectory
+    trajectory.push({ x, y });
+    
+    // Calculate next position with smaller steps for more precision
+    const stepSize = 0.5; // Smaller steps for more precise trajectory
+    const nextX = x + currentSpeedX * stepSize;
+    const nextY = y + currentSpeedY * stepSize;
+    
+    // Check wall collisions
+    if (nextX - bubbleRadius <= 0 || nextX + bubbleRadius >= gameWidth) {
+      // Bounce off walls
+      currentSpeedX = -currentSpeedX;
+      x = nextX + currentSpeedX * stepSize;
+      y = nextY;
+    } else {
+      x = nextX;
+      y = nextY;
+    }
+    
+    // Check if bubble went off screen (missed)
+    if (y <= 0) {
+      trajectory.push({ x, y });
+      break;
+    }
+    
+    // Check collision with existing bubbles
+    const [collision, loc] = checkCollision(
+      { x, y, r: bubbleRadius, speed: 0, speedX: 0, speedY: 0, color: "", isMoving: false, isSpecial: false },
+      gridBubble,
+      grid
+    );
+    
+    if (collision && Array.isArray(loc)) {
+      // Calculate final position where bubble will attach
+      const [finalX, finalY] = getLocation(loc[0], loc[1], grid);
+      trajectory.push({ x: finalX, y: finalY });
+      break;
+    }
+    
+    steps++;
+  }
+  
+  return trajectory;
+};
+
+export const calculateShootDirection = (
+  startX: number,
+  startY: number,
+  targetX: number,
+  targetY: number,
+  speed: number
+) => {
+  const dx = targetX - startX;
+  const dy = targetY - startY;
+  const magnitude = Math.sqrt(dx * dx + dy * dy);
+  
+  if (magnitude === 0) return { speedX: 0, speedY: 0 };
+  
+  return {
+    speedX: (speed * dx) / magnitude,
+    speedY: (speed * dy) / magnitude
+  };
+};
