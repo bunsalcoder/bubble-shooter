@@ -708,133 +708,147 @@ const Board: React.FC = () => {
   const drawBubblePopping = (removeBubbles: any[], p5: p5Types) => {
     for (let i = removeBubbles.length - 1; i >= 0; i--) {
       const bubble = removeBubbles[i];
-      const imageBubble = bubble.isSpecial
-        ? image.imageSpecialBall
-        : image.imageDraw;
-      const centerX: number = bubble.x;
-      const centerY: number = bubble.y;
-      const imgWidth: number = imageBubble.width;
-      const imgHeight: number = imageBubble.height;
-      const imgDiameter: number = Math.max(imgWidth, imgHeight);
-      const scale: number = (bubble.r * 2) / imgDiameter;
-      const imgX: number = centerX - (imgWidth / 2) * scale;
-      const imgY: number = centerY - (imgHeight / 2) * scale;
       
-      if (bubble.vy == undefined) {
-        bubble.vy = -18; // Reduced initial velocity
-        bubble.vx = p5.random(-10, 10); // Reduced horizontal movement
-        bubble.g = 0.6; // Gentler gravity for longer animation
-        bubble.rotation = 0;
-        bubble.rotationSpeed = p5.random(-0.6, 0.6); // Slightly reduced rotation
-        bubble.scale = 1.1; // Smaller starting scale
-        bubble.scaleSpeed = -0.012; // Slower scale reduction
-        bubble.fade = 1; // Opacity for fade effect
-        bubble.fadeSpeed = -0.012; // Slower fade for longer animation
-        bubble.pulse = 0; // For pulsing effect
-        bubble.pulseSpeed = 0.5; // Slightly reduced pulse
-        bubble.bounceCount = 0; // Track bounces
-        bubble.maxBounces = 3; // Reduced bounces
-        bubble.trail = []; // For trail effect
+      // Initialize individual bubble pop animation
+      if (bubble.popStartTime === undefined) {
+        bubble.popStartTime = p5.millis();
+        bubble.popDelay = i * 80; // Each bubble starts 80ms after the previous one (faster)
+        bubble.popDuration = 350; // 350ms for smooth individual fade (faster)
+        bubble.popScale = 1.0;
+        bubble.popAlpha = 1.0;
+        bubble.popPhase = 0;
+        bubble.scoreShown = false; // Track if score animation has been shown
       }
       
-      // Update animation properties
-      bubble.rotation += bubble.rotationSpeed;
-      bubble.scale += bubble.scaleSpeed;
-      bubble.scale = Math.max(0.35, bubble.scale); // Don't get too small
-      bubble.fade += bubble.fadeSpeed;
-      bubble.fade = Math.max(0, bubble.fade);
-      bubble.pulse += bubble.pulseSpeed;
+      // Calculate animation progress with individual delay
+      const elapsed = p5.millis() - bubble.popStartTime - bubble.popDelay;
+      bubble.popPhase = Math.min(Math.max(elapsed / bubble.popDuration, 0), 1);
       
-      // Add trail effect
-      bubble.trail.push({ x: bubble.x, y: bubble.y, fade: 1 });
-      if (bubble.trail.length > 6) { // Reduced trail length
-        bubble.trail.shift();
+      // Smooth easing for individual bubble fade
+      const easeOutCubic = (t: number) => {
+        return 1 - Math.pow(1 - t, 3);
+      };
+      
+      const easeInOutSine = (t: number) => {
+        return -(Math.cos(Math.PI * t) - 1) / 2;
+      };
+      
+      // Individual bubble alpha animation (removed scale animation)
+      let alphaMultiplier = 1.0;
+      if (bubble.popPhase > 0.1) {
+        const fadeProgress = (bubble.popPhase - 0.1) / 0.9;
+        alphaMultiplier = 1.0 - easeOutCubic(fadeProgress);
       }
       
-      if (bubble.scale > 0.35 && bubble.fade > 0) {
-        // Create pulsing glow effect
-        const pulseGlow = 1 + 0.4 * Math.sin(bubble.pulse); // Reduced glow intensity
-        
-        // Draw trail effect
-        for (let j = 0; j < bubble.trail.length; j++) {
-          const trailPoint = bubble.trail[j];
-          const trailFade = trailPoint.fade * bubble.fade;
-          const trailScale = bubble.scale * (j / bubble.trail.length);
-          
-          p5.push();
-          p5.translate(trailPoint.x, trailPoint.y);
-          p5.rotate(bubble.rotation * 0.5);
-          p5.scale(trailScale);
-          
-          p5.push();
-          p5.noStroke();
-          p5.fill(bubble.color + Math.floor(trailFade * 80).toString(16).padStart(2, '0'));
-          p5.ellipse(0, 0, bubble.r * 2 + 8); // Reduced trail glow
-          p5.pop();
-          
-          p5.push();
-          p5.tint(255, trailFade * 255);
-          p5.fill(bubble.color);
-          p5.noStroke();
-          p5.ellipse(0, 0, bubble.r * 2);
-          // Use a simple circle instead of image to avoid canvas performance issues
-          p5.ellipse(0, 0, bubble.r * 2 * 0.8);
-          p5.pop();
-          
-          p5.pop();
-          
-          trailPoint.fade -= 0.12;
-        }
-        
+      // Apply values
+      bubble.popAlpha = Math.max(0, alphaMultiplier);
+      
+      // Draw the individual popping bubble with real bubble image
+      if (bubble.popAlpha > 0) {
         p5.push();
         p5.translate(bubble.x, bubble.y);
-        p5.rotate(bubble.rotation);
-        p5.scale(bubble.scale);
         
-        // Draw enhanced glow effect
+        // Get the correct bubble image
+        const imageBubble = bubble.isSpecial
+          ? image.imageSpecialBall
+          : image.imageDraw;
+        
+        // Draw glow effect with bubble's real color
         p5.push();
         p5.noStroke();
-        p5.fill(bubble.color + Math.floor(bubble.fade * 150).toString(16).padStart(2, '0'));
-        p5.ellipse(0, 0, bubble.r * 2 + 18 * pulseGlow); // Reduced glow size
+        const glowAlpha = Math.floor(bubble.popAlpha * 150);
+        p5.fill(bubble.color + glowAlpha.toString(16).padStart(2, '0'));
+        p5.ellipse(0, 0, bubble.r * 2 + 20);
         p5.pop();
         
-        // Draw main bubble with enhanced fade
+        // Draw real bubble image
         p5.push();
-        p5.tint(255, bubble.fade * 255);
-        p5.fill(bubble.color);
-        p5.noStroke();
-        p5.ellipse(0, 0, bubble.r * 2);
-        // Use a simple circle instead of image to avoid canvas performance issues
-        p5.ellipse(0, 0, bubble.r * 2 * 0.8);
+        p5.tint(255, bubble.popAlpha * 255);
+        p5.image(imageBubble, -bubble.r, -bubble.r, bubble.r * 2, bubble.r * 2);
         p5.pop();
         
         p5.pop();
-
-        // Update physics with bounce logic
-        bubble.vy += bubble.g;
-        bubble.x -= bubble.vx;
-        bubble.y += bubble.vy;
-
-        // Enhanced bounce off walls with energy loss
-        if (bubble.x - bubble.r <= 0 || bubble.x + bubble.r >= gameWidth) {
-          bubble.x += bubble.vx;
-          bubble.vx = -bubble.vx * 0.65; // More energy loss on bounce
-          bubble.bounceCount++;
-        }
+      }
+      
+      // Show score animation when bubble starts popping (at 10% of animation)
+      if (bubble.popPhase >= 0.1 && !bubble.scoreShown) {
+        bubble.scoreShown = true;
+        // Create score animation at bubble position with real score
+        const scoreValue = 30; // Real score per bubble (pop * 30)
+        const scoreAnim = {
+          x: bubble.x,
+          y: bubble.y,
+          value: scoreValue,
+          startTime: p5.millis(),
+          duration: 800, // Faster score animation (800ms)
+          alpha: 1.0,
+          scale: 1.0,
+          offsetY: 0
+        };
         
-        // Bounce off bottom with energy loss
-        if (bubble.y + bubble.r >= gameHeight && bubble.vy > 0) {
-          bubble.y = gameHeight - bubble.r;
-          bubble.vy = -bubble.vy * 0.55; // Bounce off bottom
-          bubble.bounceCount++;
+        // Add to score animations array
+        if (!scoreAnimations.current) {
+          scoreAnimations.current = [];
         }
-        
-        // Remove when off screen, fully faded, or too many bounces
-        if (bubble.y >= gameHeight + 80 || bubble.scale <= 0.35 || bubble.fade <= 0 || bubble.bounceCount >= bubble.maxBounces) {
-          removeBubbles.splice(i, 1);
-        }
-      } else {
+        scoreAnimations.current.push(scoreAnim);
+      }
+      
+      // Remove when individual animation complete
+      if (bubble.popPhase >= 1) {
         removeBubbles.splice(i, 1);
+      }
+    }
+  };
+
+  // Draw score animations
+  const drawScoreAnimations = (p5: p5Types) => {
+    for (let i = scoreAnimations.current.length - 1; i >= 0; i--) {
+      const scoreAnim = scoreAnimations.current[i];
+      
+      // Calculate animation progress
+      const elapsed = p5.millis() - scoreAnim.startTime;
+      const progress = Math.min(elapsed / scoreAnim.duration, 1);
+      
+      // Easing functions for smooth animation
+      const easeOutCubic = (t: number) => {
+        return 1 - Math.pow(1 - t, 3);
+      };
+      
+      // Update animation properties
+      scoreAnim.alpha = 1.0 - easeOutCubic(progress);
+      scoreAnim.scale = 1.0 + (0.5 * easeOutCubic(progress));
+      scoreAnim.offsetY = -30 * easeOutCubic(progress); // Move up
+      
+      // Draw score text with glow effect
+      if (scoreAnim.alpha > 0) {
+        p5.push();
+        p5.translate(scoreAnim.x, scoreAnim.y + scoreAnim.offsetY);
+        p5.scale(scoreAnim.scale);
+        
+        // Draw glow effect
+        p5.push();
+        p5.fill(255, 255, 255, scoreAnim.alpha * 120);
+        p5.noStroke();
+        p5.textAlign(p5.CENTER, p5.CENTER);
+        p5.textSize(24);
+        p5.text(scoreAnim.value.toString(), 0, 0);
+        p5.pop();
+        
+        // Draw main score text
+        p5.push();
+        p5.fill(255, 255, 255, scoreAnim.alpha * 255); // White color
+        p5.noStroke();
+        p5.textAlign(p5.CENTER, p5.CENTER);
+        p5.textSize(22);
+        p5.text(scoreAnim.value.toString(), 0, 0);
+        p5.pop();
+        
+        p5.pop();
+      }
+      
+      // Remove when animation complete
+      if (progress >= 1) {
+        scoreAnimations.current.splice(i, 1);
       }
     }
   };
@@ -856,6 +870,9 @@ const Board: React.FC = () => {
   const isShowingTrajectory = useRef<boolean>(false);
   const isFollowingPredictedPath = useRef<boolean>(false);
   const predictedPathIndex = useRef<number>(0);
+  
+  // Score animations
+  const scoreAnimations = useRef<any[]>([]);
 
   const drawSwapArrow = (p5: p5Types) => {
     const launcherX = gameWidth / 2;
@@ -1192,8 +1209,23 @@ const Board: React.FC = () => {
     
     const launcherX = gameWidth / 2;
     const launcherY = gameHeight - 80 - 35; // Top bubble position
-    const targetX = p5.mouseX;
-    const targetY = p5.mouseY;
+    
+    // Get target coordinates - handle both mouse and touch events
+    let targetX = p5.mouseX;
+    let targetY = p5.mouseY;
+    
+    // For touch events, use the first touch position
+    if (p5.touches && p5.touches.length > 0) {
+      const touch = p5.touches[0] as any;
+      targetX = touch.x;
+      targetY = touch.y;
+    }
+    
+    // Ensure we have valid coordinates
+    if (targetX === 0 && targetY === 0) {
+      isShowingTrajectory.current = false;
+      return;
+    }
     
     // Calculate shoot direction
     const { speedX, speedY } = calculateShootDirection(
@@ -1446,6 +1478,46 @@ const Board: React.FC = () => {
   const setup = (p5: p5Types, canvasParentRef: Element) => {
     p5.createCanvas(gameWidth, gameHeight).parent(canvasParentRef);
     
+    // Prevent iOS selection menu and text selection
+    const canvas = canvasParentRef.querySelector('canvas') as HTMLCanvasElement;
+    if (canvas) {
+      // Prevent context menu
+      canvas.addEventListener('contextmenu', (e: Event) => {
+        e.preventDefault();
+        return false;
+      });
+      
+      // Prevent text selection
+      canvas.addEventListener('selectstart', (e: Event) => {
+        e.preventDefault();
+        return false;
+      });
+      
+      // Prevent drag
+      canvas.addEventListener('dragstart', (e: Event) => {
+        e.preventDefault();
+        return false;
+      });
+      
+      // Prevent copy
+      canvas.addEventListener('copy', (e: Event) => {
+        e.preventDefault();
+        return false;
+      });
+      
+      // Prevent cut
+      canvas.addEventListener('cut', (e: Event) => {
+        e.preventDefault();
+        return false;
+      });
+      
+      // Prevent paste
+      canvas.addEventListener('paste', (e: Event) => {
+        e.preventDefault();
+        return false;
+      });
+    }
+    
     // Load highest score on startup
     loadHighestScore();
     
@@ -1483,6 +1555,7 @@ const Board: React.FC = () => {
 
     // draw when ball fall down
     drawBubblePopping(removeBubbles, p5);
+    drawScoreAnimations(p5);
 
     // check is win
     checkIsWin(gridBubble.current);
@@ -1691,8 +1764,20 @@ const Board: React.FC = () => {
     if (isHolding.current && !isShowingTrajectory.current) {
       const launcherX = gameWidth / 2;
       const launcherY = gameHeight - 80;
-      // Use actual mouse position instead of hoverTarget
-      drawHoverArrow(p5, launcherX, launcherY - 35, p5.mouseX, p5.mouseY, activeBubble.current.color);
+      
+      // Get target coordinates - handle both mouse and touch events
+      let targetX = p5.mouseX;
+      let targetY = p5.mouseY;
+      
+      // For touch events, use the first touch position
+      if (p5.touches && p5.touches.length > 0) {
+        const touch = p5.touches[0] as any;
+        targetX = touch.x;
+        targetY = touch.y;
+      }
+      
+      // Use actual mouse/touch position instead of hoverTarget
+      drawHoverArrow(p5, launcherX, launcherY - 35, targetX, targetY, activeBubble.current.color || '#ffffff');
     }
 
     // Arrow trajectory removed - will be re-implemented later
@@ -1816,7 +1901,18 @@ const Board: React.FC = () => {
 
   const mouseClicked = (p5: p5Types) => {
     if (!checkGamePause()) {
-      if (p5.mouseX !== 0 && p5.mouseY !== 0) {
+      // Get click coordinates - handle both mouse and touch events
+      let clickX = p5.mouseX;
+      let clickY = p5.mouseY;
+      
+      // For touch events, use the first touch position
+      if (p5.touches && p5.touches.length > 0) {
+        const touch = p5.touches[0] as any;
+        clickX = touch.x;
+        clickY = touch.y;
+      }
+      
+      if (clickX !== 0 && clickY !== 0) {
         // Check if click is on swap area (around the bubbles)
         const launcherX = gameWidth / 2;
         const launcherY = gameHeight - 80;
@@ -1829,10 +1925,10 @@ const Board: React.FC = () => {
         
         // Check if click is within the entire launcher area
         if (
-          p5.mouseX >= launcherAreaX &&
-          p5.mouseX <= launcherAreaX + launcherAreaWidth &&
-          p5.mouseY >= launcherAreaY &&
-          p5.mouseY <= launcherAreaY + launcherAreaHeight
+          clickX >= launcherAreaX &&
+          clickX <= launcherAreaX + launcherAreaWidth &&
+          clickY >= launcherAreaY &&
+          clickY <= launcherAreaY + launcherAreaHeight
         ) {
           // Set swap area flag and swap bubbles
           isInSwapArea.current = true;
@@ -1842,9 +1938,9 @@ const Board: React.FC = () => {
         
         // Only allow shooting if not in swap area and bubble is not moving
         if (
-          p5.mouseY <= gameHeight &&
-          p5.mouseX >= 0 &&
-          p5.mouseX <= gameWidth &&
+          clickY <= gameHeight &&
+          clickX >= 0 &&
+          clickX <= gameWidth &&
           !activeBubble.current.isMoving
         ) {
           if (
@@ -1875,8 +1971,8 @@ const Board: React.FC = () => {
             setTimeout(() => saveGameToLocalStorage(), 100);
           } else {
             // Fallback to mouse direction
-            let dx = p5.mouseX - activeBubble.current.x;
-            let dy = p5.mouseY - activeBubble.current.y;
+            let dx = clickX - activeBubble.current.x;
+            let dy = clickY - activeBubble.current.y;
             let magnitude = Math.sqrt(dx * dx + dy * dy);
             
             // Ensure minimum distance for shooting
@@ -1936,11 +2032,55 @@ const Board: React.FC = () => {
   };
 
   const mouseMoved = (p5: p5Types) => {
-    // Always update hover target when mouse moves
-    if (p5.mouseX !== 0 || p5.mouseY !== 0) {
-      hoverTarget.current.x = p5.mouseX;
-      hoverTarget.current.y = p5.mouseY;
+    // Get move coordinates - handle both mouse and touch events
+    let moveX = p5.mouseX;
+    let moveY = p5.mouseY;
+    
+    // For touch events, use the first touch position
+    if (p5.touches && p5.touches.length > 0) {
+      const touch = p5.touches[0] as any;
+      moveX = touch.x;
+      moveY = touch.y;
     }
+    
+    // Always update hover target when mouse/touch moves
+    if (moveX !== 0 || moveY !== 0) {
+      hoverTarget.current.x = moveX;
+      hoverTarget.current.y = moveY;
+    }
+  };
+
+  // Add touch event handlers for iOS compatibility
+  const touchStarted = (p5: p5Types) => {
+    console.log('Touch started');
+    isHolding.current = true;
+    // Update mouse coordinates for touch events
+    if (p5.touches && p5.touches.length > 0) {
+      const touch = p5.touches[0] as any;
+      p5.mouseX = touch.x;
+      p5.mouseY = touch.y;
+      hoverTarget.current.x = touch.x;
+      hoverTarget.current.y = touch.y;
+    }
+  };
+
+  const touchMoved = (p5: p5Types) => {
+    // Update mouse coordinates for touch events
+    if (p5.touches && p5.touches.length > 0) {
+      const touch = p5.touches[0] as any;
+      p5.mouseX = touch.x;
+      p5.mouseY = touch.y;
+      hoverTarget.current.x = touch.x;
+      hoverTarget.current.y = touch.y;
+    }
+  };
+
+  const touchEnded = (p5: p5Types) => {
+    console.log('Touch ended');
+    isHolding.current = false;
+    hoverTarget.current.x = 0;
+    hoverTarget.current.y = 0;
+    isShowingTrajectory.current = false;
   };
 
   const Sketch = dynamic(() => import("react-p5").then((mod) => mod.default), {
@@ -2232,16 +2372,30 @@ const Board: React.FC = () => {
         </ul>
       </aside>
       <article className="bubble-shooter__game-main">
-        <Sketch
-          setup={setup}
-          draw={draw}
-          preload={preload}
-          mouseClicked={mouseClicked}
-          mouseMoved={mouseMoved}
-          mousePressed={mousePressed}
-          mouseReleased={mouseReleased}
-          keyPressed={keyPressed}
-        />
+        <div 
+          style={{
+            WebkitUserSelect: 'none',
+            WebkitTouchCallout: 'none',
+            WebkitTapHighlightColor: 'transparent',
+            userSelect: 'none',
+            touchAction: 'none',
+            position: 'relative'
+          }}
+        >
+          <Sketch
+            setup={setup}
+            draw={draw}
+            preload={preload}
+            mouseClicked={mouseClicked}
+            mouseMoved={mouseMoved}
+            mousePressed={mousePressed}
+            mouseReleased={mouseReleased}
+            keyPressed={keyPressed}
+            touchStarted={touchStarted}
+            touchMoved={touchMoved}
+            touchEnded={touchEnded}
+          />
+        </div>
         <Modal
           title="Question"
           open={isModalOpen}
