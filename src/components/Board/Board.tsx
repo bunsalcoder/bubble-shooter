@@ -2481,12 +2481,26 @@ const Board: React.FC = () => {
           open={isLeaderboardOpen}
           onOk={handleLeaderboardOk}
           onCancel={handleLeaderboardCancel}
-          width={600}
+          width={isMobile ? '90vw' : 600}
           centered={true}
           bodyStyle={{
-            maxHeight: '400px',
+            maxHeight: '60vh',
             overflowY: 'auto',
-            padding: '20px'
+            overflowX: 'hidden',
+            padding: '20px',
+            WebkitOverflowScrolling: 'touch', // iOS momentum scrolling
+            msOverflowStyle: 'none', // Hide scrollbar on IE/Edge
+            scrollbarWidth: 'none', // Hide scrollbar on Firefox
+            // Touch event handling for miniapp
+            touchAction: 'pan-y',
+            userSelect: 'none',
+            WebkitUserSelect: 'none',
+            MozUserSelect: 'none',
+            msUserSelect: 'none'
+          }}
+          style={{
+            maxHeight: '90vh',
+            overflow: 'hidden'
           }}
           okButtonProps={{
             style: {
@@ -2511,27 +2525,54 @@ const Board: React.FC = () => {
             }
           }}
         >
-          <div style={{ marginBottom: '20px' }}>
+          <div style={{ marginBottom: '15px' }}>
             <div 
               className="bubble-shooter__leaderboard-score-header"
               style={{
                 display: 'flex',
                 justifyContent: 'space-between',
                 alignItems: 'center',
-                padding: '10px 15px',
+                padding: isMobile ? '8px 12px' : '10px 15px',
                 background: 'linear-gradient(135deg, rgba(30, 58, 138, 0.9), rgba(59, 130, 246, 0.9))',
                 borderRadius: '10px',
                 color: 'white',
                 fontWeight: 'bold',
-                marginBottom: '15px',
-                textShadow: '0 1px 2px rgba(0, 0, 0, 0.3)'
+                marginBottom: '10px',
+                textShadow: '0 1px 2px rgba(0, 0, 0, 0.3)',
+                fontSize: isMobile ? '12px' : '14px'
               }}>
-              <span>Your Best Score: {gameProperties.current.highestScore}</span>
-              <span>Current Score: {gameProperties.current.score}</span>
+              <span>Best: {gameProperties.current.highestScore}</span>
+              <span>Current: {gameProperties.current.score}</span>
             </div>
           </div>
           
-          <div style={{ marginBottom: '15px' }}>
+          <div 
+            style={{ marginBottom: '15px' }}
+            onTouchStart={(e) => {
+              // Prevent default touch behavior that might interfere with scrolling
+              e.stopPropagation();
+            }}
+            onTouchMove={(e) => {
+              // Allow touch scrolling
+              e.stopPropagation();
+            }}
+            onTouchEnd={(e) => {
+              // Handle touch end
+              e.stopPropagation();
+            }}
+            onMouseDown={(e) => {
+              // Prevent mouse events from interfering with touch
+              e.stopPropagation();
+            }}
+            onMouseMove={(e) => {
+              // Allow mouse scrolling
+              e.stopPropagation();
+            }}
+            onMouseUp={(e) => {
+              // Handle mouse up
+              e.stopPropagation();
+            }}
+          >
             {leaderboardData.map((player, index) => {
               const isCurrentPlayer = player.name === currentPlayerName;
               const isTop3 = index < 3;
@@ -2543,8 +2584,8 @@ const Board: React.FC = () => {
                   style={{
                     display: 'flex',
                     alignItems: 'center',
-                    padding: '12px 15px',
-                    marginBottom: '8px',
+                    padding: isMobile ? '8px 12px' : '12px 15px',
+                    marginBottom: isMobile ? '6px' : '8px',
                     borderRadius: '10px',
                     background: isCurrentPlayer 
                       ? 'linear-gradient(135deg, rgba(135, 206, 235, 0.3), rgba(70, 130, 180, 0.3))'
@@ -2560,7 +2601,13 @@ const Board: React.FC = () => {
                     cursor: 'pointer',
                     position: 'relative',
                     color: 'white',
-                    textShadow: '0 1px 2px rgba(0, 0, 0, 0.4)'
+                    textShadow: '0 1px 2px rgba(0, 0, 0, 0.4)',
+                    // Prevent touch events from interfering with scrolling
+                    touchAction: 'pan-y',
+                    userSelect: 'none',
+                    WebkitUserSelect: 'none',
+                    MozUserSelect: 'none',
+                    msUserSelect: 'none'
                   }}
                   onMouseEnter={(e) => {
                     e.currentTarget.style.transform = 'scale(1.02)';
@@ -2577,6 +2624,18 @@ const Board: React.FC = () => {
                       : isTop3 
                         ? 'linear-gradient(135deg, rgba(255, 215, 0, 0.2), rgba(255, 165, 0, 0.2))'
                         : 'linear-gradient(135deg, rgba(255, 255, 255, 0.15), rgba(240, 248, 255, 0.15))';
+                  }}
+                  onTouchStart={(e) => {
+                    // Prevent default touch behavior
+                    e.stopPropagation();
+                  }}
+                  onTouchMove={(e) => {
+                    // Allow touch scrolling
+                    e.stopPropagation();
+                  }}
+                  onTouchEnd={(e) => {
+                    // Handle touch end
+                    e.stopPropagation();
                   }}
                 >
                   {isCurrentPlayer && (
@@ -2609,34 +2668,34 @@ const Board: React.FC = () => {
                   <div 
                     className="bubble-shooter__leaderboard-rank-circle"
                     style={{
-                      width: '40px',
-                      height: '40px',
+                      width: isMobile ? '32px' : '40px',
+                      height: isMobile ? '32px' : '40px',
                       borderRadius: '50%',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
-                    fontSize: '20px',
-                    background: index < 3 
-                      ? 'linear-gradient(135deg, #FFD700, #FFA500)'
-                      : 'linear-gradient(135deg, #3b82f6, #1e3a8a)',
-                    color: 'white',
-                    fontWeight: 'bold',
-                    boxShadow: '0 2px 8px rgba(0, 0, 0, 0.2)'
-                  }}>
+                      fontSize: isMobile ? '16px' : '20px',
+                      background: index < 3 
+                        ? 'linear-gradient(135deg, #FFD700, #FFA500)'
+                        : 'linear-gradient(135deg, #3b82f6, #1e3a8a)',
+                      color: 'white',
+                      fontWeight: 'bold',
+                      boxShadow: '0 2px 8px rgba(0, 0, 0, 0.2)'
+                    }}>
                     {player.rank}
                   </div>
                   
                   <div style={{
                     display: 'flex',
                     alignItems: 'center',
-                    gap: '10px',
+                    gap: isMobile ? '8px' : '10px',
                     flex: 1
                   }}>
-                    <span style={{ fontSize: '24px' }}>{player.avatar}</span>
+                    <span style={{ fontSize: isMobile ? '20px' : '24px' }}>{player.avatar}</span>
                     <span style={{
                       fontWeight: 'bold',
                       color: 'white',
-                      fontSize: '16px',
+                      fontSize: isMobile ? '14px' : '16px',
                       textShadow: '0 1px 2px rgba(0, 0, 0, 0.4)'
                     }}>
                       {player.name}
@@ -2645,7 +2704,7 @@ const Board: React.FC = () => {
                   
                   <div style={{
                     fontWeight: 'bold',
-                    fontSize: '18px',
+                    fontSize: isMobile ? '16px' : '18px',
                     color: 'white',
                     textShadow: '0 1px 2px rgba(0, 0, 0, 0.4)'
                   }}>

@@ -3,6 +3,32 @@
 $color_white: #ffffff;
 $color_black: #000000;
 
+// Touch event handling for miniapp scrolling
+.ant-modal-body {
+  touch-action: pan-y !important;
+  -webkit-overflow-scrolling: touch !important;
+  overflow-y: auto !important;
+  user-select: none !important;
+  -webkit-user-select: none !important;
+  -moz-user-select: none !important;
+  -ms-user-select: none !important;
+  
+  // Prevent touch events from interfering with scrolling
+  * {
+    touch-action: pan-y !important;
+    user-select: none !important;
+    -webkit-user-select: none !important;
+    -moz-user-select: none !important;
+    -ms-user-select: none !important;
+  }
+}
+
+// Ensure modal content is scrollable in miniapp
+.ant-modal-content {
+  touch-action: pan-y !important;
+  -webkit-overflow-scrolling: touch !important;
+}
+
 // 強調色
 $color_accent-dark: #3d32be;
 $color_accent: #2c45c4;
