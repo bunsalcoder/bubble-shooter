@@ -204,6 +204,7 @@ const Board: React.FC = () => {
   const [isModalSettingOpen, setIsModalSettingOpen] = useState<boolean>(false);
   const [isGameLoadedFromStorage, setIsGameLoadedFromStorage] = useState<boolean>(false);
   const [isLeaderboardOpen, setIsLeaderboardOpen] = useState<boolean>(false);
+  const [isMusicMuted, setIsMusicMuted] = useState<boolean>(false);
   const [isMenuVisible, setIsMenuVisible] = useState<boolean>(false);
   const gridBubble = useRef<Record<string, Bubble>>({});
   const specialBubble = useRef({
@@ -455,6 +456,45 @@ const Board: React.FC = () => {
 
   const handleCancelSetting = () => {
     setIsModalSettingOpen(false);
+  };
+
+  // Music control functions
+  const toggleMusic = () => {
+    const newMutedState = !isMusicMuted;
+    setIsMusicMuted(newMutedState);
+    
+    if ((window as any).audioManager) {
+      if (newMutedState) {
+        // Mute music
+        (window as any).audioManager.pauseMusic();
+        console.log('🔇 Music muted by user');
+      } else {
+        // Unmute music
+        (window as any).audioManager.resumeMusic();
+        console.log('🎵 Music unmuted by user');
+      }
+    }
+  };
+
+  const startBackgroundMusic = () => {
+    if ((window as any).audioManager) {
+      (window as any).audioManager.startMusic();
+    }
+  };
+
+  // Handle first user interaction to start music
+  const handleFirstInteraction = () => {
+    if ((window as any).audioManager) {
+      (window as any).audioManager.enableAudio();
+    }
+  };
+
+  // Play shoot sound when bubble is fired
+  const playShootSound = () => {
+    if ((window as any).soundEffects) {
+      (window as any).soundEffects.playSinglePop();
+      console.log('🔊 Playing shoot sound');
+    }
   };
 
   const caculateScore = (pop: number) => {
@@ -1478,6 +1518,13 @@ const Board: React.FC = () => {
   const setup = (p5: p5Types, canvasParentRef: Element) => {
     p5.createCanvas(gameWidth, gameHeight).parent(canvasParentRef);
     
+    // Try to start music when game loads (will only work if user has already interacted)
+    setTimeout(() => {
+      if ((window as any).audioManager) {
+        (window as any).audioManager.enableAudio();
+      }
+    }, 500);
+    
     // Prevent iOS selection menu and text selection
     const canvas = canvasParentRef.querySelector('canvas') as HTMLCanvasElement;
     if (canvas) {
@@ -1611,6 +1658,13 @@ const Board: React.FC = () => {
           
           let extra = verifyGrid(gridBubble.current, removeBubbles);
           gameProperties.current.score += caculateScore(pop + extra);
+          
+          // Play pop sound for each bubble that broke
+          const totalBubblesBroke = pop + extra;
+          if ((window as any).soundEffects && totalBubblesBroke > 0) {
+            (window as any).soundEffects.playPopSound(totalBubblesBroke);
+            console.log(`🔊 Playing pop sound ${totalBubblesBroke} times for broken bubbles`);
+          }
           
           // Update highest score if current score is higher
           updateHighestScore();
@@ -1848,6 +1902,13 @@ const Board: React.FC = () => {
               let extra = verifyGrid(gridBubble.current, removeBubbles);
               gameProperties.current.score += caculateScore(pop + extra);
               
+              // Play pop sound for each bubble that broke
+              const totalBubblesBroke = pop + extra;
+              if ((window as any).soundEffects && totalBubblesBroke > 0) {
+                (window as any).soundEffects.playPopSound(totalBubblesBroke);
+                console.log(`🔊 Playing pop sound ${totalBubblesBroke} times for broken bubbles (predicted path)`);
+              }
+              
               // Update highest score if current score is higher
               updateHighestScore();
               
@@ -1901,6 +1962,9 @@ const Board: React.FC = () => {
 
   const mouseClicked = (p5: p5Types) => {
     if (!checkGamePause()) {
+      // Handle first interaction to start music
+      handleFirstInteraction();
+      
       // Get click coordinates - handle both mouse and touch events
       let clickX = p5.mouseX;
       let clickY = p5.mouseY;
@@ -1967,6 +2031,9 @@ const Board: React.FC = () => {
             isShowingTrajectory.current = false; // Clear trajectory when bubble starts moving
             gameState.countShoot++;
             
+            // Play shoot sound
+            playShootSound();
+            
             // Save game after each shot
             setTimeout(() => saveGameToLocalStorage(), 100);
           } else {
@@ -1983,6 +2050,9 @@ const Board: React.FC = () => {
               activeBubble.current.isMoving = true;
               isShowingTrajectory.current = false; // Clear trajectory when bubble starts moving
               gameState.countShoot++;
+              
+              // Play shoot sound
+              playShootSound();
               
               // Save game after each shot
               setTimeout(() => saveGameToLocalStorage(), 100);
@@ -2009,6 +2079,9 @@ const Board: React.FC = () => {
   
   const keyPressed = (p5: p5Types) => {
     console.log('Key pressed:', p5.key);
+    // Handle first interaction to start music
+    handleFirstInteraction();
+    
     if (p5.key === ' ') {
       isHolding.current = !isHolding.current;
       console.log('Space pressed, holding:', isHolding.current);
@@ -2053,6 +2126,9 @@ const Board: React.FC = () => {
   // Add touch event handlers for iOS compatibility
   const touchStarted = (p5: p5Types) => {
     console.log('Touch started');
+    // Handle first interaction to start music
+    handleFirstInteraction();
+    
     isHolding.current = true;
     // Update mouse coordinates for touch events
     if (p5.touches && p5.touches.length > 0) {
@@ -2316,6 +2392,8 @@ const Board: React.FC = () => {
           <button 
             onClick={(e) => {
               e.stopPropagation();
+              // Handle first interaction to start music
+              handleFirstInteraction();
               setIsMenuVisible(true);
             }}
             style={{
@@ -2354,6 +2432,8 @@ const Board: React.FC = () => {
         <ul>
           <li
             onClick={() => {
+              // Handle first interaction to start music
+              handleFirstInteraction();
               gameState.isPause = false;
             }}
           >
@@ -2361,12 +2441,18 @@ const Board: React.FC = () => {
           </li>
           <li
             onClick={() => {
+              // Handle first interaction to start music
+              handleFirstInteraction();
               gameState.isPause = true;
             }}
           >
             <Image width={60} height={60} src={pause} alt="暫停按鈕" />
           </li>
-          <li onClick={() => setIsModalSettingOpen(true)}>
+          <li onClick={() => {
+            // Handle first interaction to start music
+            handleFirstInteraction();
+            setIsModalSettingOpen(true);
+          }}>
             <Image width={60} height={60} src={setting} alt="設定按鈕" />
           </li>
         </ul>
@@ -2961,6 +3047,50 @@ const Board: React.FC = () => {
                 textShadow: '0 2px 4px rgba(0,0,0,0.3)',
                 letterSpacing: '0.5px'
               }}>Language</span>
+            </button>
+
+            {/* Music Control Button */}
+            <button
+              onClick={toggleMusic}
+              className="bubble-shooter__menu-button"
+              style={{
+                background: 'linear-gradient(135deg, rgba(135, 206, 235, 0.9), rgba(70, 130, 180, 0.9))',
+                color: 'white',
+                borderRadius: '12px',
+                padding: '12px 18px',
+                fontSize: '16px',
+                fontWeight: 'bold',
+                cursor: 'pointer',
+                transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
+                boxShadow: '0 6px 20px rgba(135, 206, 235, 0.3)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '12px',
+                position: 'relative',
+                overflow: 'hidden',
+                border: '2px solid rgba(255, 255, 255, 0.2)'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.transform = 'translateY(-4px) scale(1.02)';
+                e.currentTarget.style.boxShadow = '0 12px 35px rgba(135, 206, 235, 0.5)';
+                e.currentTarget.style.background = 'linear-gradient(135deg, rgba(135, 206, 235, 1), rgba(70, 130, 180, 1))';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.transform = 'translateY(0) scale(1)';
+                e.currentTarget.style.boxShadow = '0 8px 25px rgba(135, 206, 235, 0.3)';
+                e.currentTarget.style.background = 'linear-gradient(135deg, rgba(135, 206, 235, 0.9), rgba(70, 130, 180, 0.9))';
+              }}
+            >
+              <span style={{ 
+                fontSize: '18px',
+                filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.3))',
+                transition: 'transform 0.3s ease'
+              }}>{isMusicMuted ? '🔇' : '🎵'}</span>
+              <span style={{
+                textShadow: '0 2px 4px rgba(0,0,0,0.3)',
+                letterSpacing: '0.5px'
+              }}>{isMusicMuted ? 'Unmute' : 'Mute'}</span>
             </button>
           </div>
         </Modal>
