@@ -463,16 +463,20 @@ const Board: React.FC = () => {
     const newMutedState = !isMusicMuted;
     setIsMusicMuted(newMutedState);
     
-    if ((window as any).audioManager) {
-      if (newMutedState) {
-        // Mute music
-        (window as any).audioManager.pauseMusic();
-        console.log('🔇 Music muted by user');
-      } else {
-        // Unmute music
-        (window as any).audioManager.resumeMusic();
-        console.log('🎵 Music unmuted by user');
+    try {
+      if ((window as any).audioManager) {
+        if (newMutedState) {
+          // Mute music
+          (window as any).audioManager.pauseMusic();
+          console.log('🔇 Music muted by user');
+        } else {
+          // Unmute music
+          (window as any).audioManager.resumeMusic();
+          console.log('🎵 Music unmuted by user');
+        }
       }
+    } catch (error) {
+      console.error('Error toggling music:', error);
     }
   };
 
@@ -484,11 +488,16 @@ const Board: React.FC = () => {
 
   // Handle first user interaction to start music and sound effects
   const handleFirstInteraction = () => {
-    if ((window as any).audioManager) {
-      (window as any).audioManager.enableAudio();
-    }
-    if ((window as any).soundEffects) {
-      (window as any).soundEffects.enableAudio();
+    try {
+      // Enable audio for both manager and effects
+      if ((window as any).audioManager?.enableAudio) {
+        (window as any).audioManager.enableAudio();
+      }
+      if ((window as any).soundEffects?.enableAudio) {
+        (window as any).soundEffects.enableAudio();
+      }
+    } catch (error) {
+      console.error('Error enabling audio:', error);
     }
     
     // iOS-specific audio initialization
@@ -1541,9 +1550,14 @@ const Board: React.FC = () => {
     p5.createCanvas(gameWidth, gameHeight).parent(canvasParentRef);
     
     // Try to start music when game loads (will only work if user has already interacted)
+    // Try to start music when game loads (will only work if user has already interacted)
     setTimeout(() => {
-      if ((window as any).audioManager) {
-        (window as any).audioManager.enableAudio();
+      try {
+        if ((window as any).audioManager) {
+          (window as any).audioManager.enableAudio();
+        }
+      } catch (error) {
+        console.error('Error enabling audio in setup:', error);
       }
     }, 500);
     

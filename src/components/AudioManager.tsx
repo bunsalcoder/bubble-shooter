@@ -1,13 +1,22 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, forwardRef } from 'react';
 
 interface AudioManagerProps {
     isMuted?: boolean;
     onVolumeChange?: (volume: number) => void;
 }
 
-const AudioManager: React.FC<AudioManagerProps> = ({ isMuted = false, onVolumeChange }) => {
+const isIOS = () => {
+    if (typeof window === 'undefined') return false;
+    return /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+        (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+};
+
+const AudioManager = forwardRef<HTMLAudioElement, AudioManagerProps>(({
+    isMuted = false,
+    onVolumeChange
+}, ref) => {
     const [isPlaying, setIsPlaying] = useState(false);
-    const [volume, setVolume] = useState(0.15);
+    const [volume, setVolume] = useState(isIOS() ? 0.005 : 0.15);
     const [isLoaded, setIsLoaded] = useState(false);
     const [hasUserInteracted, setHasUserInteracted] = useState(false);
 
@@ -21,14 +30,12 @@ const AudioManager: React.FC<AudioManagerProps> = ({ isMuted = false, onVolumeCh
                 // Create audio context for better control
                 audioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
 
-                // Try to wake up the audio context immediately with a silent buffer
                 const wakeUpAudioContext = async () => {
                     try {
-                        if (audioContextRef.current && audioContextRef.current.state === 'suspended') {
+                        if (audioContextRef.current?.state === 'suspended') {
                             await audioContextRef.current.resume();
                         }
-                        
-                        // Create a silent buffer to ensure audio context is active
+
                         if (audioContextRef.current) {
                             const silentBuffer = audioContextRef.current.createBuffer(1, 1, 22050);
                             const silentSource = audioContextRef.current.createBufferSource();
@@ -38,12 +45,11 @@ const AudioManager: React.FC<AudioManagerProps> = ({ isMuted = false, onVolumeCh
                             silentSource.stop(0.001);
                         }
                     } catch (error) {
-                        // Silent error handling
+                        console.error('Audio context wakeup failed:', error);
                     }
                 };
-                
-                // Try to wake up audio context immediately
-                wakeUpAudioContext();
+
+                await wakeUpAudioContext();
 
                 // Create audio element
                 audioRef.current = new Audio('/bubble-shooter/audio/background-music.wav');
@@ -62,16 +68,11 @@ const AudioManager: React.FC<AudioManagerProps> = ({ isMuted = false, onVolumeCh
 
                 // Handle audio errors
                 audioRef.current.addEventListener('error', (e) => {
-                    // Silent error handling
-                });
-
-                // Handle audio end (shouldn't happen due to loop)
-                audioRef.current.addEventListener('ended', () => {
-                    // Background music ended, restarting...
+                    console.error('Background music error:', e);
                 });
 
             } catch (error) {
-                // Silent error handling
+                console.error('Audio initialization failed:', error);
             }
         };
 
@@ -117,9 +118,8 @@ const AudioManager: React.FC<AudioManagerProps> = ({ isMuted = false, onVolumeCh
         enableAudioImmediately();
 
         // Listen for user interactions - use capture to catch events early
-        // Include both mouse and touch events for mobile compatibility
         const events = [
-            'click', 'touchstart', 'touchend', 'touchmove', 
+            'click', 'touchstart', 'touchend', 'touchmove',
             'keydown', 'mousedown', 'mousemove', 'scroll',
             'pointerdown', 'pointerup', 'pointermove'
         ];
@@ -160,6 +160,17 @@ const AudioManager: React.FC<AudioManagerProps> = ({ isMuted = false, onVolumeCh
         };
     }, []);
 
+    // Forward the ref
+    useEffect(() => {
+        if (ref) {
+            if (typeof ref === 'function') {
+                ref(audioRef.current);
+            } else {
+                ref.current = audioRef.current;
+            }
+        }
+    }, [audioRef.current]);
+
     // Handle mute/unmute
     useEffect(() => {
         if (audioRef.current && hasUserInteracted && isLoaded) {
@@ -181,7 +192,7 @@ const AudioManager: React.FC<AudioManagerProps> = ({ isMuted = false, onVolumeCh
             audioRef.current.volume = volume;
             onVolumeChange?.(volume);
         }
-    }, [volume, onVolumeChange]);
+    }, [volume]);
 
     // Start background music
     const startMusic = async () => {
@@ -196,7 +207,7 @@ const AudioManager: React.FC<AudioManagerProps> = ({ isMuted = false, onVolumeCh
             await audioRef.current.play();
             setIsPlaying(true);
         } catch (error) {
-            // Silent error handling
+            console.error('Failed to start music:', error);
         }
     };
 
@@ -220,17 +231,31 @@ const AudioManager: React.FC<AudioManagerProps> = ({ isMuted = false, onVolumeCh
     // Resume background music
     const resumeMusic = () => {
         if (audioRef.current && !isMuted) {
-            audioRef.current.play().catch(() => {
-                // Silent error handling
-            });
+            audioRef.current.play().catch(console.error);
             setIsPlaying(true);
         }
     };
 
     // Set volume
     const setMusicVolume = (newVolume: number) => {
-        const clampedVolume = Math.max(0, Math.min(1, newVolume));
+        let clampedVolume = Math.max(0, Math.min(1, newVolume));
+        if (isIOS()) {
+            clampedVolume = Math.min(clampedVolume, 0.2);
+        }
         setVolume(clampedVolume);
+    };
+
+    // Enable audio context (for external calls)
+    const enableAudio = () => {
+        if (!hasUserInteracted) {
+            setHasUserInteracted(true);
+            if (audioContextRef.current?.state === 'suspended') {
+                audioContextRef.current.resume();
+            }
+            if (!isMuted && isLoaded) {
+                startMusic();
+            }
+        }
     };
 
     // Expose methods globally for easy access
@@ -244,21 +269,19 @@ const AudioManager: React.FC<AudioManagerProps> = ({ isMuted = false, onVolumeCh
             isPlaying: () => isPlaying,
             isLoaded: () => isLoaded,
             hasUserInteracted: () => hasUserInteracted,
-            enableAudio: () => {
-                if (!hasUserInteracted) {
-                    setHasUserInteracted(true);
-                    if (audioContextRef.current?.state === 'suspended') {
-                        audioContextRef.current.resume();
-                    }
-                    if (!isMuted && isLoaded) {
-                        startMusic();
-                    }
-                }
+            enableAudio
+        };
+
+        return () => {
+            // Clean up the global reference when component unmounts
+            if ((window as any).audioManager) {
+                delete (window as any).audioManager;
             }
         };
-    }, [isPlaying, isLoaded, hasUserInteracted, isMuted, isLoaded]);
+    }, [isPlaying, isLoaded, hasUserInteracted, isMuted]);
 
-    return null; // This component doesn't render anything
-};
+    return null;
+});
 
-export default AudioManager; 
+AudioManager.displayName = 'AudioManager';
+export default AudioManager;

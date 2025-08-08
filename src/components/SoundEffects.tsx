@@ -2,44 +2,60 @@ import React, { useEffect, useRef, useState } from 'react';
 
 interface SoundEffectsProps {
   isMuted?: boolean;
+  backgroundMusicRef?: React.RefObject<HTMLAudioElement>;
 }
 
-const SoundEffects: React.FC<SoundEffectsProps> = ({ isMuted = false }) => {
+const SoundEffects: React.FC<SoundEffectsProps> = ({ 
+  isMuted = false, 
+  backgroundMusicRef 
+}) => {
   const [isLoaded, setIsLoaded] = useState(false);
   const [hasUserInteracted, setHasUserInteracted] = useState(false);
   const audioContextRef = useRef<AudioContext | null>(null);
   const popSoundRef = useRef<HTMLAudioElement | null>(null);
   const gameWinSoundRef = useRef<HTMLAudioElement | null>(null);
   const gameOverSoundRef = useRef<HTMLAudioElement | null>(null);
-  const soundQueue = useRef<Array<{ sound: HTMLAudioElement; delay: number }>>([]);
-  const isPlayingRef = useRef(false);
 
-  // Check if we're on iOS
   const isIOS = () => {
+    if (typeof window === 'undefined') return false;
     return /iPad|iPhone|iPod/.test(navigator.userAgent) ||
       (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
   };
 
-  // Get pop sound volume based on device
-  const getPopSoundVolume = () => {
-    return isIOS() ? 0.9 : 0.7; // Higher volume for iOS
+  const getSoundVolumes = () => {
+    return isIOS() ? {
+      pop: 1.0,       // Max volume for pop sounds on iOS
+      win: 1.0,      // Max volume for win sound on iOS
+      over: 1.0,      // Max volume for game over on iOS
+      background: 0.005 // Extremely low background music volume on iOS
+    } : {
+      pop: 0.7,
+      win: 0.8,
+      over: 0.8,
+      background: 0.15
+    };
   };
 
-  // Initialize audio context and sound effects
+  const adjustBackgroundMusic = () => {
+    if (backgroundMusicRef?.current) {
+      const volumes = getSoundVolumes();
+      backgroundMusicRef.current.volume = volumes.background;
+    }
+  };
+
   useEffect(() => {
     const initAudio = async () => {
       try {
-        // Create audio context for better control
         audioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
 
-        // iOS-specific audio context initialization
+        // Initialize audio context for iOS
         const initializeAudioForIOS = async () => {
           try {
-            if (audioContextRef.current && audioContextRef.current.state === 'suspended') {
+            if (audioContextRef.current?.state === 'suspended') {
               await audioContextRef.current.resume();
             }
 
-            // Create a silent buffer to ensure audio context is active on iOS
+            // Create silent buffer to ensure audio context is active on iOS
             if (audioContextRef.current) {
               const silentBuffer = audioContextRef.current.createBuffer(1, 1, 22050);
               const silentSource = audioContextRef.current.createBufferSource();
@@ -49,29 +65,28 @@ const SoundEffects: React.FC<SoundEffectsProps> = ({ isMuted = false }) => {
               silentSource.stop(0.001);
             }
           } catch (error) {
-            // Silent error handling
+            console.error('iOS audio init failed:', error);
           }
         };
 
-        // Initialize audio context immediately
         await initializeAudioForIOS();
 
-        // Create pop sound element
+        // Create sound effects
         popSoundRef.current = new Audio('/bubble-shooter/audio/pop.wav');
         popSoundRef.current.preload = 'auto';
-        popSoundRef.current.volume = getPopSoundVolume(); // Dynamic volume based on device
+        popSoundRef.current.volume = getSoundVolumes().pop;
 
-        // Create game win sound element
         gameWinSoundRef.current = new Audio('/bubble-shooter/audio/gamewin.mp3');
         gameWinSoundRef.current.preload = 'auto';
-        gameWinSoundRef.current.volume = 0.8; // Higher volume for win sound
+        gameWinSoundRef.current.volume = getSoundVolumes().win;
 
-        // Create game over sound element
         gameOverSoundRef.current = new Audio('/bubble-shooter/audio/gameover.wav');
         gameOverSoundRef.current.preload = 'auto';
-        gameOverSoundRef.current.volume = 0.8; // Higher volume for game over sound
+        gameOverSoundRef.current.volume = getSoundVolumes().over;
 
-        // Handle audio loading
+        adjustBackgroundMusic();
+
+        // Handle loading
         let loadedCount = 0;
         const totalSounds = 3;
 
@@ -79,80 +94,30 @@ const SoundEffects: React.FC<SoundEffectsProps> = ({ isMuted = false }) => {
           loadedCount++;
           if (loadedCount === totalSounds) {
             setIsLoaded(true);
-            // Try to enable audio immediately after loading
-            enableAudioImmediately();
           }
         };
 
-        popSoundRef.current.addEventListener('canplaythrough', () => {
-          checkAllLoaded();
-        });
-
-        gameWinSoundRef.current.addEventListener('canplaythrough', () => {
-          checkAllLoaded();
-        });
-
-        gameOverSoundRef.current.addEventListener('canplaythrough', () => {
-          checkAllLoaded();
-        });
-
-        // Handle audio errors
-        popSoundRef.current.addEventListener('error', (e) => {
-          checkAllLoaded();
-        });
-
-        gameWinSoundRef.current.addEventListener('error', (e) => {
-          checkAllLoaded();
-        });
-
-        gameOverSoundRef.current.addEventListener('error', (e) => {
-          checkAllLoaded();
+        [popSoundRef, gameWinSoundRef, gameOverSoundRef].forEach(ref => {
+          ref.current?.addEventListener('canplaythrough', checkAllLoaded);
+          ref.current?.addEventListener('error', checkAllLoaded);
         });
 
       } catch (error) {
-        // Silent error handling
+        console.error('Sound effects init failed:', error);
       }
     };
 
     initAudio();
 
-    // Try to enable audio immediately
-    const enableAudioImmediately = () => {
-      if (!hasUserInteracted) {
-        setHasUserInteracted(true);
-
-        // Resume audio context if suspended
-        if (audioContextRef.current?.state === 'suspended') {
-          audioContextRef.current.resume().then(() => {
-            // Audio context resumed successfully
-          }).catch(() => {
-            // Silent error handling
-          });
-        }
-      }
-    };
-
-    // Try to enable audio on various events
     const enableAudioOnInteraction = () => {
       if (!hasUserInteracted) {
         setHasUserInteracted(true);
-
-        // Resume audio context if suspended
         if (audioContextRef.current?.state === 'suspended') {
-          audioContextRef.current.resume().then(() => {
-            // Audio context resumed for sound effects
-          }).catch(() => {
-            // Silent error handling
-          });
+          audioContextRef.current.resume().catch(console.error);
         }
       }
     };
 
-    // Try to enable audio immediately
-    enableAudioImmediately();
-
-    // Listen for user interactions - use capture to catch events early
-    // Include both mouse and touch events for mobile compatibility
     const events = [
       'click', 'touchstart', 'touchend', 'touchmove',
       'keydown', 'mousedown', 'mousemove', 'scroll',
@@ -162,138 +127,92 @@ const SoundEffects: React.FC<SoundEffectsProps> = ({ isMuted = false }) => {
       document.addEventListener(event, enableAudioOnInteraction, { capture: true });
     });
 
-    // Also try to enable audio periodically
-    const audioCheckInterval = setInterval(() => {
-      if (!hasUserInteracted && audioContextRef.current?.state === 'suspended') {
-        audioContextRef.current.resume().then(() => {
-          setHasUserInteracted(true);
-        }).catch(() => {
-          // Silent error handling
-        });
-      }
-    }, 1000);
-
-    // Cleanup on unmount
     return () => {
-      if (popSoundRef.current) {
-        popSoundRef.current.pause();
-        popSoundRef.current = null;
-      }
-      if (gameWinSoundRef.current) {
-        gameWinSoundRef.current.pause();
-        gameWinSoundRef.current = null;
-      }
-      if (gameOverSoundRef.current) {
-        gameOverSoundRef.current.pause();
-        gameOverSoundRef.current = null;
-      }
+      [popSoundRef, gameWinSoundRef, gameOverSoundRef].forEach(ref => {
+        if (ref.current) {
+          ref.current.pause();
+          ref.current = null;
+        }
+      });
       if (audioContextRef.current) {
         audioContextRef.current.close();
       }
-
-      // Remove event listeners
       events.forEach(event => {
         document.removeEventListener(event, enableAudioOnInteraction);
       });
-
-      clearInterval(audioCheckInterval);
     };
   }, []);
 
-  // Ensure audio context is resumed before playing any sound
   const ensureAudioContextReady = async () => {
-    // Always try to resume audio context, even if no user interaction
     if (audioContextRef.current?.state === 'suspended') {
       try {
         await audioContextRef.current.resume();
         setHasUserInteracted(true);
+        return true;
       } catch (error) {
         return false;
       }
     }
-
     return true;
   };
 
-  // Play pop sound for each bubble that breaks
   const playPopSound = async (count: number = 1) => {
     if (!popSoundRef.current || !isLoaded || isMuted) return;
-
-    // Always try to ensure audio context is ready
-    const audioReady = await ensureAudioContextReady();
+    await ensureAudioContextReady();
 
     try {
-      // For iOS, try multiple approaches to play the sound
       if (isIOS()) {
-        // Try to play the sound directly first
+        // iOS requires fresh audio elements for each sound to prevent conflicts
         for (let i = 0; i < count; i++) {
           setTimeout(async () => {
-            if (popSoundRef.current && !isMuted) {
+            if (!isMuted) {
               try {
-                // Reset the audio element for iOS
-                popSoundRef.current.currentTime = 0;
-                await popSoundRef.current.play();
+                // Create a fresh audio element for each pop sound on iOS
+                const freshAudio = new Audio('/bubble-shooter/audio/pop.wav');
+                freshAudio.volume = getSoundVolumes().pop;
+                freshAudio.currentTime = 0;
+                await freshAudio.play();
               } catch (error) {
-                // Fallback: try cloning the audio element
-                try {
-                  const soundClone = popSoundRef.current.cloneNode() as HTMLAudioElement;
-                  soundClone.volume = getPopSoundVolume();
-                  soundClone.currentTime = 0;
-                  await soundClone.play();
-                } catch (cloneError) {
-                  // Silent error handling
-                }
+                console.error('Failed to play pop sound on iOS:', error);
               }
             }
-          }, i * 50); // 50ms delay between each pop sound
+          }, i * 80); // Slightly longer delay for iOS to prevent audio conflicts
         }
       } else {
-        // Non-iOS devices use the original method
+        // Non-iOS devices
         for (let i = 0; i < count; i++) {
           setTimeout(() => {
             if (popSoundRef.current && !isMuted) {
-              // Clone the audio element to play multiple sounds simultaneously
               const soundClone = popSoundRef.current.cloneNode() as HTMLAudioElement;
-              soundClone.volume = getPopSoundVolume();
-              soundClone.play().catch(() => {
-                // Silent error handling
-              });
+              soundClone.volume = getSoundVolumes().pop;
+              soundClone.play().catch(console.error);
             }
-          }, i * 50); // 50ms delay between each pop sound
+          }, i * 50);
         }
       }
-
     } catch (error) {
-      // Silent error handling
+      console.error('Pop sound failed:', error);
     }
   };
 
-  // Play single pop sound
   const playSinglePop = async () => {
     await playPopSound(1);
   };
 
-  // Play game win sound
   const playGameWinSound = async () => {
     if (!gameWinSoundRef.current || !isLoaded || isMuted) return;
-
-    // Always try to ensure audio context is ready
-    const audioReady = await ensureAudioContextReady();
+    await ensureAudioContextReady();
 
     try {
-      // Stop any currently playing win sound
       gameWinSoundRef.current.pause();
       gameWinSoundRef.current.currentTime = 0;
-
-      // Play the win sound
+      gameWinSoundRef.current.volume = getSoundVolumes().win;
       await gameWinSoundRef.current.play();
-
     } catch (error) {
-      // Silent error handling
+      console.error('Win sound failed:', error);
     }
   };
 
-  // Stop game win sound
   const stopGameWinSound = () => {
     if (gameWinSoundRef.current) {
       gameWinSoundRef.current.pause();
@@ -301,27 +220,30 @@ const SoundEffects: React.FC<SoundEffectsProps> = ({ isMuted = false }) => {
     }
   };
 
-  // Play game over sound
   const playGameOverSound = async () => {
     if (!gameOverSoundRef.current || !isLoaded || isMuted) return;
-
-    // Always try to ensure audio context is ready
-    const audioReady = await ensureAudioContextReady();
+    await ensureAudioContextReady();
 
     try {
-      // Stop any currently playing game over sound
       gameOverSoundRef.current.pause();
       gameOverSoundRef.current.currentTime = 0;
-
-      // Play the game over sound
+      gameOverSoundRef.current.volume = getSoundVolumes().over;
       await gameOverSoundRef.current.play();
-
     } catch (error) {
-      // Silent error handling
+      console.error('Game over sound failed:', error);
     }
   };
 
-  // Expose methods globally for easy access
+  const enableAudio = () => {
+    if (!hasUserInteracted) {
+      setHasUserInteracted(true);
+      if (audioContextRef.current?.state === 'suspended') {
+        audioContextRef.current.resume();
+      }
+    }
+  };
+
+  // Expose methods globally
   useEffect(() => {
     (window as any).soundEffects = {
       playPopSound,
@@ -331,18 +253,18 @@ const SoundEffects: React.FC<SoundEffectsProps> = ({ isMuted = false }) => {
       playGameOverSound,
       isLoaded: () => isLoaded,
       hasUserInteracted: () => hasUserInteracted,
-      enableAudio: () => {
-        if (!hasUserInteracted) {
-          setHasUserInteracted(true);
-          if (audioContextRef.current?.state === 'suspended') {
-            audioContextRef.current.resume();
-          }
-        }
+      enableAudio
+    };
+
+    return () => {
+      // Clean up the global reference when component unmounts
+      if ((window as any).soundEffects) {
+        delete (window as any).soundEffects;
       }
     };
   }, [isLoaded, isMuted, hasUserInteracted]);
 
-  return null; // This component doesn't render anything
+  return null;
 };
 
-export default SoundEffects; 
+export default SoundEffects;
