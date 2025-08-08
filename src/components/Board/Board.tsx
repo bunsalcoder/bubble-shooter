@@ -887,31 +887,50 @@ const Board: React.FC = () => {
       
       // Update animation properties
       scoreAnim.alpha = 1.0 - easeOutCubic(progress);
-      scoreAnim.scale = 1.0 + (0.5 * easeOutCubic(progress));
-      scoreAnim.offsetY = -30 * easeOutCubic(progress); // Move up
+      scoreAnim.scale = 1.0 + (1.0 * easeOutCubic(progress)); // Increased scale effect
+      scoreAnim.offsetY = -50 * easeOutCubic(progress); // Increased upward movement
       
-      // Draw score text with glow effect
+      // Draw score text with enhanced glow effect
       if (scoreAnim.alpha > 0) {
         p5.push();
         p5.translate(scoreAnim.x, scoreAnim.y + scoreAnim.offsetY);
         p5.scale(scoreAnim.scale);
         
-        // Draw glow effect
+        // Draw outer glow effect (larger and more intense)
         p5.push();
-        p5.fill(255, 255, 255, scoreAnim.alpha * 120);
+        p5.fill(255, 255, 255, scoreAnim.alpha * 80);
         p5.noStroke();
         p5.textAlign(p5.CENTER, p5.CENTER);
-        p5.textSize(24);
+        p5.textSize(32); // Increased from 24
         p5.text(scoreAnim.value.toString(), 0, 0);
         p5.pop();
         
-        // Draw main score text
+        // Draw middle glow effect
+        p5.push();
+        p5.fill(255, 255, 255, scoreAnim.alpha * 150);
+        p5.noStroke();
+        p5.textAlign(p5.CENTER, p5.CENTER);
+        p5.textSize(30); // Increased from 22
+        p5.text(scoreAnim.value.toString(), 0, 0);
+        p5.pop();
+        
+        // Draw main score text (bolder and bigger)
         p5.push();
         p5.fill(255, 255, 255, scoreAnim.alpha * 255); // White color
         p5.noStroke();
         p5.textAlign(p5.CENTER, p5.CENTER);
-        p5.textSize(22);
+        p5.textSize(28); // Increased from 22
+        p5.textStyle(p5.BOLD); // Make text bold
         p5.text(scoreAnim.value.toString(), 0, 0);
+        p5.pop();
+        
+        // Draw additional sparkle effect
+        p5.push();
+        p5.fill(255, 255, 0, scoreAnim.alpha * 200); // Yellow sparkle
+        p5.noStroke();
+        p5.textAlign(p5.CENTER, p5.CENTER);
+        p5.textSize(26);
+        p5.text("+", 0, 0);
         p5.pop();
         
         p5.pop();
@@ -1273,15 +1292,21 @@ const Board: React.FC = () => {
   };
 
   const updateTrajectoryPrediction = (p5: p5Types) => {
-    if (!isHolding.current || isSwapAnimating.current || isInSwapArea.current || activeBubble.current.isMoving) {
+    // Only update trajectory if we're holding and not in swap area
+    if (!isHolding.current || activeBubble.current.isMoving) {
       isShowingTrajectory.current = false;
       return;
     }
     
+    // Check if we're in swap area - if so, don't show trajectory
     const launcherX = gameWidth / 2;
-    const launcherY = gameHeight - 80 - 35; // Top bubble position
+    const launcherY = gameHeight - 80;
+    const launcherAreaX = launcherX - 60;
+    const launcherAreaY = launcherY - 40;
+    const launcherAreaWidth = 120;
+    const launcherAreaHeight = 80;
     
-    // Get target coordinates - handle both mouse and touch events
+    // Get current mouse/touch position
     let targetX = p5.mouseX;
     let targetY = p5.mouseY;
     
@@ -1292,25 +1317,39 @@ const Board: React.FC = () => {
       targetY = touch.y;
     }
     
+    // Check if we're in swap area
+    if (
+      targetX >= launcherAreaX &&
+      targetX <= launcherAreaX + launcherAreaWidth &&
+      targetY >= launcherAreaY &&
+      targetY <= launcherAreaY + launcherAreaHeight
+    ) {
+      isShowingTrajectory.current = false;
+      return;
+    }
+    
     // Ensure we have valid coordinates
     if (targetX === 0 && targetY === 0) {
       isShowingTrajectory.current = false;
       return;
     }
     
-    // Calculate shoot direction
+    const bubbleLauncherX = launcherX;
+    const bubbleLauncherY = launcherY - 35; // Top bubble position
+    
+    // Calculate shoot direction for trajectory prediction only
     const { speedX, speedY } = calculateShootDirection(
-      launcherX,
-      launcherY,
+      bubbleLauncherX,
+      bubbleLauncherY,
       targetX,
       targetY,
       activeBubble.current.speed
     );
     
-    // Predict trajectory
-    predictedTrajectory.current = predictTrajectory(
-      launcherX,
-      launcherY,
+    // Predict trajectory for display only - don't store it for shooting
+    const predictedPath = predictTrajectory(
+      bubbleLauncherX,
+      bubbleLauncherY,
       speedX,
       speedY,
       gridBubble.current,
@@ -1319,7 +1358,14 @@ const Board: React.FC = () => {
       gameHeight
     );
     
-    isShowingTrajectory.current = true;
+    // Only show trajectory if we have a valid path
+    if (predictedPath.length >= 2) {
+      predictedTrajectory.current = predictedPath;
+      isShowingTrajectory.current = true;
+      console.log('Trajectory updated - points:', predictedTrajectory.current.length, 'target:', targetX, targetY);
+    } else {
+      isShowingTrajectory.current = false;
+    }
   };
 
   const drawTrajectoryArrow = (p5: p5Types) => {
@@ -1349,9 +1395,9 @@ const Board: React.FC = () => {
       totalLength += segmentLength;
     }
     
-    // Draw animated dots only (exactly like the launcher arrow)
-    const dotCount = 8; // Same as launcher arrow
-    const dotSpeed = 0.015; // Same speed as launcher arrow
+    // Draw animated dots with much closer spacing and slower animation
+    const dotCount = 20; // Increased from 12 for much more dots
+    const dotSpeed = 0.004; // Much slower speed (reduced from 0.008)
     const dotProgress = (p5.frameCount * dotSpeed) % 1; // Continuous loop
     
     for (let i = 0; i < dotCount; i++) {
@@ -1382,17 +1428,25 @@ const Board: React.FC = () => {
         currentLength += segmentLength;
       }
       
-      // Animated dots are exactly the same as launcher arrow
-      const dotSize = 6; // Same size as launcher arrow
+      // Animated dots with bigger size and colorful appearance
+      const dotSize = 6; // Bigger dots (increased from 4)
       
-      // Bright white animated dots
-      p5.fill(255, 255, 255, 200); // Bright white with transparency
+      // Create gradient effect based on position
+      const fadeFactor = 1 - (i / dotCount); // Fade from start to end
+      const alpha = 150 + (fadeFactor * 105); // 150-255 alpha range
+      
+      // Draw colorful dots with bubble color
+      p5.fill(bubbleColor + Math.floor(alpha).toString(16).padStart(2, '0')); // Bubble color with alpha
       p5.noStroke();
       p5.ellipse(dotX, dotY, dotSize);
       
-      // Add glow effect around animated dots
-      p5.fill(bubbleColor + '40'); // Bubble color with transparency
-      p5.ellipse(dotX, dotY, dotSize + 4); // Same glow as launcher arrow
+      // Add bright glow effect around animated dots
+      p5.fill(bubbleColor + '60'); // Bubble color with more transparency for glow
+      p5.ellipse(dotX, dotY, dotSize + 4); // Bigger glow for bigger dots
+      
+      // Add white center highlight for extra brightness
+      p5.fill(255, 255, 255, 100); // White highlight
+      p5.ellipse(dotX, dotY, dotSize - 1); // Smaller white center
     }
     
     p5.pop();
@@ -1417,9 +1471,9 @@ const Board: React.FC = () => {
     const maxArrowLength = 150; // Even longer arrow
     const arrowLength = Math.min(distance, maxArrowLength);
     
-    // Draw animated dots only (no connected line or arrowhead)
-    const dotCount = 8;
-    const dotSpeed = 0.015; // Slower speed for more relaxed animation
+    // Draw animated dots with much closer spacing and slower animation
+    const dotCount = 20; // Increased from 12 for much more dots
+    const dotSpeed = 0.004; // Much slower speed (reduced from 0.008)
     const dotProgress = (p5.frameCount * dotSpeed) % 1; // Continuous loop
     
     for (let i = 0; i < dotCount; i++) {
@@ -1431,16 +1485,24 @@ const Board: React.FC = () => {
       const x = startX + Math.cos(angle) * dotDistance;
       const y = startY + Math.sin(angle) * dotDistance;
       
-      // Animated dots are smaller and bright
-      const dotSize = 6;
+      // Animated dots with bigger size and colorful appearance
+      const dotSize = 6; // Bigger dots (increased from 4)
       
-      // Bright white animated dots
-      p5.fill(255, 255, 255, 200); // Bright white with transparency
+      // Create gradient effect based on position
+      const fadeFactor = 1 - (i / dotCount); // Fade from start to end
+      const alpha = 150 + (fadeFactor * 105); // 150-255 alpha range
+      
+      // Draw colorful dots with bubble color
+      p5.fill(color + Math.floor(alpha).toString(16).padStart(2, '0')); // Bubble color with alpha
       p5.ellipse(x, y, dotSize);
       
-      // Add glow effect around animated dots
-      p5.fill(color + '40'); // Bubble color with transparency
-      p5.ellipse(x, y, dotSize + 4); // Glow effect
+      // Add bright glow effect around animated dots
+      p5.fill(color + '60'); // Bubble color with more transparency for glow
+      p5.ellipse(x, y, dotSize + 4); // Bigger glow for bigger dots
+      
+      // Add white center highlight for extra brightness
+      p5.fill(255, 255, 255, 100); // White highlight
+      p5.ellipse(x, y, dotSize - 1); // Smaller white center
     }
     
     p5.pop();
@@ -1997,6 +2059,14 @@ const Board: React.FC = () => {
   };
 
   const mouseClicked = (p5: p5Types) => {
+    console.log('Mouse clicked - isHolding:', isHolding.current);
+    
+    // If we were holding, don't process click (let mouseReleased handle it)
+    if (isHolding.current) {
+      console.log('Ignoring click because we were holding');
+      return;
+    }
+    
     if (!checkGamePause()) {
       // Handle first interaction to start music
       handleFirstInteraction();
@@ -2030,6 +2100,7 @@ const Board: React.FC = () => {
           clickY >= launcherAreaY &&
           clickY <= launcherAreaY + launcherAreaHeight
         ) {
+          console.log('Click in swap area - swapping bubbles');
           // Set swap area flag and swap bubbles
           isInSwapArea.current = true;
           swapBubbles();
@@ -2051,7 +2122,8 @@ const Board: React.FC = () => {
             return;
           }
 
-                    // Use predicted trajectory if available, otherwise use mouse direction
+          console.log('Mouse clicked - shooting bubble');
+          // Use predicted trajectory if available, otherwise use mouse direction
           if (isShowingTrajectory.current && predictedTrajectory.current.length >= 2) {
             // Start following the predicted path exactly
             isFollowingPredictedPath.current = true;
@@ -2101,12 +2173,88 @@ const Board: React.FC = () => {
   
   // Add mouse pressed and released handlers for arrow
   const mousePressed = (p5: p5Types) => {
-    console.log('Mouse pressed');
+    console.log('Mouse pressed - setting isHolding to true');
     isHolding.current = true;
   };
   
   const mouseReleased = (p5: p5Types) => {
-    console.log('Mouse released');
+    console.log('Mouse released - isHolding:', isHolding.current, 'isShowingTrajectory:', isShowingTrajectory.current);
+    
+    // If we were holding and bubble is not moving, shoot the bubble
+    if (isHolding.current && !activeBubble.current.isMoving && !checkGamePause()) {
+      console.log('Attempting to shoot bubble on mouse release');
+      
+      // Get release coordinates
+      let releaseX = p5.mouseX;
+      let releaseY = p5.mouseY;
+      
+      // For touch events, use the first touch position
+      if (p5.touches && p5.touches.length > 0) {
+        const touch = p5.touches[0] as any;
+        releaseX = touch.x;
+        releaseY = touch.y;
+      }
+      
+      console.log('Release coordinates:', releaseX, releaseY);
+      
+      if (releaseX !== 0 && releaseY !== 0) {
+        // Check if release is not in swap area
+        const launcherX = gameWidth / 2;
+        const launcherY = gameHeight - 80;
+        
+        // Define the entire launcher area as swap-only zone
+        const launcherAreaX = launcherX - 60;
+        const launcherAreaY = launcherY - 40;
+        const launcherAreaWidth = 120;
+        const launcherAreaHeight = 80;
+        
+        // Only shoot if not in swap area
+        if (
+          releaseX < launcherAreaX ||
+          releaseX > launcherAreaX + launcherAreaWidth ||
+          releaseY < launcherAreaY ||
+          releaseY > launcherAreaY + launcherAreaHeight
+        ) {
+          console.log('Not in swap area, shooting bubble');
+          
+          // ALWAYS use the actual release position for shooting direction
+          // This ensures accuracy regardless of hold duration or trajectory prediction
+          let dx = releaseX - launcherX;
+          let dy = releaseY - launcherY;
+          let magnitude = Math.sqrt(dx * dx + dy * dy);
+          
+          console.log('Shooting direction - dx:', dx, 'dy:', dy, 'magnitude:', magnitude);
+          
+          // Ensure minimum distance for shooting
+          if (magnitude > 10) {
+            let speed = activeBubble.current.speed;
+            activeBubble.current.speedX = (speed * dx) / magnitude;
+            activeBubble.current.speedY = (speed * dy) / magnitude;
+            
+            // Set bubble to launcher position
+            activeBubble.current.x = launcherX;
+            activeBubble.current.y = launcherY - 35; // Top bubble position
+            
+            activeBubble.current.isMoving = true;
+            isShowingTrajectory.current = false; // Clear trajectory when bubble starts moving
+            gameState.countShoot++;
+            
+            // Play shoot sound
+            playShootSound();
+            
+            // Save game after each shot
+            setTimeout(() => saveGameToLocalStorage(), 100);
+            
+            console.log('Bubble shot successfully - speedX:', activeBubble.current.speedX, 'speedY:', activeBubble.current.speedY);
+          } else {
+            console.log('Release too close to launcher, not shooting');
+          }
+        } else {
+          console.log('In swap area, not shooting');
+        }
+      }
+    }
+    
     isHolding.current = false;
     hoverTarget.current.x = 0;
     hoverTarget.current.y = 0;
@@ -2159,6 +2307,9 @@ const Board: React.FC = () => {
     }
   };
 
+  // Add touch coordinate tracking
+  const touchStartCoords = useRef<{x: number, y: number} | null>(null);
+
   // Add touch event handlers for iOS compatibility
   const touchStarted = (p5: p5Types) => {
     // Handle first interaction to start music
@@ -2179,10 +2330,13 @@ const Board: React.FC = () => {
       }
     }
     
+    console.log('Touch started - setting isHolding to true');
     isHolding.current = true;
-    // Update mouse coordinates for touch events
+    
+    // Store initial touch coordinates
     if (p5.touches && p5.touches.length > 0) {
       const touch = p5.touches[0] as any;
+      touchStartCoords.current = { x: touch.x, y: touch.y };
       p5.mouseX = touch.x;
       p5.mouseY = touch.y;
       hoverTarget.current.x = touch.x;
@@ -2198,10 +2352,102 @@ const Board: React.FC = () => {
       p5.mouseY = touch.y;
       hoverTarget.current.x = touch.x;
       hoverTarget.current.y = touch.y;
+      
+      // Update stored touch coordinates for accurate release position
+      if (touchStartCoords.current) {
+        touchStartCoords.current.x = touch.x;
+        touchStartCoords.current.y = touch.y;
+      }
     }
   };
 
   const touchEnded = (p5: p5Types) => {
+    console.log('Touch ended - isHolding:', isHolding.current, 'isShowingTrajectory:', isShowingTrajectory.current);
+    
+    // If we were holding and bubble is not moving, shoot the bubble
+    if (isHolding.current && !activeBubble.current.isMoving && !checkGamePause()) {
+      console.log('Attempting to shoot bubble on touch release');
+      
+      // Get release coordinates - try current touch first, then fallback to stored coordinates
+      let releaseX = 0;
+      let releaseY = 0;
+      
+      if (p5.touches && p5.touches.length > 0) {
+        const touch = p5.touches[0] as any;
+        releaseX = touch.x;
+        releaseY = touch.y;
+      } else if (touchStartCoords.current) {
+        // Use stored coordinates if no current touch data
+        releaseX = touchStartCoords.current.x;
+        releaseY = touchStartCoords.current.y;
+      } else {
+        // Final fallback to mouse coordinates
+        releaseX = p5.mouseX;
+        releaseY = p5.mouseY;
+      }
+      
+      console.log('Touch release coordinates:', releaseX, releaseY);
+      
+      if (releaseX !== 0 && releaseY !== 0) {
+        // Check if release is not in swap area
+        const launcherX = gameWidth / 2;
+        const launcherY = gameHeight - 80;
+        
+        // Define the entire launcher area as swap-only zone
+        const launcherAreaX = launcherX - 60;
+        const launcherAreaY = launcherY - 40;
+        const launcherAreaWidth = 120;
+        const launcherAreaHeight = 80;
+        
+        // Only shoot if not in swap area
+        if (
+          releaseX < launcherAreaX ||
+          releaseX > launcherAreaX + launcherAreaWidth ||
+          releaseY < launcherAreaY ||
+          releaseY > launcherAreaY + launcherAreaHeight
+        ) {
+          console.log('Not in swap area, shooting bubble');
+          
+          // ALWAYS use the actual release position for shooting direction
+          // This ensures accuracy regardless of hold duration or trajectory prediction
+          let dx = releaseX - launcherX;
+          let dy = releaseY - launcherY;
+          let magnitude = Math.sqrt(dx * dx + dy * dy);
+          
+          console.log('Shooting direction - dx:', dx, 'dy:', dy, 'magnitude:', magnitude);
+          
+          // Ensure minimum distance for shooting
+          if (magnitude > 10) {
+            let speed = activeBubble.current.speed;
+            activeBubble.current.speedX = (speed * dx) / magnitude;
+            activeBubble.current.speedY = (speed * dy) / magnitude;
+            
+            // Set bubble to launcher position
+            activeBubble.current.x = launcherX;
+            activeBubble.current.y = launcherY - 35; // Top bubble position
+            
+            activeBubble.current.isMoving = true;
+            isShowingTrajectory.current = false; // Clear trajectory when bubble starts moving
+            gameState.countShoot++;
+            
+            // Play shoot sound
+            playShootSound();
+            
+            // Save game after each shot
+            setTimeout(() => saveGameToLocalStorage(), 100);
+            
+            console.log('Bubble shot successfully - speedX:', activeBubble.current.speedX, 'speedY:', activeBubble.current.speedY);
+          } else {
+            console.log('Release too close to launcher, not shooting');
+          }
+        } else {
+          console.log('In swap area, not shooting');
+        }
+      }
+    }
+    
+    // Reset touch tracking
+    touchStartCoords.current = null;
     isHolding.current = false;
     hoverTarget.current.x = 0;
     hoverTarget.current.y = 0;
