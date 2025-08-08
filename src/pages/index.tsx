@@ -1,7 +1,58 @@
 import Board from '@/components/Board/Board';
+import SplashScreen from '@/components/SplashScreen';
 import Head from 'next/head';
+import { useState, useEffect } from 'react';
 
 export default function Home() {
+  const [showGame, setShowGame] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [fadeOut, setFadeOut] = useState(false);
+  const [gameReady, setGameReady] = useState(false);
+
+  const handleSplashComplete = () => {
+    setFadeOut(true);
+    setTimeout(() => {
+      setShowGame(true);
+      setTimeout(() => {
+        setGameReady(true);
+      }, 300);
+    }, 800); // Longer fade for smoother transition
+  };
+
+  useEffect(() => {
+    // Prevent flash by ensuring splash screen is ready
+    const timer = setTimeout(() => {
+      setIsLoading(false);
+    }, 100);
+    return () => clearTimeout(timer);
+  }, []);
+
+  if (isLoading) {
+    return (
+      <div style={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        width: '100vw',
+        height: '100vh',
+        background: 'linear-gradient(135deg, #667eea 0%, #764ba2 25%, #f093fb 50%, #f5576c 75%, #4facfe 100%)',
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        zIndex: 9999
+      }}>
+        <div style={{
+          color: 'white',
+          fontSize: '1.2rem',
+          textAlign: 'center',
+          fontFamily: '"Segoe UI", "Roboto", "Helvetica Neue", Arial, sans-serif'
+        }}>
+          Loading...
+        </div>
+      </div>
+    );
+  }
+
   return (
     <>
       <Head>
@@ -10,7 +61,48 @@ export default function Home() {
         <meta name='viewport' content='width=device-width, initial-scale=1' />
         <link rel='icon' href='/favicon.ico' />
       </Head>
-      <Board />
+
+      <div style={{
+        position: 'relative',
+        width: '100vw',
+        height: '100vh',
+        overflow: 'hidden'
+      }}>
+        {/* Splash Screen */}
+        {!showGame && (
+          <div style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            width: '100%',
+            height: '100%',
+            opacity: fadeOut ? 0 : 1,
+            transform: fadeOut ? 'scale(1.1)' : 'scale(1)',
+            transition: 'all 0.8s cubic-bezier(0.68, -0.55, 0.265, 1.55)',
+            zIndex: 9999,
+            pointerEvents: fadeOut ? 'none' : 'auto'
+          }}>
+            <SplashScreen onComplete={handleSplashComplete} />
+          </div>
+        )}
+
+        {/* Game with smooth entrance */}
+        {showGame && (
+          <div style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            width: '100%',
+            height: '100%',
+            opacity: gameReady ? 1 : 0,
+            transform: gameReady ? 'translateY(0)' : 'translateY(20px)',
+            transition: 'all 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94)',
+            zIndex: 1
+          }}>
+            <Board />
+          </div>
+        )}
+      </div>
     </>
   );
 }

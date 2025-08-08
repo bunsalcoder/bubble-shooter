@@ -2210,6 +2210,15 @@ const Board: React.FC = () => {
 
   const Sketch = dynamic(() => import("react-p5").then((mod) => mod.default), {
     ssr: false,
+    loading: () => <div style={{ 
+      display: 'flex', 
+      justifyContent: 'center', 
+      alignItems: 'center', 
+      height: '100vh',
+      background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+      color: 'white',
+      fontSize: '1.2rem'
+    }}>Loading game...</div>
   });
 
   const showAlert = (message: string) => {
