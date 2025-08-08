@@ -496,20 +496,18 @@ const Board: React.FC = () => {
                   (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
     
     if (isIOS) {
-      console.log('🍎 iOS detected, initializing audio context');
-      
       // Try to create and play a silent audio to wake up iOS audio context
       try {
         const silentAudio = new Audio();
         silentAudio.src = 'data:audio/wav;base64,UklGRigAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQAAAAA=';
         silentAudio.volume = 0;
         silentAudio.play().then(() => {
-          console.log('🔊 iOS silent audio played successfully');
-        }).catch((error) => {
-          console.log('⚠️ iOS silent audio failed:', error);
+          // iOS silent audio played successfully
+        }).catch(() => {
+          // Silent error handling
         });
       } catch (error) {
-        console.log('⚠️ Could not create iOS silent audio:', error);
+        // Silent error handling
       }
     }
   };
@@ -517,22 +515,7 @@ const Board: React.FC = () => {
   // Play shoot sound when bubble is fired
   const playShootSound = () => {
     if ((window as any).soundEffects) {
-      // Debug audio state for iOS
-      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || 
-                    (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
-      
-      if (isIOS) {
-        const soundEffects = (window as any).soundEffects;
-        console.log('🍎 iOS Pop Sound Debug:', {
-          isLoaded: soundEffects.isLoaded(),
-          hasUserInteracted: soundEffects.hasUserInteracted(),
-          isMuted: isMusicMuted,
-          audioContextState: soundEffects.audioContextRef?.current?.state
-        });
-      }
-      
       (window as any).soundEffects.playSinglePop();
-      console.log('🔊 Playing shoot sound');
     }
   };
 
@@ -2164,7 +2147,6 @@ const Board: React.FC = () => {
 
   // Add touch event handlers for iOS compatibility
   const touchStarted = (p5: p5Types) => {
-    console.log('Touch started');
     // Handle first interaction to start music
     handleFirstInteraction();
     
@@ -2173,13 +2155,13 @@ const Board: React.FC = () => {
                   (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
     
     if (isIOS) {
-      console.log('🍎 iOS touch detected, activating audio context');
-      
       // Try to resume audio context immediately on iOS touch
       if ((window as any).soundEffects?.audioContextRef?.current?.state === 'suspended') {
         (window as any).soundEffects.audioContextRef.current.resume().then(() => {
-          console.log('🔊 iOS audio context resumed on touch');
-        }).catch(console.error);
+          // iOS audio context resumed on touch
+        }).catch(() => {
+          // Silent error handling
+        });
       }
     }
     
@@ -2206,7 +2188,6 @@ const Board: React.FC = () => {
   };
 
   const touchEnded = (p5: p5Types) => {
-    console.log('Touch ended');
     isHolding.current = false;
     hoverTarget.current.x = 0;
     hoverTarget.current.y = 0;
@@ -2230,10 +2211,8 @@ const Board: React.FC = () => {
     // Play appropriate sound effect
     if (isWin && (window as any).soundEffects) {
       (window as any).soundEffects.playGameWinSound();
-      console.log('🎉 Playing game win sound');
     } else if (isGameOver && (window as any).soundEffects) {
       (window as any).soundEffects.playGameOverSound();
-      console.log('💀 Playing game over sound');
     }
 
     const overlay = document.createElement("div");
@@ -2378,7 +2357,6 @@ const Board: React.FC = () => {
         // Stop game win sound if it's playing (for win scenarios)
         if (isWin && (window as any).soundEffects) {
           (window as any).soundEffects.stopGameWinSound();
-          console.log('🔇 Stopping game win sound');
         }
         
         // Animate out

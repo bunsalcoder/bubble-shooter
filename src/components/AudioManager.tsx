@@ -26,7 +26,6 @@ const AudioManager: React.FC<AudioManagerProps> = ({ isMuted = false, onVolumeCh
                     try {
                         if (audioContextRef.current && audioContextRef.current.state === 'suspended') {
                             await audioContextRef.current.resume();
-                            console.log('🔊 Audio context woken up immediately');
                         }
                         
                         // Create a silent buffer to ensure audio context is active
@@ -37,11 +36,9 @@ const AudioManager: React.FC<AudioManagerProps> = ({ isMuted = false, onVolumeCh
                             silentSource.connect(audioContextRef.current.destination);
                             silentSource.start(0);
                             silentSource.stop(0.001);
-                            
-                            console.log('🔊 Silent buffer created to wake up audio context');
                         }
                     } catch (error) {
-                        console.log('⚠️ Could not wake up audio context immediately:', error);
+                        // Silent error handling
                     }
                 };
                 
@@ -57,7 +54,6 @@ const AudioManager: React.FC<AudioManagerProps> = ({ isMuted = false, onVolumeCh
                 // Handle audio loading
                 audioRef.current.addEventListener('canplaythrough', () => {
                     setIsLoaded(true);
-                    console.log('🎵 Background music loaded successfully');
                     // Try to start music immediately after loading
                     if (!isMuted) {
                         startMusic();
@@ -66,16 +62,16 @@ const AudioManager: React.FC<AudioManagerProps> = ({ isMuted = false, onVolumeCh
 
                 // Handle audio errors
                 audioRef.current.addEventListener('error', (e) => {
-                    console.error('❌ Audio loading error:', e);
+                    // Silent error handling
                 });
 
                 // Handle audio end (shouldn't happen due to loop)
                 audioRef.current.addEventListener('ended', () => {
-                    console.log('🔄 Background music ended, restarting...');
+                    // Background music ended, restarting...
                 });
 
             } catch (error) {
-                console.error('❌ Failed to initialize audio:', error);
+                // Silent error handling
             }
         };
 
@@ -85,17 +81,17 @@ const AudioManager: React.FC<AudioManagerProps> = ({ isMuted = false, onVolumeCh
         const enableAudioImmediately = () => {
             if (!hasUserInteracted) {
                 setHasUserInteracted(true);
-                console.log('🔊 Attempting to enable audio immediately');
 
                 // Resume audio context if suspended
                 if (audioContextRef.current?.state === 'suspended') {
                     audioContextRef.current.resume().then(() => {
-                        console.log('🔊 Audio context resumed successfully');
                         // Try to start music after resuming
                         if (!isMuted && isLoaded) {
                             startMusic();
                         }
-                    }).catch(console.error);
+                    }).catch(() => {
+                        // Silent error handling
+                    });
                 }
             }
         };
@@ -104,7 +100,6 @@ const AudioManager: React.FC<AudioManagerProps> = ({ isMuted = false, onVolumeCh
         const enableAudioOnInteraction = () => {
             if (!hasUserInteracted) {
                 setHasUserInteracted(true);
-                console.log('👆 User interaction detected, audio enabled');
 
                 // Resume audio context if suspended
                 if (audioContextRef.current?.state === 'suspended') {
@@ -135,14 +130,14 @@ const AudioManager: React.FC<AudioManagerProps> = ({ isMuted = false, onVolumeCh
         // Also try to enable audio periodically
         const audioCheckInterval = setInterval(() => {
             if (!hasUserInteracted && audioContextRef.current?.state === 'suspended') {
-                console.log('🔄 Periodic audio context resume attempt');
                 audioContextRef.current.resume().then(() => {
                     setHasUserInteracted(true);
-                    console.log('🔊 Audio context resumed via periodic check');
                     if (!isMuted && isLoaded) {
                         startMusic();
                     }
-                }).catch(console.error);
+                }).catch(() => {
+                    // Silent error handling
+                });
             }
         }, 1000);
 
@@ -171,7 +166,6 @@ const AudioManager: React.FC<AudioManagerProps> = ({ isMuted = false, onVolumeCh
             if (isMuted) {
                 audioRef.current.pause();
                 setIsPlaying(false);
-                console.log('🔇 Music muted');
             } else {
                 // Unmute - start music if not already playing
                 if (!isPlaying) {
@@ -201,9 +195,8 @@ const AudioManager: React.FC<AudioManagerProps> = ({ isMuted = false, onVolumeCh
 
             await audioRef.current.play();
             setIsPlaying(true);
-            console.log('🎵 Background music started');
         } catch (error) {
-            console.error('❌ Failed to start background music:', error);
+            // Silent error handling
         }
     };
 
@@ -213,7 +206,6 @@ const AudioManager: React.FC<AudioManagerProps> = ({ isMuted = false, onVolumeCh
             audioRef.current.pause();
             audioRef.current.currentTime = 0;
             setIsPlaying(false);
-            console.log('🔇 Background music stopped');
         }
     };
 
@@ -222,16 +214,16 @@ const AudioManager: React.FC<AudioManagerProps> = ({ isMuted = false, onVolumeCh
         if (audioRef.current) {
             audioRef.current.pause();
             setIsPlaying(false);
-            console.log('⏸️ Background music paused');
         }
     };
 
     // Resume background music
     const resumeMusic = () => {
         if (audioRef.current && !isMuted) {
-            audioRef.current.play().catch(console.error);
+            audioRef.current.play().catch(() => {
+                // Silent error handling
+            });
             setIsPlaying(true);
-            console.log('▶️ Background music resumed');
         }
     };
 
