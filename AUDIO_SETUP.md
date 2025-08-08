@@ -38,7 +38,7 @@ public/bubble-shooter/audio/pop-sound.mp3
 2. **Place the files**:
    ```
    public/bubble-shooter/audio/background-music.wav
-   public/bubble-shooter/audio/pop1.ogg
+   public/bubble-shooter/audio/pop.wav
    ```
 
 3. **Test the game**:

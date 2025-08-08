@@ -482,16 +482,55 @@ const Board: React.FC = () => {
     }
   };
 
-  // Handle first user interaction to start music
+  // Handle first user interaction to start music and sound effects
   const handleFirstInteraction = () => {
     if ((window as any).audioManager) {
       (window as any).audioManager.enableAudio();
+    }
+    if ((window as any).soundEffects) {
+      (window as any).soundEffects.enableAudio();
+    }
+    
+    // iOS-specific audio initialization
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || 
+                  (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+    
+    if (isIOS) {
+      console.log('🍎 iOS detected, initializing audio context');
+      
+      // Try to create and play a silent audio to wake up iOS audio context
+      try {
+        const silentAudio = new Audio();
+        silentAudio.src = 'data:audio/wav;base64,UklGRigAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQAAAAA=';
+        silentAudio.volume = 0;
+        silentAudio.play().then(() => {
+          console.log('🔊 iOS silent audio played successfully');
+        }).catch((error) => {
+          console.log('⚠️ iOS silent audio failed:', error);
+        });
+      } catch (error) {
+        console.log('⚠️ Could not create iOS silent audio:', error);
+      }
     }
   };
 
   // Play shoot sound when bubble is fired
   const playShootSound = () => {
     if ((window as any).soundEffects) {
+      // Debug audio state for iOS
+      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || 
+                    (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+      
+      if (isIOS) {
+        const soundEffects = (window as any).soundEffects;
+        console.log('🍎 iOS Pop Sound Debug:', {
+          isLoaded: soundEffects.isLoaded(),
+          hasUserInteracted: soundEffects.hasUserInteracted(),
+          isMuted: isMusicMuted,
+          audioContextState: soundEffects.audioContextRef?.current?.state
+        });
+      }
+      
       (window as any).soundEffects.playSinglePop();
       console.log('🔊 Playing shoot sound');
     }
@@ -2129,6 +2168,21 @@ const Board: React.FC = () => {
     // Handle first interaction to start music
     handleFirstInteraction();
     
+    // iOS-specific audio context activation
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || 
+                  (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+    
+    if (isIOS) {
+      console.log('🍎 iOS touch detected, activating audio context');
+      
+      // Try to resume audio context immediately on iOS touch
+      if ((window as any).soundEffects?.audioContextRef?.current?.state === 'suspended') {
+        (window as any).soundEffects.audioContextRef.current.resume().then(() => {
+          console.log('🔊 iOS audio context resumed on touch');
+        }).catch(console.error);
+      }
+    }
+    
     isHolding.current = true;
     // Update mouse coordinates for touch events
     if (p5.touches && p5.touches.length > 0) {
@@ -2172,6 +2226,15 @@ const Board: React.FC = () => {
     // Determine if it's a win or game over
     const isWin = message.includes('Win');
     const isGameOver = message.includes('Over');
+
+    // Play appropriate sound effect
+    if (isWin && (window as any).soundEffects) {
+      (window as any).soundEffects.playGameWinSound();
+      console.log('🎉 Playing game win sound');
+    } else if (isGameOver && (window as any).soundEffects) {
+      (window as any).soundEffects.playGameOverSound();
+      console.log('💀 Playing game over sound');
+    }
 
     const overlay = document.createElement("div");
     overlay.style.cssText = `
@@ -2312,6 +2375,12 @@ const Board: React.FC = () => {
       });
 
       okBtn.addEventListener("click", () => {
+        // Stop game win sound if it's playing (for win scenarios)
+        if (isWin && (window as any).soundEffects) {
+          (window as any).soundEffects.stopGameWinSound();
+          console.log('🔇 Stopping game win sound');
+        }
+        
         // Animate out
         overlay.style.opacity = '0';
         alertBox.style.opacity = '0';
