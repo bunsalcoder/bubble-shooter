@@ -238,7 +238,7 @@ const Board: React.FC = () => {
       // Also save highest score separately
       saveHighestScore();
       
-      console.log('Game saved to localStorage');
+
     } catch (error) {
       console.error('Error saving game to localStorage:', error);
     }
@@ -279,13 +279,13 @@ const Board: React.FC = () => {
             }
           });
           
-          console.log('Game loaded from localStorage');
+
           setIsGameLoadedFromStorage(true);
           return true;
         } else {
           // Clear old saved game
           localStorage.removeItem('bubbleShooterGame');
-          console.log('Old saved game cleared (older than 24 hours)');
+
         }
       }
     } catch (error) {
@@ -297,7 +297,7 @@ const Board: React.FC = () => {
 
   const clearSavedGame = () => {
     localStorage.removeItem('bubbleShooterGame');
-    console.log('Saved game cleared');
+
   };
 
   const loadHighestScore = () => {
@@ -307,7 +307,7 @@ const Board: React.FC = () => {
         const highestScore = parseInt(savedHighestScore, 10);
         if (!isNaN(highestScore)) {
           gameProperties.current.highestScore = highestScore;
-          console.log('Highest score loaded:', highestScore);
+
         }
       }
     } catch (error) {
@@ -318,7 +318,7 @@ const Board: React.FC = () => {
   const saveHighestScore = () => {
     try {
       localStorage.setItem('bubbleShooterHighestScore', gameProperties.current.highestScore.toString());
-      console.log('Highest score saved:', gameProperties.current.highestScore);
+
     } catch (error) {
       console.error('Error saving highest score:', error);
     }
@@ -328,14 +328,14 @@ const Board: React.FC = () => {
     if (gameProperties.current.score > gameProperties.current.highestScore) {
       gameProperties.current.highestScore = gameProperties.current.score;
       saveHighestScore();
-      console.log('New highest score achieved:', gameProperties.current.highestScore);
+
     }
   };
 
   const syncHighestScore = () => {
     // Ensure highest score is loaded and synced with game properties
     loadHighestScore();
-    console.log('Highest score synced:', gameProperties.current.highestScore);
+    
   };
 
   // Leaderboard data with sample players
@@ -393,7 +393,7 @@ const Board: React.FC = () => {
     // Reset the loaded from storage flag
     setIsGameLoadedFromStorage(false);
     
-    console.log('Forced new game - all state reset');
+
   };
 
   // Save game when user closes the page
@@ -408,7 +408,7 @@ const Board: React.FC = () => {
     const localStorageCheckInterval = setInterval(() => {
       const savedGame = localStorage.getItem('bubbleShooterGame');
       if (!savedGame && Object.keys(gridBubble.current).length > 0) {
-        console.log('localStorage was cleared, refreshing game...');
+  
         forceNewGame();
         // Clear the interval after triggering to prevent loops
         clearInterval(localStorageCheckInterval);
@@ -425,13 +425,6 @@ const Board: React.FC = () => {
   const debugLocalStorage = () => {
     const savedGame = localStorage.getItem('bubbleShooterGame');
     const savedHighestScore = localStorage.getItem('bubbleShooterHighestScore');
-    console.log('localStorage status:', savedGame ? 'Has saved game' : 'No saved game');
-    console.log('Current gridBubble keys:', Object.keys(gridBubble.current).length);
-    console.log('Current score:', gameProperties.current.score);
-    console.log('Highest score:', gameProperties.current.highestScore);
-    console.log('Saved highest score:', savedHighestScore);
-    console.log('Full gameProperties object:', gameProperties.current);
-    console.log('gameProperties keys:', Object.keys(gameProperties.current));
     return savedGame;
   };
 
@@ -468,11 +461,11 @@ const Board: React.FC = () => {
         if (newMutedState) {
           // Mute music
           (window as any).audioManager.pauseMusic();
-          console.log('🔇 Music muted by user');
+
         } else {
           // Unmute music
           (window as any).audioManager.resumeMusic();
-          console.log('🎵 Music unmuted by user');
+
         }
       }
     } catch (error) {
@@ -1298,6 +1291,11 @@ const Board: React.FC = () => {
       return;
     }
     
+    // Limit trajectory updates to every 2 frames for smoother updates
+    if (p5.frameCount % 2 !== 0) {
+      return;
+    }
+    
     // Check if we're in swap area - if so, don't show trajectory
     const launcherX = gameWidth / 2;
     const launcherY = gameHeight - 80;
@@ -1362,7 +1360,7 @@ const Board: React.FC = () => {
     if (predictedPath.length >= 2) {
       predictedTrajectory.current = predictedPath;
       isShowingTrajectory.current = true;
-      console.log('Trajectory updated - points:', predictedTrajectory.current.length, 'target:', targetX, targetY);
+
     } else {
       isShowingTrajectory.current = false;
     }
@@ -1669,9 +1667,9 @@ const Board: React.FC = () => {
     // Try to load saved game on startup
     const gameLoaded = loadGameFromLocalStorage();
     if (gameLoaded) {
-      console.log('Resuming saved game');
+
     } else {
-      console.log('Starting new game');
+      
       // Initialize fresh game state
       gridBubble.current = createGridBubble(gridRef.current, gameProperties.current.color);
       bubbleNext.current = createListBubbleNext(grid, bubbleStartX, bubbleStartY, gameProperties.current.color);
@@ -1720,11 +1718,11 @@ const Board: React.FC = () => {
     // Update trajectory prediction
     updateTrajectoryPrediction(p5);
 
-    //check the bubble hit the wall (only for normal physics, not predicted path)
-    if (!isFollowingPredictedPath.current && (
+    //check the bubble hit the wall
+    if (
       activeBubble.current.x - activeBubble.current.r <= 0 ||
       activeBubble.current.x + activeBubble.current.r >= gameWidth
-    )) {
+    ) {
       activeBubble.current.speedX = -activeBubble.current.speedX;
     }
 
@@ -1733,7 +1731,7 @@ const Board: React.FC = () => {
     }
 
     // check when the bubble collides with the grid and insert bubble
-    if (activeBubble.current.isMoving === true && !isFollowingPredictedPath.current) {
+    if (activeBubble.current.isMoving === true) {
       const [collision, loc] = checkCollision(
         activeBubble.current,
         gridBubble.current,
@@ -1752,7 +1750,6 @@ const Board: React.FC = () => {
         
         if (pop > 0) {
           // Shot broke bubbles - DON'T reset the round counter, just keep it as is
-          console.log("Broke bubbles, counter stays at:", gameProperties.current.shotsInRound);
           
           let extra = verifyGrid(gridBubble.current, removeBubbles);
           gameProperties.current.score += caculateScore(pop + extra);
@@ -1761,7 +1758,7 @@ const Board: React.FC = () => {
           const totalBubblesBroke = pop + extra;
           if ((window as any).soundEffects && totalBubblesBroke > 0) {
             (window as any).soundEffects.playPopSound(totalBubblesBroke);
-            console.log(`🔊 Playing pop sound ${totalBubblesBroke} times for broken bubbles`);
+
           }
           
           // Update highest score if current score is higher
@@ -1806,7 +1803,6 @@ const Board: React.FC = () => {
         } else {
           // Shot attached but didn't break bubbles - count this shot
           gameProperties.current.shotsInRound++;
-          console.log("No bubbles broken, shots in round:", gameProperties.current.shotsInRound);
           
           // Add bounce/jiggle animation to the attached bubble and nearby bubbles
           const attachedBubble = gridBubble.current[`${loc[0]},${loc[1]}`];
@@ -1873,7 +1869,6 @@ const Board: React.FC = () => {
       } else if (activeBubble.current.isMoving && activeBubble.current.y <= 0) {
         // Shot missed completely (went off screen) - count this shot
         gameProperties.current.shotsInRound++;
-        console.log("Shot missed (off screen), shots in round:", gameProperties.current.shotsInRound);
         
         // Reset bubble
         activeBubble.current.x = bubbleStartX;
@@ -1889,7 +1884,6 @@ const Board: React.FC = () => {
       
       // Check if we've used all 5 shots without breaking bubbles (moved outside collision detection)
       if (gameProperties.current.shotsInRound >= 5) {
-        console.log("5 shots without breaking bubbles, dropping grid");
         // Drop the entire grid down
         gridRef.current.numRows++;
         addRowBubbleList(
@@ -1952,103 +1946,9 @@ const Board: React.FC = () => {
       verifyGrid(gridBubble.current, removeBubbles);
     }
 
-    // Handle bubble movement - either normal physics or follow predicted path
-    if (isFollowingPredictedPath.current && predictedTrajectory.current.length > 0) {
-      // Follow the predicted path exactly
-      const trajectory = predictedTrajectory.current;
-      const targetIndex = Math.min(predictedPathIndex.current, trajectory.length - 1);
-      const targetPoint = trajectory[targetIndex];
-      
-      // Move bubble towards the target point
-      const dx = targetPoint.x - activeBubble.current.x;
-      const dy = targetPoint.y - activeBubble.current.y;
-      const distance = Math.sqrt(dx * dx + dy * dy);
-      
-      if (distance < 1) {
-        // Reached this point, move to next
-        predictedPathIndex.current++;
-        
-        if (predictedPathIndex.current >= trajectory.length) {
-          // Reached the end of predicted path, perform collision at final position
-          isFollowingPredictedPath.current = false;
-          
-          // Set bubble to exact final position from trajectory
-          const finalPoint = trajectory[trajectory.length - 1];
-          activeBubble.current.x = finalPoint.x;
-          activeBubble.current.y = finalPoint.y;
-          
-          // Now check for collision at the final position
-          const [collision, loc] = checkCollision(
-            activeBubble.current,
-            gridBubble.current,
-            gridRef.current
-          );
-
-          if (collision && Array.isArray(loc)) {
-            // Handle collision at the predicted landing position
-            const pop = insertBubble(
-              gridBubble.current,
-              gridRef.current,
-              activeBubble.current,
-              loc[0],
-              loc[1]
-            );
-            
-            if (pop > 0) {
-              console.log("Broke bubbles, counter stays at:", gameProperties.current.shotsInRound);
-              
-              let extra = verifyGrid(gridBubble.current, removeBubbles);
-              gameProperties.current.score += caculateScore(pop + extra);
-              
-              // Play pop sound for each bubble that broke
-              const totalBubblesBroke = pop + extra;
-              if ((window as any).soundEffects && totalBubblesBroke > 0) {
-                (window as any).soundEffects.playPopSound(totalBubblesBroke);
-                console.log(`🔊 Playing pop sound ${totalBubblesBroke} times for broken bubbles (predicted path)`);
-              }
-              
-              // Update highest score if current score is higher
-              updateHighestScore();
-              
-              // Create enhanced explosion particles at collision point
-              createParticles(activeBubble.current.x, activeBubble.current.y, activeBubble.current.color, p5);
-            } else {
-              // Shot attached but didn't break bubbles - count this shot
-              gameProperties.current.shotsInRound++;
-              console.log("No bubbles broken, shots in round:", gameProperties.current.shotsInRound);
-            }
-
-            renderBubbleList(p5, gridBubble.current);
-            specialBubble.current.isAnswered = Answer.NOT_YET;
-            bubbleNext.current.shift()!;
-            addBubbleNext(gridBubble.current, bubbleNext.current);
-            updateDirectionBubbleNext(bubbleNext.current, grid);
-
-            activeBubble.current = bubbleNext.current[0];
-            secondaryBubble.current = bubbleNext.current[1] || bubbleNext.current[0];
-            activeBubble.current.x = bubbleStartX;
-            activeBubble.current.y = bubbleStartY;
-            activeBubble.current.speedX = 0;
-            activeBubble.current.speedY = 0;
-            activeBubble.current.isMoving = false;
-            activeBubble.current.animationProps = undefined;
-            isShowingTrajectory.current = false;
-            isFollowingPredictedPath.current = false;
-            predictedPathIndex.current = 0;
-          }
-        }
-      } else {
-        // Move towards target point at consistent speed
-        const speed = activeBubble.current.speed;
-        const moveSpeed = Math.min(speed * 0.6, distance); // Even slower for maximum precision
-        activeBubble.current.x += (moveSpeed * dx) / distance;
-        activeBubble.current.y += (moveSpeed * dy) / distance;
-      }
-    } else {
-      // Normal physics movement
-      activeBubble.current.x += activeBubble.current.speedX;
-      activeBubble.current.y += activeBubble.current.speedY;
-    }
+    // Normal physics movement (always use this for smooth, fast movement)
+    activeBubble.current.x += activeBubble.current.speedX;
+    activeBubble.current.y += activeBubble.current.speedY;
     
     if (
       activeBubble.current.isSpecial &&
@@ -2059,11 +1959,8 @@ const Board: React.FC = () => {
   };
 
   const mouseClicked = (p5: p5Types) => {
-    console.log('Mouse clicked - isHolding:', isHolding.current);
-    
     // If we were holding, don't process click (let mouseReleased handle it)
     if (isHolding.current) {
-      console.log('Ignoring click because we were holding');
       return;
     }
     
@@ -2100,7 +1997,7 @@ const Board: React.FC = () => {
           clickY >= launcherAreaY &&
           clickY <= launcherAreaY + launcherAreaHeight
         ) {
-          console.log('Click in swap area - swapping bubbles');
+
           // Set swap area flag and swap bubbles
           isInSwapArea.current = true;
           swapBubbles();
@@ -2122,14 +2019,26 @@ const Board: React.FC = () => {
             return;
           }
 
-          console.log('Mouse clicked - shooting bubble');
-          // Use predicted trajectory if available, otherwise use mouse direction
+
+          // Use predicted trajectory for initial direction, then use normal physics
           if (isShowingTrajectory.current && predictedTrajectory.current.length >= 2) {
-            // Start following the predicted path exactly
-            isFollowingPredictedPath.current = true;
-            predictedPathIndex.current = 0;
+            // Use trajectory prediction to set initial velocity
+            const trajectory = predictedTrajectory.current;
+            const startPoint = trajectory[0];
+            const endPoint = trajectory[1]; // Use first segment for initial direction
             
-            // Set bubble to exact starting position of trajectory
+            // Calculate initial velocity from trajectory with faster speed
+            const dx = endPoint.x - startPoint.x;
+            const dy = endPoint.y - startPoint.y;
+            const distance = Math.sqrt(dx * dx + dy * dy);
+            
+            if (distance > 0) {
+              const speed = activeBubble.current.speed * 3; // 3x faster initial speed
+              activeBubble.current.speedX = (speed * dx) / distance;
+              activeBubble.current.speedY = (speed * dy) / distance;
+            }
+            
+            // Set bubble to launcher position
             const launcherX = gameWidth / 2;
             const launcherY = gameHeight - 80 - 35; // Top bubble position
             activeBubble.current.x = launcherX;
@@ -2173,17 +2082,12 @@ const Board: React.FC = () => {
   
   // Add mouse pressed and released handlers for arrow
   const mousePressed = (p5: p5Types) => {
-    console.log('Mouse pressed - setting isHolding to true');
     isHolding.current = true;
   };
   
   const mouseReleased = (p5: p5Types) => {
-    console.log('Mouse released - isHolding:', isHolding.current, 'isShowingTrajectory:', isShowingTrajectory.current);
-    
     // If we were holding and bubble is not moving, shoot the bubble
     if (isHolding.current && !activeBubble.current.isMoving && !checkGamePause()) {
-      console.log('Attempting to shoot bubble on mouse release');
-      
       // Get release coordinates
       let releaseX = p5.mouseX;
       let releaseY = p5.mouseY;
@@ -2194,8 +2098,6 @@ const Board: React.FC = () => {
         releaseX = touch.x;
         releaseY = touch.y;
       }
-      
-      console.log('Release coordinates:', releaseX, releaseY);
       
       if (releaseX !== 0 && releaseY !== 0) {
         // Check if release is not in swap area
@@ -2215,23 +2117,13 @@ const Board: React.FC = () => {
           releaseY < launcherAreaY ||
           releaseY > launcherAreaY + launcherAreaHeight
         ) {
-          console.log('Not in swap area, shooting bubble');
-          
-          // ALWAYS use the actual release position for shooting direction
-          // This ensures accuracy regardless of hold duration or trajectory prediction
-          let dx = releaseX - launcherX;
-          let dy = releaseY - launcherY;
-          let magnitude = Math.sqrt(dx * dx + dy * dy);
-          
-          console.log('Shooting direction - dx:', dx, 'dy:', dy, 'magnitude:', magnitude);
-          
-          // Ensure minimum distance for shooting
-          if (magnitude > 10) {
-            let speed = activeBubble.current.speed;
-            activeBubble.current.speedX = (speed * dx) / magnitude;
-            activeBubble.current.speedY = (speed * dy) / magnitude;
+          // Use predicted trajectory if available, otherwise use mouse direction
+          if (isShowingTrajectory.current && predictedTrajectory.current.length >= 2) {
+            // Start following the predicted path exactly
+            isFollowingPredictedPath.current = true;
+            predictedPathIndex.current = 0;
             
-            // Set bubble to launcher position
+            // Set bubble to exact starting position of trajectory
             activeBubble.current.x = launcherX;
             activeBubble.current.y = launcherY - 35; // Top bubble position
             
@@ -2244,13 +2136,33 @@ const Board: React.FC = () => {
             
             // Save game after each shot
             setTimeout(() => saveGameToLocalStorage(), 100);
-            
-            console.log('Bubble shot successfully - speedX:', activeBubble.current.speedX, 'speedY:', activeBubble.current.speedY);
           } else {
-            console.log('Release too close to launcher, not shooting');
+            // Fallback to mouse direction
+            let dx = releaseX - launcherX;
+            let dy = releaseY - launcherY;
+            let magnitude = Math.sqrt(dx * dx + dy * dy);
+            
+            // Ensure minimum distance for shooting
+            if (magnitude > 10) {
+              let speed = activeBubble.current.speed;
+              activeBubble.current.speedX = (speed * dx) / magnitude;
+              activeBubble.current.speedY = (speed * dy) / magnitude;
+              
+              // Set bubble to launcher position
+              activeBubble.current.x = launcherX;
+              activeBubble.current.y = launcherY - 35; // Top bubble position
+              
+              activeBubble.current.isMoving = true;
+              isShowingTrajectory.current = false; // Clear trajectory when bubble starts moving
+              gameState.countShoot++;
+              
+              // Play shoot sound
+              playShootSound();
+              
+              // Save game after each shot
+              setTimeout(() => saveGameToLocalStorage(), 100);
+            }
           }
-        } else {
-          console.log('In swap area, not shooting');
         }
       }
     }
@@ -2262,29 +2174,23 @@ const Board: React.FC = () => {
   };
   
   const keyPressed = (p5: p5Types) => {
-    console.log('Key pressed:', p5.key);
     // Handle first interaction to start music
     handleFirstInteraction();
     
     if (p5.key === ' ') {
       isHolding.current = !isHolding.current;
-      console.log('Space pressed, holding:', isHolding.current);
     }
     if (p5.key === 'd' || p5.key === 'D') {
       debugLocalStorage();
-      console.log('D key pressed - debug localStorage');
     }
     if (p5.key === 'r' || p5.key === 'R') {
       forceNewGame();
-      console.log('R key pressed - forced new game');
     }
     if (p5.key === 's' || p5.key === 'S') {
       syncHighestScore();
-      console.log('S key pressed - synced highest score');
     }
     if (p5.key === 'h' || p5.key === 'H') {
       loadHighestScore();
-      console.log('H key pressed - forced load highest score');
     }
   };
 
@@ -2315,78 +2221,40 @@ const Board: React.FC = () => {
     // Handle first interaction to start music
     handleFirstInteraction();
     
-    // iOS-specific audio context activation
-    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || 
-                  (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
-    
-    if (isIOS) {
-      // Try to resume audio context immediately on iOS touch
-      if ((window as any).soundEffects?.audioContextRef?.current?.state === 'suspended') {
-        (window as any).soundEffects.audioContextRef.current.resume().then(() => {
-          // iOS audio context resumed on touch
-        }).catch(() => {
-          // Silent error handling
-        });
-      }
-    }
-    
-    console.log('Touch started - setting isHolding to true');
-    isHolding.current = true;
-    
-    // Store initial touch coordinates
+    // Store initial touch position for accurate tracking
     if (p5.touches && p5.touches.length > 0) {
       const touch = p5.touches[0] as any;
       touchStartCoords.current = { x: touch.x, y: touch.y };
-      p5.mouseX = touch.x;
-      p5.mouseY = touch.y;
-      hoverTarget.current.x = touch.x;
-      hoverTarget.current.y = touch.y;
     }
+    
+    isHolding.current = true;
   };
 
   const touchMoved = (p5: p5Types) => {
-    // Update mouse coordinates for touch events
+    // Update current touch position for accurate tracking
     if (p5.touches && p5.touches.length > 0) {
       const touch = p5.touches[0] as any;
-      p5.mouseX = touch.x;
-      p5.mouseY = touch.y;
-      hoverTarget.current.x = touch.x;
-      hoverTarget.current.y = touch.y;
-      
-      // Update stored touch coordinates for accurate release position
-      if (touchStartCoords.current) {
-        touchStartCoords.current.x = touch.x;
-        touchStartCoords.current.y = touch.y;
-      }
+      touchStartCoords.current = { x: touch.x, y: touch.y };
     }
   };
 
   const touchEnded = (p5: p5Types) => {
-    console.log('Touch ended - isHolding:', isHolding.current, 'isShowingTrajectory:', isShowingTrajectory.current);
-    
     // If we were holding and bubble is not moving, shoot the bubble
     if (isHolding.current && !activeBubble.current.isMoving && !checkGamePause()) {
-      console.log('Attempting to shoot bubble on touch release');
+      // Get release coordinates - prioritize touch coordinates, then fallback to mouse
+      let releaseX = p5.mouseX;
+      let releaseY = p5.mouseY;
       
-      // Get release coordinates - try current touch first, then fallback to stored coordinates
-      let releaseX = 0;
-      let releaseY = 0;
-      
+      // For touch events, use the first touch position
       if (p5.touches && p5.touches.length > 0) {
         const touch = p5.touches[0] as any;
         releaseX = touch.x;
         releaseY = touch.y;
       } else if (touchStartCoords.current) {
-        // Use stored coordinates if no current touch data
+        // Use stored touch coordinates as fallback
         releaseX = touchStartCoords.current.x;
         releaseY = touchStartCoords.current.y;
-      } else {
-        // Final fallback to mouse coordinates
-        releaseX = p5.mouseX;
-        releaseY = p5.mouseY;
       }
-      
-      console.log('Touch release coordinates:', releaseX, releaseY);
       
       if (releaseX !== 0 && releaseY !== 0) {
         // Check if release is not in swap area
@@ -2406,25 +2274,31 @@ const Board: React.FC = () => {
           releaseY < launcherAreaY ||
           releaseY > launcherAreaY + launcherAreaHeight
         ) {
-          console.log('Not in swap area, shooting bubble');
-          
-          // ALWAYS use the actual release position for shooting direction
-          // This ensures accuracy regardless of hold duration or trajectory prediction
-          let dx = releaseX - launcherX;
-          let dy = releaseY - launcherY;
-          let magnitude = Math.sqrt(dx * dx + dy * dy);
-          
-          console.log('Shooting direction - dx:', dx, 'dy:', dy, 'magnitude:', magnitude);
-          
-          // Ensure minimum distance for shooting
-          if (magnitude > 10) {
-            let speed = activeBubble.current.speed;
-            activeBubble.current.speedX = (speed * dx) / magnitude;
-            activeBubble.current.speedY = (speed * dy) / magnitude;
+          // Use predicted trajectory if available, otherwise use mouse direction
+          if (isShowingTrajectory.current && predictedTrajectory.current.length >= 2) {
+            // Use trajectory prediction to set initial velocity
+            const trajectory = predictedTrajectory.current;
+            const startPoint = trajectory[0];
+            const endPoint = trajectory[1]; // Use first segment for initial direction
+            
+            // Calculate initial velocity from trajectory
+            const dx = endPoint.x - startPoint.x;
+            const dy = endPoint.y - startPoint.y;
+            const distance = Math.sqrt(dx * dx + dy * dy);
+            
+            if (distance > 0) {
+              const speed = activeBubble.current.speed;
+              activeBubble.current.speedX = (speed * dx) / distance;
+              activeBubble.current.speedY = (speed * dy) / distance;
+            }
             
             // Set bubble to launcher position
             activeBubble.current.x = launcherX;
             activeBubble.current.y = launcherY - 35; // Top bubble position
+            
+            // Enable trajectory following for smooth movement
+            isFollowingPredictedPath.current = true;
+            predictedPathIndex.current = 0;
             
             activeBubble.current.isMoving = true;
             isShowingTrajectory.current = false; // Clear trajectory when bubble starts moving
@@ -2435,19 +2309,40 @@ const Board: React.FC = () => {
             
             // Save game after each shot
             setTimeout(() => saveGameToLocalStorage(), 100);
-            
-            console.log('Bubble shot successfully - speedX:', activeBubble.current.speedX, 'speedY:', activeBubble.current.speedY);
           } else {
-            console.log('Release too close to launcher, not shooting');
+            // Fallback to mouse direction
+            let dx = releaseX - launcherX;
+            let dy = releaseY - launcherY;
+            let magnitude = Math.sqrt(dx * dx + dy * dy);
+            
+            // Ensure minimum distance for shooting
+            if (magnitude > 10) {
+              let speed = activeBubble.current.speed;
+              activeBubble.current.speedX = (speed * dx) / magnitude;
+              activeBubble.current.speedY = (speed * dy) / magnitude;
+              
+              // Set bubble to launcher position
+              activeBubble.current.x = launcherX;
+              activeBubble.current.y = launcherY - 35; // Top bubble position
+              
+              activeBubble.current.isMoving = true;
+              isShowingTrajectory.current = false; // Clear trajectory when bubble starts moving
+              gameState.countShoot++;
+              
+              // Play shoot sound
+              playShootSound();
+              
+              // Save game after each shot
+              setTimeout(() => saveGameToLocalStorage(), 100);
+            }
           }
-        } else {
-          console.log('In swap area, not shooting');
         }
       }
+      
+      // Reset touch coordinates
+      touchStartCoords.current = null;
     }
     
-    // Reset touch tracking
-    touchStartCoords.current = null;
     isHolding.current = false;
     hoverTarget.current.x = 0;
     hoverTarget.current.y = 0;
@@ -3322,7 +3217,7 @@ const Board: React.FC = () => {
               onClick={() => {
                 setIsMenuVisible(false);
                 // TODO: Implement language selection
-                console.log('Language selection clicked');
+        
               }}
               className="bubble-shooter__menu-button"
               style={{
