@@ -3,6 +3,7 @@ import SplashScreen from '@/components/SplashScreen';
 import Head from 'next/head';
 import { useState, useEffect } from 'react';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { useBackgroundAuth } from '@/hooks/useBackgroundAuth';
 
 export default function Home() {
   const [showGame, setShowGame] = useState(false);
@@ -10,6 +11,7 @@ export default function Home() {
   const [fadeOut, setFadeOut] = useState(false);
   const [gameReady, setGameReady] = useState(false);
   const { t } = useLanguage();
+  const { isAuthenticated, isLoading: authLoading, error } = useBackgroundAuth();
 
   const handleSplashComplete = () => {
     setFadeOut(true);
@@ -18,18 +20,24 @@ export default function Home() {
       setTimeout(() => {
         setGameReady(true);
       }, 300);
-    }, 800); // Longer fade for smoother transition
+    }, 800);
   };
 
   useEffect(() => {
-    // Prevent flash by ensuring splash screen is ready
-    const timer = setTimeout(() => {
-      setIsLoading(false);
-    }, 100);
-    return () => clearTimeout(timer);
-  }, []);
+    if (!authLoading) {
+      if (isAuthenticated) {
+        setIsLoading(false);
+      } else if (error) {
+        console.error('Authentication failed:', error);
+        setIsLoading(false);
+      } else {
+        // Still loading
+        setIsLoading(true);
+      }
+    }
+  }, [isAuthenticated, authLoading, error]);
 
-  if (isLoading) {
+  if (isLoading || authLoading) {
     return (
       <div style={{
         position: 'fixed',
