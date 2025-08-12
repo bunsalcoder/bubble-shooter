@@ -189,3 +189,67 @@ export const authenticatedRequest = async (url: string, options: RequestInit = {
 
   return response;
 };
+
+export const saveGameAPI = async (gameData: any, highestScore: number): Promise<any> => {
+  try {
+    const response = await authenticatedRequest(`${BASE_URL}/progress/bubbleShooter/save`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        bubbleShooterGame:gameData,
+        bubbleShooterHighestScore: highestScore
+      }),
+    });
+    
+    if (response.ok) {
+      return await response.json();
+    } else {
+      throw new Error(`Save game request failed: ${response.status}`);
+    }
+  } catch (error) {
+    console.error('Save game API error:', error);
+    throw error;
+  }
+};
+
+export const getGameAPI = async (): Promise<any> => {
+  try {
+    const response = await authenticatedRequest(`${BASE_URL}/progress/bubbleShooter/get`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+    
+    if (response.ok) {
+      return await response.json();
+    } else {
+      throw new Error(`Get game request failed: ${response.status}`);
+    }
+  } catch (error) {
+    console.error('Get game API error:', error);
+    throw error;
+  }
+};
+
+export const clearGameAPI = async (): Promise<any> => {
+  try {
+    const response = await authenticatedRequest(`${BASE_URL}/progress/bubbleShooter/clear`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+    
+    if (response.ok) {
+      return await response.json();
+    } else {
+      throw new Error(`Clear game request failed: ${response.status}`);
+    }
+  } catch (error) {
+    console.error('Clear game API error:', error);
+    throw error;
+  }
+};

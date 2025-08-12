@@ -41,6 +41,7 @@ import Image from "next/image";
 import { isMobile } from "react-device-detect";
 import { useLanguage } from "@/contexts/LanguageContext";
 import LanguageSelector from "@/components/LanguageSelector";
+import { saveGameAPI, getGameAPI, clearGameAPI } from "@/services/mosAuth";
 
 const Board: React.FC = () => {
   let gameState: GameState = {
@@ -205,6 +206,7 @@ const Board: React.FC = () => {
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
   const [isModalSettingOpen, setIsModalSettingOpen] = useState<boolean>(false);
   const [isGameLoadedFromStorage, setIsGameLoadedFromStorage] = useState<boolean>(false);
+  const [isGameLoading, setIsGameLoading] = useState<boolean>(true);
   const [isLeaderboardOpen, setIsLeaderboardOpen] = useState<boolean>(false);
   const [isMusicMuted, setIsMusicMuted] = useState<boolean>(false);
   const [isMenuVisible, setIsMenuVisible] = useState<boolean>(false);
@@ -239,71 +241,83 @@ const Board: React.FC = () => {
         tertiaryBubble: tertiaryBubble.current,
         timestamp: new Date().toISOString()
       };
-      localStorage.setItem('bubbleShooterGame', JSON.stringify(gameData));
+      // localStorage.setItem('bubbleShooterGame', JSON.stringify(gameData));
       
       // Also save highest score separately
-      saveHighestScore();
+      // saveHighestScore();
       
+      // Save to API as well
+      saveGameToAPI(gameData, gameProperties.current.highestScore);
 
     } catch (error) {
       console.error('Error saving game to localStorage:', error);
     }
   };
 
-  const loadGameFromLocalStorage = () => {
+  const loadGameFromAPI = async () => {
     try {
-      const savedGame = localStorage.getItem('bubbleShooterGame');
-      if (savedGame) {
-        const gameData = JSON.parse(savedGame);
+      const response = await getGameAPI();
+      
+      if (response && response.data) {
+        const gameData = response.data.bubbleShooterGame;
+        const highestScore = response.data.bubbleShooterHighestScore;
         
-        // Check if saved game is not too old (24 hours)
-        const savedTime = new Date(gameData.timestamp);
-        const currentTime = new Date();
-        const hoursDiff = (currentTime.getTime() - savedTime.getTime()) / (1000 * 60 * 60);
-        
-        if (hoursDiff < 24) {
-          // Restore game state
-          gridBubble.current = gameData.gridBubble;
-          gridRef.current = gameData.grid;
-          bubbleNext.current = gameData.bubbleQueue;
-          activeBubble.current = gameData.activeBubble;
-          secondaryBubble.current = gameData.secondaryBubble;
-          tertiaryBubble.current = gameData.tertiaryBubble;
+        if (gameData) {
+          // Check if saved game is not too old (24 hours)
+          const savedTime = new Date(gameData.timestamp);
+          const currentTime = new Date();
+          const hoursDiff = (currentTime.getTime() - savedTime.getTime()) / (1000 * 60 * 60);
           
-          // Load highest score first, then restore game properties
-          loadHighestScore();
-          // Merge saved game properties with current ones to preserve highestScore
-          gameProperties.current = {
-            ...gameProperties.current, // Keep current properties (including highestScore)
-            ...gameData.gameProperties // Override with saved data
-          };
-          
-          // Clear any animation props to prevent visual glitches
-          Object.keys(gridBubble.current).forEach(key => {
-            if (gridBubble.current[key].animationProps) {
-              gridBubble.current[key].animationProps = undefined;
+          if (hoursDiff < 24) {
+            // Restore game state
+            gridBubble.current = gameData.gridBubble;
+            gridRef.current = gameData.grid;
+            bubbleNext.current = gameData.bubbleQueue;
+            activeBubble.current = gameData.activeBubble;
+            secondaryBubble.current = gameData.secondaryBubble;
+            tertiaryBubble.current = gameData.tertiaryBubble;
+
+            if (highestScore) {
+              gameProperties.current.highestScore = highestScore;
             }
-          });
-          
-
-          setIsGameLoadedFromStorage(true);
-          return true;
-        } else {
-          // Clear old saved game
-          localStorage.removeItem('bubbleShooterGame');
-
+            
+            // Merge saved game properties with current ones to preserve highestScore
+            gameProperties.current = {
+              ...gameProperties.current, // Keep current properties (including highestScore)
+              ...gameData.gameProperties // Override with saved data
+            };
+            
+            // Clear any animation props to prevent visual glitches
+            Object.keys(gridBubble.current).forEach(key => {
+              if (gridBubble.current[key].animationProps) {
+                gridBubble.current[key].animationProps = undefined;
+              }
+            });
+            
+            setIsGameLoadedFromStorage(true);
+            console.log('Game loaded from API successfully');
+            return true;
+          } else {
+            console.log('Saved game is too old (24+ hours), starting fresh');
+          }
         }
       }
     } catch (error) {
-      console.error('Error loading game from localStorage:', error);
-      localStorage.removeItem('bubbleShooterGame');
+      console.error('Error loading game from API:', error);
     }
     return false;
   };
 
-  const clearSavedGame = () => {
+  const clearSavedGame = async () => {
     localStorage.removeItem('bubbleShooterGame');
-
+    
+    // Also clear game progress from API
+    try {
+      await clearGameAPI();
+      console.log('Game progress cleared from API successfully');
+    } catch (error) {
+      console.error('Failed to clear game progress from API:', error);
+    }
   };
 
   const loadHighestScore = () => {
@@ -327,6 +341,15 @@ const Board: React.FC = () => {
 
     } catch (error) {
       console.error('Error saving highest score:', error);
+    }
+  };
+
+  const saveGameToAPI = async (gameData: any, highestScore: number) => {
+    try {
+      await saveGameAPI(gameData, highestScore);
+      console.log('Game saved to API successfully');
+    } catch (error) {
+      console.error('Error saving game to API:', error);
     }
   };
 
@@ -531,7 +554,7 @@ const Board: React.FC = () => {
     return pop * 30;
   };
 
-  const resetGame = () => {
+  const resetGame = async () => {
     gridRef.current.numRows = GRID_ROWS;
     gridRef.current.numCols = girdColumns;
     gridRef.current.movement = 0;
@@ -557,7 +580,7 @@ const Board: React.FC = () => {
     isGenerateSpecialBall.current = false;
     
     // Clear saved game when starting new game
-    clearSavedGame();
+    await clearSavedGame();
   };
 
   // const checkIsWin = (gridBubble: Record<string, Bubble>) => {
@@ -1612,7 +1635,7 @@ const Board: React.FC = () => {
     );
   };
 
-  const setup = (p5: p5Types, canvasParentRef: Element) => {
+  const setup = async (p5: p5Types, canvasParentRef: Element) => {
     p5.createCanvas(gameWidth, gameHeight).parent(canvasParentRef);
     
     // Try to start music when game loads (will only work if user has already interacted)
@@ -1669,9 +1692,7 @@ const Board: React.FC = () => {
     
     // Load highest score on startup
     loadHighestScore();
-    
-    // Try to load saved game on startup
-    const gameLoaded = loadGameFromLocalStorage();
+    const gameLoaded = await loadGameFromAPI();
     if (gameLoaded) {
 
     } else {
@@ -1684,6 +1705,8 @@ const Board: React.FC = () => {
       tertiaryBubble.current = bubbleNext.current[2] || bubbleNext.current[0];
       setIsGameLoadedFromStorage(false);
     }
+
+    setIsGameLoading(false);
     
     // Initial check for disconnected bubbles
     verifyGrid(gridBubble.current, removeBubbles);
@@ -1698,6 +1721,10 @@ const Board: React.FC = () => {
 
   const draw = (p5: p5Types) => {
     p5.clear();
+
+    if (isGameLoading) {
+      return;
+    }
 
     // Update and draw particles
     updateAndDrawParticles(p5);
@@ -1725,19 +1752,19 @@ const Board: React.FC = () => {
     updateTrajectoryPrediction(p5);
 
     //check the bubble hit the wall
-    if (
+    if (activeBubble.current && (
       activeBubble.current.x - activeBubble.current.r <= 0 ||
       activeBubble.current.x + activeBubble.current.r >= gameWidth
-    ) {
+    )) {
       activeBubble.current.speedX = -activeBubble.current.speedX;
     }
 
-    if (specialBubble.current.isAnswered === Answer.WRONG) {
+    if (specialBubble.current.isAnswered === Answer.WRONG && activeBubble.current) {
       activeBubble.current.isSpecial = false;
     }
 
     // check when the bubble collides with the grid and insert bubble
-    if (activeBubble.current.isMoving === true) {
+    if (activeBubble.current && activeBubble.current.isMoving === true) {
       const [collision, loc] = checkCollision(
         activeBubble.current,
         gridBubble.current,
@@ -2523,7 +2550,7 @@ const Board: React.FC = () => {
         okBtn.style.boxShadow = '0 4px 15px rgba(0, 0, 0, 0.3)';
       });
 
-      okBtn.addEventListener("click", () => {
+      okBtn.addEventListener("click", async () => {
         // Stop game win sound if it's playing (for win scenarios)
         if (isWin && (window as any).soundEffects) {
           (window as any).soundEffects.stopGameWinSound();
@@ -2534,7 +2561,7 @@ const Board: React.FC = () => {
         alertBox.style.opacity = '0';
         alertBox.style.transform = 'translate(-50%, -50%) scale(0.3)';
         
-        setTimeout(() => {
+        setTimeout(async () => {
           if (document.body.contains(alertBox)) {
             document.body.removeChild(alertBox);
           }
@@ -2546,7 +2573,7 @@ const Board: React.FC = () => {
           }
           alertActive = false;
           unfreezeGame();
-          resetGame();
+          await resetGame();
         }, 500);
       }, { once: true });
     }
@@ -3126,9 +3153,9 @@ const Board: React.FC = () => {
 
             {/* Restart Button */}
             <button
-              onClick={() => {
+              onClick={async () => {
                 setIsMenuVisible(false);
-                resetGame();
+                await resetGame();
               }}
               className="bubble-shooter__menu-button"
               style={{
