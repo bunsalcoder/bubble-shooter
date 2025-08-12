@@ -39,6 +39,8 @@ import play from "@public/bubble-shooter/icon/play.png";
 import setting from "@public/bubble-shooter/icon/setting.png";
 import Image from "next/image";
 import { isMobile } from "react-device-detect";
+import { useLanguage } from "@/contexts/LanguageContext";
+import LanguageSelector from "@/components/LanguageSelector";
 
 const Board: React.FC = () => {
   let gameState: GameState = {
@@ -206,6 +208,10 @@ const Board: React.FC = () => {
   const [isLeaderboardOpen, setIsLeaderboardOpen] = useState<boolean>(false);
   const [isMusicMuted, setIsMusicMuted] = useState<boolean>(false);
   const [isMenuVisible, setIsMenuVisible] = useState<boolean>(false);
+  const [isLanguageSelectorOpen, setIsLanguageSelectorOpen] = useState<boolean>(false);
+  
+  // Language context
+  const { t } = useLanguage();
   const gridBubble = useRef<Record<string, Bubble>>({});
   const specialBubble = useRef({
     isAnswered: Answer.NOT_YET,
@@ -576,14 +582,14 @@ const Board: React.FC = () => {
   const checkIsWin = (gridBubble: Record<string, Bubble>) => {
     if (getSize(gridBubble) === 0 && getSize(removeBubbles) === 0) {
       freezeGame();
-      showAlert('You Win!');
+      showAlert(t('youWin'));
     }
   };
 
   const checkGameOVer = (gridBubble: Record<string, Bubble>) => {
     if (getHeight(gridBubble) >= LIMIT_HEIGHT) {
       freezeGame();
-      showAlert('Game Over!');
+      showAlert(t('gameOver'));
     }
   };
 
@@ -2359,7 +2365,7 @@ const Board: React.FC = () => {
       background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
       color: 'white',
       fontSize: '1.2rem'
-    }}>Loading game...</div>
+    }}>{t('loadingGame')}</div>
   });
 
   const showAlert = (message: string) => {
@@ -2369,8 +2375,8 @@ const Board: React.FC = () => {
     freezeGame();
 
     // Determine if it's a win or game over
-    const isWin = message.includes('Win');
-    const isGameOver = message.includes('Over');
+    const isWin = message.includes('Win') || message.includes('赢了') || message.includes('ឈ្នះ');
+    const isGameOver = message.includes('Over') || message.includes('结束') || message.includes('បញ្ចប់');
 
     // Play appropriate sound effect
     if (isWin && (window as any).soundEffects) {
@@ -2474,7 +2480,7 @@ const Board: React.FC = () => {
           color: rgba(255, 255, 255, 0.9);
           margin-bottom: 25px;
           text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
-        ">${isWin ? '🎉 Congratulations! 🎉' : '💪 Try again! 💪'}</div>
+        ">${isWin ? t('congratulations') : t('tryAgain')}</div>
         <button id="alert-ok-btn" style="
           padding: 12px 30px;
           background: linear-gradient(135deg, rgba(255, 255, 255, 0.3), rgba(255, 255, 255, 0.1));
@@ -2487,7 +2493,7 @@ const Board: React.FC = () => {
           transition: all 0.3s ease;
           box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
           animation: pulse 2s ease-in-out infinite;
-        ">OK</button>
+        ">${t('ok')}</button>
       </div>
     `;
 
@@ -2694,18 +2700,18 @@ const Board: React.FC = () => {
           />
         </div>
         <Modal
-          title="Question"
+          title={t('question')}
           open={isModalOpen}
           onOk={handleOk}
           onCancel={handleCancel}
         >
-          <p>Press Ok button for the correct answer</p>
-          <p>Press Cancel button for the wrong answer</p>
+          <p>{t('pressOkForCorrect')}</p>
+          <p>{t('pressCancelForWrong')}</p>
         </Modal>
 
         {/* for testing  */}
         <Modal
-          title="Setting"
+          title={t('settings')}
           open={isModalSettingOpen}
           onOk={handleOkSetting}
           onCancel={handleCancelSetting}
@@ -2724,7 +2730,7 @@ const Board: React.FC = () => {
               resetGame();
             }}
           >
-            <label htmlFor="">Color:</label>
+            <label htmlFor="">{t('color')}</label>
             {gameProperties.current.color.map((color, index) => {
               return (
                 <Form.Item
@@ -2740,22 +2746,22 @@ const Board: React.FC = () => {
                     ></div>
                   }
                   name={`color-${index}`}
-                  rules={[{ required: true, message: "Please input color!" }]}
+                  rules={[{ required: true, message: t('pleaseInputColor') }]}
                 >
                   <Input />
                 </Form.Item>
               );
             })}
-            <label htmlFor="">Move down after (second):</label>
+            <label htmlFor="">{t('moveDownAfter')}</label>
             <Form.Item
               name="moveDown"
-              rules={[{ required: true, message: "Please input time!" }]}
+              rules={[{ required: true, message: t('pleaseInputTime') }]}
             >
               <Input />
             </Form.Item>
             <Form.Item wrapperCol={{ offset: 0, span: 16 }}>
               <Button type="primary" htmlType="submit">
-                Submit
+                {t('submit')}
               </Button>
             </Form.Item>
           </Form>
@@ -2772,7 +2778,7 @@ const Board: React.FC = () => {
               fontWeight: 'bold',
               color: '#1e3a8a'
             }}>
-              🏆 Global Leaderboard
+              {t('globalLeaderboard')}
             </div>
           }
           open={isLeaderboardOpen}
@@ -2838,8 +2844,8 @@ const Board: React.FC = () => {
                 textShadow: '0 1px 2px rgba(0, 0, 0, 0.3)',
                 fontSize: isMobile ? '12px' : '14px'
               }}>
-              <span>Best: {gameProperties.current.highestScore}</span>
-              <span>Current: {gameProperties.current.score}</span>
+              <span>{t('best')}: {gameProperties.current.highestScore}</span>
+              <span>{t('current')}: {gameProperties.current.score}</span>
             </div>
           </div>
           
@@ -3027,7 +3033,7 @@ const Board: React.FC = () => {
               fontStyle: 'italic',
               textShadow: '0 1px 2px rgba(0, 0, 0, 0.4)'
             }}>
-              💡 Tip: Keep playing to improve your score and climb the leaderboard!
+              {t('tip')}
             </p>
           </div>
         </Modal>
@@ -3115,7 +3121,7 @@ const Board: React.FC = () => {
               <span style={{
                 textShadow: '0 2px 4px rgba(0,0,0,0.3)',
                 letterSpacing: '0.5px'
-              }}>Resume</span>
+              }}>{t('resume')}</span>
             </button>
 
             {/* Restart Button */}
@@ -3162,7 +3168,7 @@ const Board: React.FC = () => {
               <span style={{
                 textShadow: '0 2px 4px rgba(0,0,0,0.3)',
                 letterSpacing: '0.5px'
-              }}>Restart</span>
+              }}>{t('restart')}</span>
             </button>
 
             {/* Leaderboard Button (3rd position) */}
@@ -3209,15 +3215,14 @@ const Board: React.FC = () => {
               <span style={{
                 textShadow: '0 2px 4px rgba(0,0,0,0.3)',
                 letterSpacing: '0.5px'
-              }}>Leaderboard</span>
+              }}>{t('leaderboard')}</span>
             </button>
 
             {/* Language Button */}
             <button
               onClick={() => {
                 setIsMenuVisible(false);
-                // TODO: Implement language selection
-        
+                setIsLanguageSelectorOpen(true);
               }}
               className="bubble-shooter__menu-button"
               style={{
@@ -3257,7 +3262,7 @@ const Board: React.FC = () => {
               <span style={{
                 textShadow: '0 2px 4px rgba(0,0,0,0.3)',
                 letterSpacing: '0.5px'
-              }}>Language</span>
+              }}>{t('language')}</span>
             </button>
 
             {/* Music Control Button */}
@@ -3301,10 +3306,16 @@ const Board: React.FC = () => {
               <span style={{
                 textShadow: '0 2px 4px rgba(0,0,0,0.3)',
                 letterSpacing: '0.5px'
-              }}>{isMusicMuted ? 'Unmute' : 'Mute'}</span>
+              }}>{isMusicMuted ? t('unmute') : t('mute')}</span>
             </button>
           </div>
         </Modal>
+
+        {/* Language Selector Modal */}
+        <LanguageSelector 
+          isOpen={isLanguageSelectorOpen}
+          onClose={() => setIsLanguageSelectorOpen(false)}
+        />
       </article>
 
       <footer className="bubble-shooter__game-footer">

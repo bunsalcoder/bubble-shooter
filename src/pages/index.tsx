@@ -2,12 +2,14 @@ import Board from '@/components/Board/Board';
 import SplashScreen from '@/components/SplashScreen';
 import Head from 'next/head';
 import { useState, useEffect } from 'react';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 export default function Home() {
   const [showGame, setShowGame] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [fadeOut, setFadeOut] = useState(false);
   const [gameReady, setGameReady] = useState(false);
+  const { t } = useLanguage();
 
   const handleSplashComplete = () => {
     setFadeOut(true);
@@ -47,7 +49,7 @@ export default function Home() {
           textAlign: 'center',
           fontFamily: '"Segoe UI", "Roboto", "Helvetica Neue", Arial, sans-serif'
         }}>
-          Loading...
+          {t('loading')}
         </div>
       </div>
     );
