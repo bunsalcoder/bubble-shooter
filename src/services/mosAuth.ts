@@ -2,16 +2,60 @@ interface MOSLoginResponse {
   code: string;
 }
 
+interface MOSUserInfoResponse {
+  authorized: number;
+  firstName: string;
+  lastName: string;
+  headPortrait: string;
+  descriptor: string;
+}
+
 interface LoginAPIResponse {
   data: {
     token: string;
   };
 }
 
+interface GetUserInfoResponse {
+  code: number;
+  data: {
+    authResult: boolean;
+    firstName: string;
+    headPortrait: string;
+    lastName: string;
+  };
+  message: string | null;
+}
+
+interface SaveUserInfoRequest {
+  authResult: boolean;
+  firstName: string;
+  lastName: string;
+  headPortrait: string;
+}
+
+interface LeaderboardPlayer {
+  avatarUrl: string;
+  id: string;
+  name: string;
+  rank: number;
+  score: number;
+}
+
+interface LeaderboardResponse {
+  code: number;
+  data: {
+    currentUserRank: LeaderboardPlayer;
+    topPlayers: LeaderboardPlayer[];
+  };
+  message: string;
+}
+
 declare global {
   interface Window {
     mos: {
       login: (appKey: string) => Promise<MOSLoginResponse>;
+      getUserInfo: () => Promise<MOSUserInfoResponse>;
     };
   }
 }
@@ -21,6 +65,11 @@ const BASE_URL = process.env.NEXT_PUBLIC_MOS_API_BASE_URL || 'https://mp-test.mo
 
 let isInitializing = false;
 let refreshPromise: Promise<string> | null = null;
+
+// Global flags to prevent duplicate user info API calls
+let getUserInfoPromise: Promise<any> | null = null;
+let saveUserInfoPromise: Promise<any> | null = null;
+let getLeaderboardPromise: Promise<any> | null = null;
 
 const waitForMOSSDK = async (): Promise<void> => {
   return new Promise((resolve, reject) => {
@@ -252,4 +301,102 @@ export const clearGameAPI = async (): Promise<any> => {
     console.error('Clear game API error:', error);
     throw error;
   }
+};
+
+export const getUserInfoAPI = async (): Promise<GetUserInfoResponse> => {
+  if (getUserInfoPromise) {
+    return getUserInfoPromise;
+  }
+
+  getUserInfoPromise = (async () => {
+    try {
+      const response = await authenticatedRequest(`${BASE_URL}/user/bubbleShooter/getUserInfo`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+      
+      if (response.ok) {
+        return await response.json();
+      } else {
+        throw new Error(`Get user info request failed: ${response.status}`);
+      }
+    } catch (error) {
+      throw error;
+    } finally {
+      getUserInfoPromise = null;
+    }
+  })();
+
+  return getUserInfoPromise;
+};
+
+export const saveUserInfoAPI = async (userInfo: SaveUserInfoRequest): Promise<any> => {
+  if (saveUserInfoPromise) {
+    return saveUserInfoPromise;
+  }
+
+  saveUserInfoPromise = (async () => {
+    try {
+      const response = await authenticatedRequest(`${BASE_URL}/user/bubbleShooter/saveUserInfo`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(userInfo),
+      });
+      
+      if (response.ok) {
+        return await response.json();
+      } else {
+        throw new Error(`Save user info request failed: ${response.status}`);
+      }
+    } catch (error) {
+      throw error;
+    } finally {
+      saveUserInfoPromise = null;
+    }
+  })();
+
+  return saveUserInfoPromise;
+};
+
+export const getMOSUserInfo = async (): Promise<MOSUserInfoResponse> => {
+  try {
+    await waitForMOSSDK();
+    return await window.mos.getUserInfo();
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const getLeaderboardAPI = async (): Promise<LeaderboardResponse> => {
+  if (getLeaderboardPromise) {
+    return getLeaderboardPromise;
+  }
+
+  getLeaderboardPromise = (async () => {
+    try {
+      const response = await authenticatedRequest(`${BASE_URL}/rank/bubbleShooter`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        return data;
+      } else {
+        throw new Error(`Get leaderboard request failed: ${response.status}`);
+      }
+    } catch (error) {
+      throw error;
+    } finally {
+      getLeaderboardPromise = null;
+    }
+  })();
+
+  return getLeaderboardPromise;
 };

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { initializeAuth } from '@/services/mosAuth';
 
 interface UseBackgroundAuthReturn {
@@ -13,14 +13,20 @@ export const useBackgroundAuth = (): UseBackgroundAuthReturn => {
     const [isLoading, setIsLoading] = useState<boolean>(true);
     const [error, setError] = useState<string | null>(null);
     const [token, setToken] = useState<string | null>(null);
+    const isInitialized = useRef(false);
 
     useEffect(() => {
+        if (isInitialized.current) {
+            return;
+        }
+
         const initAuth = async () => {
             try {
+                isInitialized.current = true;
+                
                 setIsLoading(true);
                 setError(null);
 
-                // Initialize background authentication
                 const authToken = await initializeAuth();
 
                 if (authToken) {

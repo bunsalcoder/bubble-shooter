@@ -42,6 +42,9 @@ import { isMobile } from "react-device-detect";
 import { useLanguage } from "@/contexts/LanguageContext";
 import LanguageSelector from "@/components/LanguageSelector";
 import { saveGameAPI, getGameAPI, clearGameAPI } from "@/services/mosAuth";
+import { useLeaderboard } from "@/hooks/useLeaderboard";
+import { getSafeAvatarEmoji, getRankEmoji, isValidAvatarUrl } from "@/utils/avatarUtils";
+import AvatarDisplay from "@/components/AvatarDisplay";
 
 const Board: React.FC = () => {
   let gameState: GameState = {
@@ -214,6 +217,7 @@ const Board: React.FC = () => {
   
   // Language context
   const { t } = useLanguage();
+  const { currentUserRank, topPlayers, isLoading: leaderboardLoading, error: leaderboardError, refreshLeaderboard } = useLeaderboard();
   const gridBubble = useRef<Record<string, Bubble>>({});
   const specialBubble = useRef({
     isAnswered: Answer.NOT_YET,
@@ -367,22 +371,18 @@ const Board: React.FC = () => {
     
   };
 
-  // Leaderboard data with sample players
-  const leaderboardData = [
-    { rank: 1, name: "BubbleMaster", score: 2840, avatar: "🏆" },
-    { rank: 2, name: "PopKing", score: 2650, avatar: "👑" },
-    { rank: 3, name: "ShooterPro", score: 2480, avatar: "⭐" },
-    { rank: 4, name: "BubbleQueen", score: 2320, avatar: "💎" },
-    { rank: 5, name: "PopStar", score: 2180, avatar: "🌟" },
-    { rank: 6, name: "BubbleNinja", score: 2040, avatar: "⚡" },
-    { rank: 7, name: "ShooterElite", score: 1890, avatar: "🔥" },
-    { rank: 8, name: "BubbleLegend", score: 1750, avatar: "💫" },
-    { rank: 9, name: "PopChampion", score: 1620, avatar: "🎯" },
-    { rank: 10, name: "BubbleHero", score: 1480, avatar: "🚀" }
-  ];
+  // Use API data for leaderboard
+  const leaderboardData = topPlayers.map(player => ({
+    rank: player.rank,
+    name: player.name,
+    score: player.score,
+    avatarUrl: player.avatarUrl,
+    avatarEmoji: getSafeAvatarEmoji(player.avatarUrl),
+    hasAvatar: isValidAvatarUrl(player.avatarUrl)
+  }));
 
-  // Current player name (you can change this to match the actual player)
-  const currentPlayerName = "BubbleMaster"; // This should be dynamic based on actual player
+  // Current player name from API
+  const currentPlayerName = currentUserRank?.name || "Player";
 
   const handleLeaderboardOk = () => {
     setIsLeaderboardOpen(false);
@@ -2800,12 +2800,36 @@ const Board: React.FC = () => {
             <div style={{ 
               display: 'flex', 
               alignItems: 'center', 
-              gap: '10px',
-              fontSize: '20px',
-              fontWeight: 'bold',
-              color: '#1e3a8a'
+              justifyContent: 'space-between',
+              width: '100%'
             }}>
-              {t('globalLeaderboard')}
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '10px',
+                fontSize: '20px',
+                fontWeight: 'bold',
+                color: '#1e3a8a'
+              }}>
+                {t('globalLeaderboard')}
+              </div>
+              <button
+                onClick={refreshLeaderboard}
+                disabled={leaderboardLoading}
+                style={{
+                  background: 'linear-gradient(135deg, #87CEEB, #4682B4)',
+                  border: 'none',
+                  borderRadius: '6px',
+                  color: 'white',
+                  cursor: leaderboardLoading ? 'not-allowed' : 'pointer',
+                  padding: '6px 12px',
+                  fontSize: '12px',
+                  opacity: leaderboardLoading ? 0.6 : 1,
+                  transition: 'all 0.3s ease'
+                }}
+              >
+                {leaderboardLoading ? 'Loading...' : '🔄'}
+              </button>
             </div>
           }
           open={isLeaderboardOpen}
@@ -2871,8 +2895,18 @@ const Board: React.FC = () => {
                 textShadow: '0 1px 2px rgba(0, 0, 0, 0.3)',
                 fontSize: isMobile ? '12px' : '14px'
               }}>
-              <span>{t('best')}: {gameProperties.current.highestScore}</span>
               <span>{t('current')}: {gameProperties.current.score}</span>
+              {currentUserRank && (
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <AvatarDisplay
+                    avatarUrl={currentUserRank.avatarUrl}
+                    name="You"
+                    size={20}
+                    showBorder={true}
+                  />
+                  <span>Rank: #{currentUserRank.rank}</span>
+                </div>
+              )}
             </div>
           </div>
           
@@ -2903,9 +2937,52 @@ const Board: React.FC = () => {
               e.stopPropagation();
             }}
           >
-            {leaderboardData.map((player, index) => {
-              const isCurrentPlayer = player.name === currentPlayerName;
-              const isTop3 = index < 3;
+            {leaderboardLoading ? (
+              <div style={{
+                textAlign: 'center',
+                padding: '20px',
+                color: 'white',
+                fontSize: '16px'
+              }}>
+                Loading leaderboard...
+              </div>
+            ) : leaderboardError ? (
+              <div style={{
+                textAlign: 'center',
+                padding: '20px',
+                color: '#ff6b6b',
+                fontSize: '14px'
+              }}>
+                {leaderboardError}
+                <br />
+                <button 
+                  onClick={refreshLeaderboard}
+                  style={{
+                    marginTop: '10px',
+                    padding: '8px 16px',
+                    background: 'linear-gradient(135deg, #87CEEB, #4682B4)',
+                    border: 'none',
+                    borderRadius: '6px',
+                    color: 'white',
+                    cursor: 'pointer'
+                  }}
+                >
+                  Retry
+                </button>
+              </div>
+            ) : leaderboardData.length === 0 ? (
+              <div style={{
+                textAlign: 'center',
+                padding: '20px',
+                color: 'white',
+                fontSize: '14px'
+              }}>
+                No leaderboard data available
+              </div>
+            ) : (
+              leaderboardData.map((player, index) => {
+                const isCurrentPlayer = currentUserRank && player.name === currentUserRank.name;
+                const isTop3 = index < 3;
               
               return (
                 <div
@@ -2918,42 +2995,54 @@ const Board: React.FC = () => {
                     marginBottom: isMobile ? '6px' : '8px',
                     borderRadius: '10px',
                     background: isCurrentPlayer 
-                      ? 'linear-gradient(135deg, rgba(135, 206, 235, 0.3), rgba(70, 130, 180, 0.3))'
+                      ? 'linear-gradient(135deg, rgba(135, 206, 235, 0.5), rgba(70, 130, 180, 0.5))'
                       : isTop3 
-                        ? 'linear-gradient(135deg, rgba(255, 215, 0, 0.2), rgba(255, 165, 0, 0.2))'
-                        : 'linear-gradient(135deg, rgba(255, 255, 255, 0.15), rgba(240, 248, 255, 0.15))',
+                        ? 'linear-gradient(135deg, rgba(255, 215, 0, 0.15), rgba(255, 165, 0, 0.15))'
+                        : 'linear-gradient(135deg, rgba(255, 255, 255, 0.1), rgba(240, 248, 255, 0.1))',
                     border: isCurrentPlayer 
-                      ? '3px solid rgba(135, 206, 235, 0.8)'
+                      ? '4px solid rgba(135, 206, 235, 1)'
                       : isTop3 
-                        ? '2px solid rgba(255, 215, 0, 0.5)'
-                        : '1px solid rgba(255, 255, 255, 0.3)',
+                        ? '1px solid rgba(255, 215, 0, 0.3)'
+                        : '1px solid rgba(255, 255, 255, 0.2)',
                     transition: 'all 0.3s ease',
                     cursor: 'pointer',
                     position: 'relative',
                     color: 'white',
-                    textShadow: '0 1px 2px rgba(0, 0, 0, 0.4)',
+                    textShadow: isCurrentPlayer 
+                      ? '0 2px 4px rgba(0, 0, 0, 0.6)'
+                      : '0 1px 2px rgba(0, 0, 0, 0.4)',
                     // Prevent touch events from interfering with scrolling
                     touchAction: 'pan-y',
                     userSelect: 'none',
                     WebkitUserSelect: 'none',
                     MozUserSelect: 'none',
-                    msUserSelect: 'none'
+                    msUserSelect: 'none',
+                    transform: isCurrentPlayer ? 'scale(1.02)' : 'scale(1)',
+                    boxShadow: isCurrentPlayer 
+                      ? '0 4px 12px rgba(135, 206, 235, 0.4)'
+                      : '0 2px 6px rgba(0, 0, 0, 0.1)'
                   }}
                   onMouseEnter={(e) => {
-                    e.currentTarget.style.transform = 'scale(1.02)';
+                    e.currentTarget.style.transform = isCurrentPlayer ? 'scale(1.05)' : 'scale(1.02)';
                     e.currentTarget.style.background = isCurrentPlayer 
-                      ? 'linear-gradient(135deg, rgba(135, 206, 235, 0.4), rgba(70, 130, 180, 0.4))'
-                      : isTop3 
-                        ? 'linear-gradient(135deg, rgba(255, 215, 0, 0.3), rgba(255, 165, 0, 0.3))'
-                        : 'linear-gradient(135deg, rgba(255, 255, 255, 0.25), rgba(240, 248, 255, 0.25))';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.transform = 'scale(1)';
-                    e.currentTarget.style.background = isCurrentPlayer 
-                      ? 'linear-gradient(135deg, rgba(135, 206, 235, 0.3), rgba(70, 130, 180, 0.3))'
+                      ? 'linear-gradient(135deg, rgba(135, 206, 235, 0.6), rgba(70, 130, 180, 0.6))'
                       : isTop3 
                         ? 'linear-gradient(135deg, rgba(255, 215, 0, 0.2), rgba(255, 165, 0, 0.2))'
                         : 'linear-gradient(135deg, rgba(255, 255, 255, 0.15), rgba(240, 248, 255, 0.15))';
+                    e.currentTarget.style.boxShadow = isCurrentPlayer 
+                      ? '0 6px 20px rgba(135, 206, 235, 0.6)'
+                      : '0 3px 10px rgba(0, 0, 0, 0.15)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.transform = isCurrentPlayer ? 'scale(1.02)' : 'scale(1)';
+                    e.currentTarget.style.background = isCurrentPlayer 
+                      ? 'linear-gradient(135deg, rgba(135, 206, 235, 0.5), rgba(70, 130, 180, 0.5))'
+                      : isTop3 
+                        ? 'linear-gradient(135deg, rgba(255, 215, 0, 0.15), rgba(255, 165, 0, 0.15))'
+                        : 'linear-gradient(135deg, rgba(255, 255, 255, 0.1), rgba(240, 248, 255, 0.1))';
+                    e.currentTarget.style.boxShadow = isCurrentPlayer 
+                      ? '0 4px 12px rgba(135, 206, 235, 0.4)'
+                      : '0 2px 6px rgba(0, 0, 0, 0.1)';
                   }}
                   onTouchStart={(e) => {
                     // Prevent default touch behavior
@@ -2971,20 +3060,22 @@ const Board: React.FC = () => {
                   {isCurrentPlayer && (
                     <div style={{
                       position: 'absolute',
-                      top: '-5px',
-                      right: '-5px',
+                      top: '-8px',
+                      right: '-8px',
                       background: 'linear-gradient(135deg, #87CEEB, #4682B4)',
                       color: 'white',
                       borderRadius: '50%',
-                      width: '24px',
-                      height: '24px',
+                      width: '28px',
+                      height: '28px',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
-                      fontSize: '12px',
+                      fontSize: '14px',
                       fontWeight: 'bold',
-                      boxShadow: '0 2px 8px rgba(135, 206, 235, 0.4)',
-                      zIndex: 1
+                      boxShadow: '0 4px 12px rgba(135, 206, 235, 0.6)',
+                      zIndex: 1,
+                      border: '2px solid rgba(255, 255, 255, 0.8)',
+                      animation: 'pulse 2s infinite'
                     }}>
                       👤
                     </div>
@@ -2998,13 +3089,13 @@ const Board: React.FC = () => {
                   <div 
                     className="bubble-shooter__leaderboard-rank-circle"
                     style={{
-                      width: isMobile ? '32px' : '40px',
-                      height: isMobile ? '32px' : '40px',
+                      width: '28px',
+                      height: '28px',
                       borderRadius: '50%',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
-                      fontSize: isMobile ? '16px' : '20px',
+                      fontSize: '12px',
                       background: index < 3 
                         ? 'linear-gradient(135deg, #FFD700, #FFA500)'
                         : 'linear-gradient(135deg, #3b82f6, #1e3a8a)',
@@ -3021,7 +3112,13 @@ const Board: React.FC = () => {
                     gap: isMobile ? '8px' : '10px',
                     flex: 1
                   }}>
-                    <span style={{ fontSize: isMobile ? '20px' : '24px' }}>{player.avatar}</span>
+                    <AvatarDisplay
+                      avatarUrl={player.avatarUrl}
+                      name={player.name}
+                      size={isMobile ? 28 : 36}
+                      showBorder={true}
+                      style={{ marginLeft: '-10px' }}
+                    />
                     <span style={{
                       fontWeight: 'bold',
                       color: 'white',
@@ -3043,7 +3140,8 @@ const Board: React.FC = () => {
                 </div>
               </div>
             );
-          })}
+          }))
+          }
           </div>
           
           <div style={{
@@ -3200,9 +3298,11 @@ const Board: React.FC = () => {
 
             {/* Leaderboard Button (3rd position) */}
             <button
-              onClick={() => {
+              onClick={async () => {
                 setIsMenuVisible(false);
                 setIsLeaderboardOpen(true);
+                // Refresh leaderboard data when opened
+                await refreshLeaderboard();
               }}
               className="bubble-shooter__menu-button"
               style={{

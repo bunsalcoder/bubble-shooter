@@ -4,6 +4,7 @@ import Head from 'next/head';
 import { useState, useEffect } from 'react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useBackgroundAuth } from '@/hooks/useBackgroundAuth';
+import { useUserInfo } from '@/hooks/useUserInfo';
 
 export default function Home() {
   const [showGame, setShowGame] = useState(false);
@@ -11,7 +12,8 @@ export default function Home() {
   const [fadeOut, setFadeOut] = useState(false);
   const [gameReady, setGameReady] = useState(false);
   const { t } = useLanguage();
-  const { isAuthenticated, isLoading: authLoading, error } = useBackgroundAuth();
+  const { isAuthenticated: authAuthenticated, isLoading: authLoading, error: authError } = useBackgroundAuth();
+  const { userInfo, isLoading: userInfoLoading, error: userInfoError, isAuthenticated: userInfoAuthenticated } = useUserInfo();
 
   const handleSplashComplete = () => {
     setFadeOut(true);
@@ -24,20 +26,19 @@ export default function Home() {
   };
 
   useEffect(() => {
-    if (!authLoading) {
-      if (isAuthenticated) {
+    if (!authLoading && !userInfoLoading) {
+      if (authAuthenticated && userInfoAuthenticated) {
         setIsLoading(false);
-      } else if (error) {
-        console.error('Authentication failed:', error);
+      } else if (authError || userInfoError) {
         setIsLoading(false);
       } else {
         // Still loading
         setIsLoading(true);
       }
     }
-  }, [isAuthenticated, authLoading, error]);
+  }, [authAuthenticated, authLoading, authError, userInfoAuthenticated, userInfoLoading, userInfoError]);
 
-  if (isLoading || authLoading) {
+  if (isLoading || authLoading || userInfoLoading) {
     return (
       <div style={{
         position: 'fixed',

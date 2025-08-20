@@ -430,8 +430,8 @@ $radius-size_base: 6px;
           }
           
           .bubble-shooter__leaderboard-rank-circle {
-            width: 32px !important;
-            height: 32px !important;
+            width: 28px !important;
+            height: 28px !important;
             font-size: 13px !important;
           }
           
@@ -630,6 +630,22 @@ $radius-size_base: 6px;
   100% {
     opacity: 0.3;
     transform: translateX(100%);
+  }
+}
+
+// Pulse animation for current user indicator
+@keyframes pulse {
+  0% {
+    transform: scale(1);
+    box-shadow: 0 4px 12px rgba(135, 206, 235, 0.6);
+  }
+  50% {
+    transform: scale(1.1);
+    box-shadow: 0 6px 20px rgba(135, 206, 235, 0.8);
+  }
+  100% {
+    transform: scale(1);
+    box-shadow: 0 4px 12px rgba(135, 206, 235, 0.6);
   }
 }
 
