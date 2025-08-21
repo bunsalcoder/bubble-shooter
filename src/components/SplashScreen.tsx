@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 interface SplashScreenProps {
   onComplete: () => void;
@@ -9,6 +10,7 @@ const SplashScreen: React.FC<SplashScreenProps> = ({ onComplete }) => {
   const [progress, setProgress] = useState(0);
   const [windowSize, setWindowSize] = useState({ width: 0, height: 0 });
   const [animationPhase, setAnimationPhase] = useState(0);
+  const { t } = useLanguage();
 
   useEffect(() => {
     // Set initial window size
@@ -171,7 +173,7 @@ const SplashScreen: React.FC<SplashScreenProps> = ({ onComplete }) => {
             textTransform: 'uppercase',
             animation: 'textShimmer 3s ease-in-out infinite'
           }}>
-            Bubble Shooter
+            {t('bubbleShooter')}
           </h1>
           <p style={{
             fontSize: isSmallMobile ? '1.1rem' : '1.3rem',
@@ -186,7 +188,7 @@ const SplashScreen: React.FC<SplashScreenProps> = ({ onComplete }) => {
             fontFamily: '"Poppins", "Segoe UI", "Roboto", "Helvetica Neue", Arial, sans-serif',
             animation: 'fadeInUp 2s ease-in-out infinite alternate'
           }}>
-            Classic Edition
+            {t('classicEdition')}
           </p>
         </div>
 
@@ -261,7 +263,7 @@ const SplashScreen: React.FC<SplashScreenProps> = ({ onComplete }) => {
           fontWeight: '300',
           animation: 'fadeInOut 3s ease-in-out infinite'
         }}>
-          Loading game...
+          {t('loadingGame')}
         </div>
       </div>
 

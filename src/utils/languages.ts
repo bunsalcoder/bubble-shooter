@@ -45,6 +45,12 @@ export interface Translations {
   loading: string;
   loadingGame: string;
   
+  // Start Game Screen
+  startGame: string;
+  tapToStart: string;
+  classicEdition: string;
+  bubbleShooter: string;
+  
   // Help/Info modal
   howToPlay: string;
   objective: string;
@@ -111,6 +117,12 @@ export const translations: Record<Language, Translations> = {
     loading: 'Loading...',
     loadingGame: 'Loading game...',
     
+    // Start Game Screen
+    startGame: 'Start Game',
+    tapToStart: 'Tap to start your bubble shooting adventure!',
+    classicEdition: 'Classic Edition',
+    bubbleShooter: 'Bubble Shooter',
+    
     // Help/Info modal
     howToPlay: 'How to Play',
     objective: 'Objective',
@@ -176,6 +188,12 @@ export const translations: Record<Language, Translations> = {
     loading: '加载中...',
     loadingGame: '游戏加载中...',
     
+    // Start Game Screen
+    startGame: '开始游戏',
+    tapToStart: '点击开始你的泡泡射击冒险！',
+    classicEdition: '经典版',
+    bubbleShooter: '泡泡射击',
+    
     // Help/Info modal
     howToPlay: '游戏玩法',
     objective: '游戏目标',
@@ -240,6 +258,12 @@ export const translations: Record<Language, Translations> = {
     // Loading
     loading: 'កំពុងផ្ទុក...',
     loadingGame: 'កំពុងផ្ទុកហ្គេម...',
+    
+    // Start Game Screen
+    startGame: 'ចាប់ផ្តើមហ្គេម',
+    tapToStart: 'ចុចដើម្បីចាប់ផ្តើមការផ្លាស់ទីព្រលានរបស់អ្នក!',
+    classicEdition: 'កំណែបុរាណ',
+    bubbleShooter: 'ហ្គេមបាញ់ព្រលាន',
     
     // Help/Info modal
     howToPlay: 'របៀបលេង',

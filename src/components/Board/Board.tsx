@@ -38,7 +38,7 @@ import pause from "@public/bubble-shooter/icon/pause.png";
 import play from "@public/bubble-shooter/icon/play.png";
 import setting from "@public/bubble-shooter/icon/setting.png";
 import Image from "next/image";
-import { isMobile } from "react-device-detect";
+import { isMobile, isAndroid } from "react-device-detect";
 import { useLanguage } from "@/contexts/LanguageContext";
 import LanguageSelector from "@/components/LanguageSelector";
 import { saveGameAPI, getGameAPI, clearGameAPI } from "@/services/mosAuth";
@@ -491,45 +491,12 @@ const Board: React.FC = () => {
     }
   };
 
-  const startBackgroundMusic = () => {
-    if ((window as any).audioManager) {
-      (window as any).audioManager.startMusic();
-    }
-  };
 
-  // Handle first user interaction to start music and sound effects
+
+  // Handle first user interaction (audio is now handled by StartGameScreen)
   const handleFirstInteraction = () => {
-    try {
-      // Enable audio for both manager and effects
-      if ((window as any).audioManager?.enableAudio) {
-        (window as any).audioManager.enableAudio();
-      }
-      if ((window as any).soundEffects?.enableAudio) {
-        (window as any).soundEffects.enableAudio();
-      }
-    } catch (error) {
-      console.error('Error enabling audio:', error);
-    }
-    
-    // iOS-specific audio initialization
-    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || 
-                  (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
-    
-    if (isIOS) {
-      // Try to create and play a silent audio to wake up iOS audio context
-      try {
-        const silentAudio = new Audio();
-        silentAudio.src = 'data:audio/wav;base64,UklGRigAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQAAAAA=';
-        silentAudio.volume = 0;
-        silentAudio.play().then(() => {
-          // iOS silent audio played successfully
-        }).catch(() => {
-          // Silent error handling
-        });
-      } catch (error) {
-        // Silent error handling
-      }
-    }
+    // Audio initialization is now handled by StartGameScreen
+    // This function is kept for compatibility but doesn't initialize audio
   };
 
   // Play shoot sound when bubble is fired
@@ -1636,18 +1603,6 @@ const Board: React.FC = () => {
 
   const setup = async (p5: p5Types, canvasParentRef: Element) => {
     p5.createCanvas(gameWidth, gameHeight).parent(canvasParentRef);
-    
-    // Try to start music when game loads (will only work if user has already interacted)
-    // Try to start music when game loads (will only work if user has already interacted)
-    setTimeout(() => {
-      try {
-        if ((window as any).audioManager) {
-          (window as any).audioManager.enableAudio();
-        }
-      } catch (error) {
-        console.error('Error enabling audio in setup:', error);
-      }
-    }, 500);
     
     // Prevent iOS selection menu and text selection
     const canvas = canvasParentRef.querySelector('canvas') as HTMLCanvasElement;
@@ -2884,7 +2839,7 @@ const Board: React.FC = () => {
           position: 'absolute',
           bottom: '30px',
           right: '30px',
-          marginBottom: '60px',
+          marginBottom: isAndroid ? '5px' : '60px',
           background: 'linear-gradient(145deg, #5DADE2, #85C1E9, #AED6F1)',
           borderRadius: '50%',
           width: '60px',

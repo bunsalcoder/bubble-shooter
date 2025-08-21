@@ -1,5 +1,6 @@
 import Board from '@/components/Board/Board';
 import SplashScreen from '@/components/SplashScreen';
+import StartGameScreen from '@/components/StartGameScreen';
 import Head from 'next/head';
 import { useState, useEffect } from 'react';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -7,6 +8,8 @@ import { useBackgroundAuth } from '@/hooks/useBackgroundAuth';
 import { useUserInfo } from '@/hooks/useUserInfo';
 
 export default function Home() {
+  const [showStartScreen, setShowStartScreen] = useState(true);
+  const [showSplash, setShowSplash] = useState(false);
   const [showGame, setShowGame] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [fadeOut, setFadeOut] = useState(false);
@@ -14,6 +17,11 @@ export default function Home() {
   const { t } = useLanguage();
   const { isAuthenticated: authAuthenticated, isLoading: authLoading, error: authError } = useBackgroundAuth();
   const { userInfo, isLoading: userInfoLoading, error: userInfoError, isAuthenticated: userInfoAuthenticated } = useUserInfo();
+
+  const handleStartGame = () => {
+    setShowStartScreen(false);
+    setShowSplash(true);
+  };
 
   const handleSplashComplete = () => {
     setFadeOut(true);
@@ -79,8 +87,22 @@ export default function Home() {
         height: '100vh',
         overflow: 'hidden'
       }}>
+        {/* Start Game Screen */}
+        {showStartScreen && (
+          <div style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            width: '100%',
+            height: '100%',
+            zIndex: 10000
+          }}>
+            <StartGameScreen onStart={handleStartGame} />
+          </div>
+        )}
+
         {/* Splash Screen */}
-        {!showGame && (
+        {showSplash && !showGame && (
           <div style={{
             position: 'absolute',
             top: 0,
