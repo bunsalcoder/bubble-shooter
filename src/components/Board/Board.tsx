@@ -214,7 +214,7 @@ const Board: React.FC = () => {
   const [isMusicMuted, setIsMusicMuted] = useState<boolean>(false);
   const [isMenuVisible, setIsMenuVisible] = useState<boolean>(false);
   const [isLanguageSelectorOpen, setIsLanguageSelectorOpen] = useState<boolean>(false);
-  
+
   // Language context
   const { t } = useLanguage();
   const { currentUserRank, topPlayers, isLoading: leaderboardLoading, error: leaderboardError, refreshLeaderboard } = useLeaderboard();
@@ -433,20 +433,8 @@ const Board: React.FC = () => {
 
     window.addEventListener('beforeunload', handleBeforeUnload);
     
-    // Add periodic check for localStorage changes (every 2 seconds)
-    const localStorageCheckInterval = setInterval(() => {
-      const savedGame = localStorage.getItem('bubbleShooterGame');
-      if (!savedGame && Object.keys(gridBubble.current).length > 0) {
-  
-        forceNewGame();
-        // Clear the interval after triggering to prevent loops
-        clearInterval(localStorageCheckInterval);
-      }
-    }, 2000);
-    
     return () => {
       window.removeEventListener('beforeunload', handleBeforeUnload);
-      clearInterval(localStorageCheckInterval);
     };
   }, []);
 
@@ -617,7 +605,7 @@ const Board: React.FC = () => {
   };
 
   const checkGamePause = () => {
-    if (isModalOpen || isModalSettingOpen || gameState.isPause) {
+    if (isModalOpen || isModalSettingOpen || isMenuVisible || isLeaderboardOpen || isLanguageSelectorOpen || gameState.isPause) {
       return true;
     }
     return false;
@@ -1422,8 +1410,9 @@ const Board: React.FC = () => {
       totalLength += segmentLength;
     }
     
-    // Draw animated dots with much closer spacing and slower animation
-    const dotCount = 20; // Increased from 12 for much more dots
+    // Draw animated dots with consistent spacing regardless of trajectory length
+    const dotSpacing = 15; // Fixed spacing between dots in pixels (reduced for more dots)
+    const dotCount = Math.max(8, Math.min(50, Math.floor(totalLength / dotSpacing))); // Dynamic dot count based on trajectory length
     const dotSpeed = 0.004; // Much slower speed (reduced from 0.008)
     const dotProgress = (p5.frameCount * dotSpeed) % 1; // Continuous loop
     
@@ -1498,8 +1487,9 @@ const Board: React.FC = () => {
     const maxArrowLength = 150; // Even longer arrow
     const arrowLength = Math.min(distance, maxArrowLength);
     
-    // Draw animated dots with much closer spacing and slower animation
-    const dotCount = 20; // Increased from 12 for much more dots
+    // Draw animated dots with consistent spacing regardless of arrow length
+    const dotSpacing = 15; // Fixed spacing between dots in pixels (reduced for more dots)
+    const dotCount = Math.max(6, Math.min(40, Math.floor(arrowLength / dotSpacing))); // Dynamic dot count based on arrow length
     const dotSpeed = 0.004; // Much slower speed (reduced from 0.008)
     const dotProgress = (p5.frameCount * dotSpeed) % 1; // Continuous loop
     
@@ -1723,6 +1713,11 @@ const Board: React.FC = () => {
     p5.clear();
 
     if (isGameLoading) {
+      return;
+    }
+    
+    // COMPLETELY STOP rendering if any UI element is active
+    if (isModalOpen || isModalSettingOpen || isMenuVisible || isLeaderboardOpen || isLanguageSelectorOpen) {
       return;
     }
 
@@ -1992,14 +1987,27 @@ const Board: React.FC = () => {
   };
 
   const mouseClicked = (p5: p5Types) => {
-    // If we were holding, don't process click (let mouseReleased handle it)
+    // COMPLETELY BLOCK all game interactions if any UI element is active
+    if (isModalOpen || isModalSettingOpen || isMenuVisible || isLeaderboardOpen || isLanguageSelectorOpen) {
+      return;
+    }
+    
+    // Block if game is paused or over
+    if (gameState.isPause || gameState.isGameOver) {
+      return;
+    }
+    
+    // Block if we were holding (let mouseReleased handle it)
     if (isHolding.current) {
       return;
     }
     
+    // Final check - only proceed if game is not paused
     if (!checkGamePause()) {
-      // Handle first interaction to start music
-      handleFirstInteraction();
+      // Handle first interaction to start music (only if no UI elements are active)
+      if (!isModalOpen && !isModalSettingOpen && !isMenuVisible && !isLeaderboardOpen && !isLanguageSelectorOpen) {
+        handleFirstInteraction();
+      }
       
       // Get click coordinates - handle both mouse and touch events
       let clickX = p5.mouseX;
@@ -2010,6 +2018,11 @@ const Board: React.FC = () => {
         const touch = p5.touches[0] as any;
         clickX = touch.x;
         clickY = touch.y;
+      }
+      
+      // Check if click is within the canvas bounds using p5's coordinate system
+      if (clickX < 0 || clickX > p5.width || clickY < 0 || clickY > p5.height) {
+        return; // Ignore clicks outside canvas
       }
       
       if (clickX !== 0 && clickY !== 0) {
@@ -2132,6 +2145,15 @@ const Board: React.FC = () => {
         releaseY = touch.y;
       }
       
+      // Check if release is within the canvas bounds using p5's coordinate system
+      if (releaseX < 0 || releaseX > p5.width || releaseY < 0 || releaseY > p5.height) {
+        isHolding.current = false;
+        hoverTarget.current.x = 0;
+        hoverTarget.current.y = 0;
+        isShowingTrajectory.current = false;
+        return; // Ignore releases outside canvas
+      }
+      
       if (releaseX !== 0 && releaseY !== 0) {
         // Check if release is not in swap area
         const launcherX = gameWidth / 2;
@@ -2207,6 +2229,16 @@ const Board: React.FC = () => {
   };
   
   const keyPressed = (p5: p5Types) => {
+    // COMPLETELY BLOCK all game interactions if any UI element is active
+    if (isModalOpen || isModalSettingOpen || isMenuVisible || isLeaderboardOpen || isLanguageSelectorOpen) {
+      return;
+    }
+    
+    // Block if game is paused or over
+    if (gameState.isPause || gameState.isGameOver) {
+      return;
+    }
+    
     // Handle first interaction to start music
     handleFirstInteraction();
     
@@ -2228,6 +2260,16 @@ const Board: React.FC = () => {
   };
 
   const mouseMoved = (p5: p5Types) => {
+    // COMPLETELY BLOCK all game interactions if any UI element is active
+    if (isModalOpen || isModalSettingOpen || isMenuVisible || isLeaderboardOpen || isLanguageSelectorOpen) {
+      return;
+    }
+    
+    // Block if game is paused or over
+    if (gameState.isPause || gameState.isGameOver) {
+      return;
+    }
+    
     // Get move coordinates - handle both mouse and touch events
     let moveX = p5.mouseX;
     let moveY = p5.mouseY;
@@ -2251,19 +2293,44 @@ const Board: React.FC = () => {
 
   // Add touch event handlers for iOS compatibility
   const touchStarted = (p5: p5Types) => {
-    // Handle first interaction to start music
-    handleFirstInteraction();
+    // COMPLETELY BLOCK all game interactions if any UI element is active
+    if (isModalOpen || isModalSettingOpen || isMenuVisible || isLeaderboardOpen || isLanguageSelectorOpen) {
+      return;
+    }
+    
+    // Block if game is paused or over
+    if (gameState.isPause || gameState.isGameOver) {
+      return;
+    }
+    
+    // Handle first interaction to start music (only if no UI elements are active)
+    if (!isModalOpen && !isModalSettingOpen && !isMenuVisible && !isLeaderboardOpen && !isLanguageSelectorOpen) {
+      handleFirstInteraction();
+    }
     
     // Store initial touch position for accurate tracking
     if (p5.touches && p5.touches.length > 0) {
       const touch = p5.touches[0] as any;
       touchStartCoords.current = { x: touch.x, y: touch.y };
+      
+      // Only set holding state if touch is within canvas bounds using p5's coordinate system
+      if (touch.x >= 0 && touch.x <= p5.width && touch.y >= 0 && touch.y <= p5.height) {
+        isHolding.current = true;
+      }
     }
-    
-    isHolding.current = true;
   };
 
   const touchMoved = (p5: p5Types) => {
+    // COMPLETELY BLOCK all game interactions if any UI element is active
+    if (isModalOpen || isModalSettingOpen || isMenuVisible || isLeaderboardOpen || isLanguageSelectorOpen) {
+      return;
+    }
+    
+    // Block if game is paused or over
+    if (gameState.isPause || gameState.isGameOver) {
+      return;
+    }
+    
     // Update current touch position for accurate tracking
     if (p5.touches && p5.touches.length > 0) {
       const touch = p5.touches[0] as any;
@@ -2797,39 +2864,15 @@ const Board: React.FC = () => {
         {/* Leaderboard Modal */}
         <Modal
           title={
-            <div style={{ 
-              display: 'flex', 
-              alignItems: 'center', 
-              justifyContent: 'space-between',
-              width: '100%'
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '10px',
+              fontSize: '20px',
+              fontWeight: 'bold',
+              color: '#1e3a8a'
             }}>
-              <div style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '10px',
-                fontSize: '20px',
-                fontWeight: 'bold',
-                color: '#1e3a8a'
-              }}>
-                {t('globalLeaderboard')}
-              </div>
-              <button
-                onClick={refreshLeaderboard}
-                disabled={leaderboardLoading}
-                style={{
-                  background: 'linear-gradient(135deg, #87CEEB, #4682B4)',
-                  border: 'none',
-                  borderRadius: '6px',
-                  color: 'white',
-                  cursor: leaderboardLoading ? 'not-allowed' : 'pointer',
-                  padding: '6px 12px',
-                  fontSize: '12px',
-                  opacity: leaderboardLoading ? 0.6 : 1,
-                  transition: 'all 0.3s ease'
-                }}
-              >
-                {leaderboardLoading ? 'Loading...' : '🔄'}
-              </button>
+              {t('globalLeaderboard')}
             </div>
           }
           open={isLeaderboardOpen}
@@ -2954,21 +2997,6 @@ const Board: React.FC = () => {
                 fontSize: '14px'
               }}>
                 {leaderboardError}
-                <br />
-                <button 
-                  onClick={refreshLeaderboard}
-                  style={{
-                    marginTop: '10px',
-                    padding: '8px 16px',
-                    background: 'linear-gradient(135deg, #87CEEB, #4682B4)',
-                    border: 'none',
-                    borderRadius: '6px',
-                    color: 'white',
-                    cursor: 'pointer'
-                  }}
-                >
-                  Retry
-                </button>
               </div>
             ) : leaderboardData.length === 0 ? (
               <div style={{
@@ -3166,8 +3194,12 @@ const Board: React.FC = () => {
         {/* Menu Modal */}
         <Modal
           open={isMenuVisible}
-          onOk={() => setIsMenuVisible(false)}
-          onCancel={() => setIsMenuVisible(false)}
+          onOk={() => {
+            setIsMenuVisible(false);
+          }}
+          onCancel={() => {
+            setIsMenuVisible(false);
+          }}
           width={400}
           bodyStyle={{
             padding: '0',
@@ -3441,7 +3473,9 @@ const Board: React.FC = () => {
         {/* Language Selector Modal */}
         <LanguageSelector 
           isOpen={isLanguageSelectorOpen}
-          onClose={() => setIsLanguageSelectorOpen(false)}
+          onClose={() => {
+            setIsLanguageSelectorOpen(false);
+          }}
         />
       </article>
 
