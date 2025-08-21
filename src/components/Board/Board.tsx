@@ -1411,9 +1411,13 @@ const Board: React.FC = () => {
     }
     
     // Draw animated dots with consistent spacing regardless of trajectory length
-    const dotSpacing = 15; // Fixed spacing between dots in pixels (reduced for more dots)
-    const dotCount = Math.max(8, Math.min(50, Math.floor(totalLength / dotSpacing))); // Dynamic dot count based on trajectory length
-    const dotSpeed = 0.004; // Much slower speed (reduced from 0.008)
+    const dotSpacing = 12; // Reduced spacing for more dots
+    const dotCount = Math.max(12, Math.min(80, Math.floor(totalLength / dotSpacing))); // More dots for longer trajectories
+    
+    // Dynamic speed based on trajectory length - longer trajectories move slower
+    const baseSpeed = 0.002; // Slower base speed
+    const speedMultiplier = Math.max(0.2, Math.min(1.0, 300 / totalLength)); // More aggressive speed reduction
+    const dotSpeed = baseSpeed * speedMultiplier;
     const dotProgress = (p5.frameCount * dotSpeed) % 1; // Continuous loop
     
     for (let i = 0; i < dotCount; i++) {
@@ -1488,9 +1492,13 @@ const Board: React.FC = () => {
     const arrowLength = Math.min(distance, maxArrowLength);
     
     // Draw animated dots with consistent spacing regardless of arrow length
-    const dotSpacing = 15; // Fixed spacing between dots in pixels (reduced for more dots)
-    const dotCount = Math.max(6, Math.min(40, Math.floor(arrowLength / dotSpacing))); // Dynamic dot count based on arrow length
-    const dotSpeed = 0.004; // Much slower speed (reduced from 0.008)
+    const dotSpacing = 12; // Reduced spacing for more dots
+    const dotCount = Math.max(8, Math.min(60, Math.floor(arrowLength / dotSpacing))); // More dots for longer arrows
+    
+    // Dynamic speed based on arrow length - longer arrows move slower
+    const baseSpeed = 0.002; // Slower base speed
+    const speedMultiplier = Math.max(0.2, Math.min(1.0, 200 / arrowLength)); // More aggressive speed reduction
+    const dotSpeed = baseSpeed * speedMultiplier;
     const dotProgress = (p5.frameCount * dotSpeed) % 1; // Continuous loop
     
     for (let i = 0; i < dotCount; i++) {
@@ -2081,7 +2089,9 @@ const Board: React.FC = () => {
             if (distance > 0) {
               const speed = activeBubble.current.speed * 3; // 3x faster initial speed
               activeBubble.current.speedX = (speed * dx) / distance;
-              activeBubble.current.speedY = (speed * dy) / distance;
+              // Force upward shooting - prevent shooting downward
+              const calculatedSpeedY = (speed * dy) / distance;
+              activeBubble.current.speedY = Math.min(calculatedSpeedY, -1); // Ensure Y speed is negative (upward)
             }
             
             // Set bubble to launcher position
@@ -2109,7 +2119,9 @@ const Board: React.FC = () => {
             if (magnitude > 10) {
               let speed = activeBubble.current.speed;
               activeBubble.current.speedX = (speed * dx) / magnitude;
-              activeBubble.current.speedY = (speed * dy) / magnitude;
+              // Force upward shooting - prevent shooting downward
+              const calculatedSpeedY = (speed * dy) / magnitude;
+              activeBubble.current.speedY = Math.min(calculatedSpeedY, -1); // Ensure Y speed is negative (upward)
               activeBubble.current.isMoving = true;
               isShowingTrajectory.current = false; // Clear trajectory when bubble starts moving
               gameState.countShoot++;
@@ -2389,7 +2401,9 @@ const Board: React.FC = () => {
             if (distance > 0) {
               const speed = activeBubble.current.speed;
               activeBubble.current.speedX = (speed * dx) / distance;
-              activeBubble.current.speedY = (speed * dy) / distance;
+              // Force upward shooting - prevent shooting downward
+              const calculatedSpeedY = (speed * dy) / distance;
+              activeBubble.current.speedY = Math.min(calculatedSpeedY, -1); // Ensure Y speed is negative (upward)
             }
             
             // Set bubble to launcher position
