@@ -213,6 +213,7 @@ const Board: React.FC = () => {
   const [isLeaderboardOpen, setIsLeaderboardOpen] = useState<boolean>(false);
   const [isMusicMuted, setIsMusicMuted] = useState<boolean>(false);
   const [isMenuVisible, setIsMenuVisible] = useState<boolean>(false);
+  const [isInfoVisible, setIsInfoVisible] = useState<boolean>(false);
   const [isLanguageSelectorOpen, setIsLanguageSelectorOpen] = useState<boolean>(false);
 
   // Language context
@@ -605,7 +606,7 @@ const Board: React.FC = () => {
   };
 
   const checkGamePause = () => {
-    if (isModalOpen || isModalSettingOpen || isMenuVisible || isLeaderboardOpen || isLanguageSelectorOpen || gameState.isPause) {
+    if (isModalOpen || isModalSettingOpen || isMenuVisible || isLeaderboardOpen || isLanguageSelectorOpen || isInfoVisible || gameState.isPause) {
       return true;
     }
     return false;
@@ -1725,7 +1726,7 @@ const Board: React.FC = () => {
     }
     
     // COMPLETELY STOP rendering if any UI element is active
-    if (isModalOpen || isModalSettingOpen || isMenuVisible || isLeaderboardOpen || isLanguageSelectorOpen) {
+    if (isModalOpen || isModalSettingOpen || isMenuVisible || isLeaderboardOpen || isLanguageSelectorOpen || isInfoVisible) {
       return;
     }
 
@@ -1996,7 +1997,7 @@ const Board: React.FC = () => {
 
   const mouseClicked = (p5: p5Types) => {
     // COMPLETELY BLOCK all game interactions if any UI element is active
-    if (isModalOpen || isModalSettingOpen || isMenuVisible || isLeaderboardOpen || isLanguageSelectorOpen) {
+    if (isModalOpen || isModalSettingOpen || isMenuVisible || isLeaderboardOpen || isLanguageSelectorOpen || isInfoVisible) {
       return;
     }
     
@@ -2010,12 +2011,12 @@ const Board: React.FC = () => {
       return;
     }
     
-    // Final check - only proceed if game is not paused
-    if (!checkGamePause()) {
-      // Handle first interaction to start music (only if no UI elements are active)
-      if (!isModalOpen && !isModalSettingOpen && !isMenuVisible && !isLeaderboardOpen && !isLanguageSelectorOpen) {
-        handleFirstInteraction();
-      }
+          // Final check - only proceed if game is not paused
+      if (!checkGamePause()) {
+        // Handle first interaction to start music (only if no UI elements are active)
+        if (!isModalOpen && !isModalSettingOpen && !isMenuVisible && !isLeaderboardOpen && !isLanguageSelectorOpen && !isInfoVisible) {
+          handleFirstInteraction();
+        }
       
       // Get click coordinates - handle both mouse and touch events
       let clickX = p5.mouseX;
@@ -2242,7 +2243,7 @@ const Board: React.FC = () => {
   
   const keyPressed = (p5: p5Types) => {
     // COMPLETELY BLOCK all game interactions if any UI element is active
-    if (isModalOpen || isModalSettingOpen || isMenuVisible || isLeaderboardOpen || isLanguageSelectorOpen) {
+    if (isModalOpen || isModalSettingOpen || isMenuVisible || isLeaderboardOpen || isLanguageSelectorOpen || isInfoVisible) {
       return;
     }
     
@@ -2273,7 +2274,7 @@ const Board: React.FC = () => {
 
   const mouseMoved = (p5: p5Types) => {
     // COMPLETELY BLOCK all game interactions if any UI element is active
-    if (isModalOpen || isModalSettingOpen || isMenuVisible || isLeaderboardOpen || isLanguageSelectorOpen) {
+    if (isModalOpen || isModalSettingOpen || isMenuVisible || isLeaderboardOpen || isLanguageSelectorOpen || isInfoVisible) {
       return;
     }
     
@@ -2306,7 +2307,7 @@ const Board: React.FC = () => {
   // Add touch event handlers for iOS compatibility
   const touchStarted = (p5: p5Types) => {
     // COMPLETELY BLOCK all game interactions if any UI element is active
-    if (isModalOpen || isModalSettingOpen || isMenuVisible || isLeaderboardOpen || isLanguageSelectorOpen) {
+    if (isModalOpen || isModalSettingOpen || isMenuVisible || isLeaderboardOpen || isLanguageSelectorOpen || isInfoVisible) {
       return;
     }
     
@@ -2316,7 +2317,7 @@ const Board: React.FC = () => {
     }
     
     // Handle first interaction to start music (only if no UI elements are active)
-    if (!isModalOpen && !isModalSettingOpen && !isMenuVisible && !isLeaderboardOpen && !isLanguageSelectorOpen) {
+    if (!isModalOpen && !isModalSettingOpen && !isMenuVisible && !isLeaderboardOpen && !isLanguageSelectorOpen && !isInfoVisible) {
       handleFirstInteraction();
     }
     
@@ -2334,7 +2335,7 @@ const Board: React.FC = () => {
 
   const touchMoved = (p5: p5Types) => {
     // COMPLETELY BLOCK all game interactions if any UI element is active
-    if (isModalOpen || isModalSettingOpen || isMenuVisible || isLeaderboardOpen || isLanguageSelectorOpen) {
+    if (isModalOpen || isModalSettingOpen || isMenuVisible || isLeaderboardOpen || isLanguageSelectorOpen || isInfoVisible) {
       return;
     }
     
@@ -2678,33 +2679,83 @@ const Board: React.FC = () => {
           <div 
             onClick={(e) => e.stopPropagation()}
             style={{
-              background: 'linear-gradient(135deg, rgba(135, 206, 235, 0.8), rgba(70, 130, 180, 0.8))',
-              borderRadius: '20px',
-              padding: '12px 20px',
+              background: 'linear-gradient(145deg, #5DADE2, #85C1E9, #AED6F1)',
+              borderRadius: '25px',
+              padding: '15px 25px',
               display: 'flex',
               alignItems: 'center',
-              gap: '12px',
-              boxShadow: '0 6px 20px rgba(135, 206, 235, 0.3)',
-              border: '2px solid rgba(255, 255, 255, 0.3)',
-              minWidth: '140px',
+              gap: '15px',
+              boxShadow: 
+                '0 8px 25px rgba(93, 173, 226, 0.4), ' +
+                'inset 0 2px 4px rgba(255, 255, 255, 0.5), ' +
+                'inset 0 -2px 4px rgba(0, 0, 0, 0.1)',
+              border: 'none',
+              minWidth: '160px',
               position: 'relative',
-              overflow: 'hidden'
-            }}>
-            <span style={{ fontSize: '20px', color: '#2d3748' }}>🪙</span>
+              overflow: 'hidden',
+              transform: 'translateY(0)',
+              transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+              cursor: 'pointer',
+              animation: 'scoreButtonGlow 3s ease-in-out infinite'
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.transform = 'translateY(-3px) scale(1.02)';
+              e.currentTarget.style.boxShadow = 
+                '0 12px 35px rgba(93, 173, 226, 0.6), ' +
+                'inset 0 2px 4px rgba(255, 255, 255, 0.6), ' +
+                'inset 0 -2px 4px rgba(0, 0, 0, 0.15)';
+              e.currentTarget.style.animation = 'scoreButtonPulse 0.5s ease-in-out';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.transform = 'translateY(0) scale(1)';
+              e.currentTarget.style.boxShadow = 
+                '0 8px 25px rgba(93, 173, 226, 0.4), ' +
+                'inset 0 2px 4px rgba(255, 255, 255, 0.5), ' +
+                'inset 0 -2px 4px rgba(0, 0, 0, 0.1)';
+              e.currentTarget.style.animation = 'scoreButtonGlow 3s ease-in-out infinite';
+            }}
+            onMouseDown={(e) => {
+              e.currentTarget.style.transform = 'translateY(1px) scale(0.98)';
+            }}
+            onMouseUp={(e) => {
+              e.currentTarget.style.transform = 'translateY(-3px) scale(1.02)';
+            }}
+          >
+            {/* 3D shine effect */}
+            <div style={{
+              position: 'absolute',
+              top: '0',
+              left: '0',
+              right: '0',
+              height: '50%',
+              background: 'linear-gradient(180deg, rgba(255, 255, 255, 0.15) 0%, transparent 100%)',
+              borderRadius: '25px 25px 0 0',
+              pointerEvents: 'none'
+            }} />
+            
+            <span style={{ 
+              fontSize: '24px', 
+              filter: 'drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3))',
+              zIndex: '1',
+              position: 'relative',
+              animation: 'coinSpin 2s linear infinite'
+            }}>🪙</span>
             <span 
               id="score" 
               className="custom-score"
               style={{ 
-                fontSize: '24px', 
-                color: 'white', 
+                fontSize: '26px', 
+                color: '#FFFFFF', 
                 fontWeight: 'bold',
+                textShadow: '0 2px 4px rgba(0, 0, 0, 0.5), 0 0 10px rgba(255, 255, 255, 0.3)',
                 overflow: 'hidden',
                 textOverflow: 'ellipsis',
                 whiteSpace: 'nowrap',
                 maxWidth: '100%',
-                position: 'static',
                 top: 'auto',
-                left: 'auto'
+                left: 'auto',
+                zIndex: '1',
+                position: 'relative'
               }}
             >Score 0</span>
           </div>
@@ -2722,34 +2773,72 @@ const Board: React.FC = () => {
               setIsMenuVisible(true);
             }}
             style={{
-              background: 'linear-gradient(135deg, rgba(135, 206, 235, 0.8), rgba(70, 130, 180, 0.8))',
-              borderRadius: '15px',
-              padding: '12px',
+              background: 'linear-gradient(145deg, #5499C7, #7FB3D3, #A9CCE3)',
+              borderRadius: '20px',
+              padding: '15px',
               color: 'white',
               fontSize: '20px',
               fontWeight: 'bold',
               cursor: 'pointer',
-              boxShadow: '0 4px 15px rgba(135, 206, 235, 0.3)',
-              transition: 'all 0.3s ease',
+              boxShadow: 
+                '0 8px 25px rgba(84, 153, 199, 0.4), ' +
+                'inset 0 2px 4px rgba(255, 255, 255, 0.5), ' +
+                'inset 0 -2px 4px rgba(0, 0, 0, 0.1)',
+              transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              minWidth: '50px',
-              height: '50px',
-              border: '2px solid rgba(255, 255, 255, 0.3)',
+              minWidth: '60px',
+              height: '60px',
+              border: 'none',
               position: 'relative',
-              overflow: 'hidden'
+              overflow: 'hidden',
+              transform: 'translateY(0)',
+              animation: 'menuButtonFloat 4s ease-in-out infinite'
             }}
             onMouseEnter={(e) => {
-              e.currentTarget.style.transform = 'scale(1.05)';
-              e.currentTarget.style.boxShadow = '0 6px 20px rgba(135, 206, 235, 0.4)';
+              e.currentTarget.style.transform = 'translateY(-3px) scale(1.05)';
+              e.currentTarget.style.boxShadow = 
+                '0 12px 35px rgba(84, 153, 199, 0.6), ' +
+                'inset 0 2px 4px rgba(255, 255, 255, 0.6), ' +
+                'inset 0 -2px 4px rgba(0, 0, 0, 0.15)';
+              e.currentTarget.style.animation = 'menuButtonPulse 0.5s ease-in-out';
             }}
             onMouseLeave={(e) => {
-              e.currentTarget.style.transform = 'scale(1)';
-              e.currentTarget.style.boxShadow = '0 4px 15px rgba(135, 206, 235, 0.3)';
+              e.currentTarget.style.transform = 'translateY(0) scale(1)';
+              e.currentTarget.style.boxShadow = 
+                '0 8px 25px rgba(84, 153, 199, 0.4), ' +
+                'inset 0 2px 4px rgba(255, 255, 255, 0.5), ' +
+                'inset 0 -2px 4px rgba(0, 0, 0, 0.1)';
+              e.currentTarget.style.animation = 'menuButtonFloat 4s ease-in-out infinite';
+            }}
+            onMouseDown={(e) => {
+              e.currentTarget.style.transform = 'translateY(1px) scale(0.98)';
+            }}
+            onMouseUp={(e) => {
+              e.currentTarget.style.transform = 'translateY(-3px) scale(1.05)';
             }}
           >
-            <span style={{ fontSize: '24px', color: 'white' }}>☰</span>
+            {/* 3D shine effect */}
+            <div style={{
+              position: 'absolute',
+              top: '0',
+              left: '0',
+              right: '0',
+              height: '50%',
+              background: 'linear-gradient(180deg, rgba(255, 255, 255, 0.15) 0%, transparent 100%)',
+              borderRadius: '20px 20px 0 0',
+              pointerEvents: 'none'
+            }} />
+            
+            <span style={{ 
+              fontSize: '28px', 
+              color: '#FFFFFF',
+              textShadow: '0 2px 4px rgba(0, 0, 0, 0.5), 0 0 10px rgba(255, 255, 255, 0.3)',
+              filter: 'drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3))',
+              zIndex: '1',
+              position: 'relative'
+            }}>☰</span>
           </button>
         </div>
       </header>
@@ -2782,6 +2871,68 @@ const Board: React.FC = () => {
           </li>
         </ul>
       </aside>
+      
+      {/* Information/Help Button */}
+      <div 
+        className="bubble-shooter__info-button"
+        onClick={(e) => {
+          e.stopPropagation();
+          handleFirstInteraction();
+          setIsInfoVisible(true);
+        }}
+        style={{
+          position: 'absolute',
+          bottom: '30px',
+          right: '30px',
+          background: 'linear-gradient(145deg, #5DADE2, #85C1E9, #AED6F1)',
+          borderRadius: '50%',
+          width: '60px',
+          height: '60px',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          cursor: 'pointer',
+          boxShadow: 
+            '0 8px 25px rgba(93, 173, 226, 0.4), ' +
+            'inset 0 2px 4px rgba(255, 255, 255, 0.5), ' +
+            'inset 0 -2px 4px rgba(0, 0, 0, 0.1)',
+          border: 'none',
+          transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+          transform: 'translateY(0)',
+          animation: 'infoButtonPulse 2s ease-in-out infinite',
+          zIndex: 10
+        }}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.transform = 'translateY(-3px) scale(1.1)';
+          e.currentTarget.style.boxShadow = 
+            '0 12px 35px rgba(93, 173, 226, 0.6), ' +
+            'inset 0 2px 4px rgba(255, 255, 255, 0.6), ' +
+            'inset 0 -2px 4px rgba(0, 0, 0, 0.15)';
+          e.currentTarget.style.animation = 'infoButtonGlow 0.5s ease-in-out';
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.transform = 'translateY(0) scale(1)';
+          e.currentTarget.style.boxShadow = 
+            '0 8px 25px rgba(93, 173, 226, 0.4), ' +
+            'inset 0 2px 4px rgba(255, 255, 255, 0.5), ' +
+            'inset 0 -2px 4px rgba(0, 0, 0, 0.1)';
+          e.currentTarget.style.animation = 'infoButtonPulse 2s ease-in-out infinite';
+        }}
+        onMouseDown={(e) => {
+          e.currentTarget.style.transform = 'translateY(1px) scale(0.95)';
+        }}
+        onMouseUp={(e) => {
+          e.currentTarget.style.transform = 'translateY(-3px) scale(1.1)';
+        }}
+      >
+        <span style={{ 
+          fontSize: '28px', 
+          color: 'white',
+          textShadow: '0 2px 4px rgba(0, 0, 0, 0.3)',
+          animation: 'infoIconSpin 3s linear infinite'
+        }}>❓</span>
+      </div>
+      
       <article className="bubble-shooter__game-main">
         <div 
           style={{
@@ -3481,6 +3632,151 @@ const Board: React.FC = () => {
                 letterSpacing: '0.5px'
               }}>{isMusicMuted ? t('unmute') : t('mute')}</span>
             </button>
+          </div>
+        </Modal>
+
+        {/* Information/Help Modal */}
+        <Modal
+          open={isInfoVisible}
+          onCancel={() => setIsInfoVisible(false)}
+          style={{
+            background: 'transparent',
+            padding: '0',
+            textAlign: 'center',
+            borderRadius: '20px',
+            overflow: 'hidden',
+            position: 'relative'
+          }}
+          footer={null}
+          className="bubble-shooter__info-modal"
+          title={null}
+          centered={true}
+        >
+          {/* Animated background overlay */}
+          <div style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: 'linear-gradient(45deg, rgba(255,255,255,0.15) 0%, rgba(255,255,255,0.05) 100%)',
+            animation: 'shimmer 3s ease-in-out infinite',
+            pointerEvents: 'none',
+            borderRadius: '15px'
+          }} />
+          
+          <div style={{
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '20px',
+            padding: '25px 20px',
+            position: 'relative',
+            zIndex: 1
+          }}>
+
+
+            {/* Title */}
+            <h2 style={{
+              color: 'white',
+              fontSize: '24px',
+              fontWeight: 'bold',
+              margin: '0 0 10px 0',
+              textShadow: '0 2px 4px rgba(0, 0, 0, 0.5)'
+            }}>
+              {t('howToPlay')}
+            </h2>
+
+            {/* Objective Section */}
+            <div style={{
+              background: 'linear-gradient(135deg, rgba(255, 215, 0, 0.15), rgba(255, 215, 0, 0.05))',
+              borderRadius: '15px',
+              padding: '20px',
+              textAlign: 'left',
+              color: 'white',
+              fontSize: '16px',
+              lineHeight: '1.6',
+              border: '1px solid rgba(255, 215, 0, 0.3)'
+            }}>
+              <h3 style={{ margin: '0 0 15px 0', color: '#FFD700', textAlign: 'left', fontWeight: 'bold', fontSize: '18px', textShadow: '0 1px 2px rgba(0, 0, 0, 0.5)' }}>🎯 {t('objective')}</h3>
+              <p style={{ margin: '0', textAlign: 'left' }}>
+                {t('objectiveDescription')}
+              </p>
+            </div>
+
+            {/* Controls Section */}
+            <div style={{
+              background: 'linear-gradient(135deg, rgba(93, 173, 226, 0.15), rgba(93, 173, 226, 0.05))',
+              borderRadius: '15px',
+              padding: '20px',
+              textAlign: 'left',
+              color: 'white',
+              fontSize: '16px',
+              lineHeight: '1.6',
+              border: '1px solid rgba(93, 173, 226, 0.3)'
+            }}>
+              <h3 style={{ margin: '0 0 15px 0', color: '#1E3A8A', textAlign: 'left', fontWeight: 'bold', fontSize: '18px', textShadow: '0 1px 2px rgba(0, 0, 0, 0.5)' }}>🎮 {t('controls')}</h3>
+              <ul style={{ margin: '0', paddingLeft: '0', listStyle: 'none' }}>
+                <li style={{ margin: '0 0 8px 0', textAlign: 'left' }}>{t('control1')}</li>
+                <li style={{ margin: '0 0 8px 0', textAlign: 'left' }}>{t('control2')}</li>
+                <li style={{ margin: '0 0 8px 0', textAlign: 'left' }}>{t('control3')}</li>
+              </ul>
+            </div>
+
+            {/* Scoring Section */}
+            <div style={{
+              background: 'linear-gradient(135deg, rgba(255, 193, 7, 0.15), rgba(255, 193, 7, 0.05))',
+              borderRadius: '15px',
+              padding: '20px',
+              textAlign: 'left',
+              color: 'white',
+              fontSize: '16px',
+              lineHeight: '1.6',
+              border: '1px solid rgba(255, 193, 7, 0.3)'
+            }}>
+              <h3 style={{ margin: '0 0 15px 0', color: '#B8860B', textAlign: 'left', fontWeight: 'bold', fontSize: '18px', textShadow: '0 1px 2px rgba(0, 0, 0, 0.5)' }}>🏆 {t('scoring')}</h3>
+              <ul style={{ margin: '0', paddingLeft: '0', listStyle: 'none' }}>
+                <li style={{ margin: '0 0 8px 0', textAlign: 'left' }}>{t('score1')}</li>
+                <li style={{ margin: '0 0 8px 0', textAlign: 'left' }}>{t('score2')}</li>
+                <li style={{ margin: '0 0 8px 0', textAlign: 'left' }}>{t('score3')}</li>
+              </ul>
+            </div>
+
+            {/* Game Over Section */}
+            <div style={{
+              background: 'linear-gradient(135deg, rgba(220, 53, 69, 0.15), rgba(220, 53, 69, 0.05))',
+              borderRadius: '15px',
+              padding: '20px',
+              textAlign: 'left',
+              color: 'white',
+              fontSize: '16px',
+              lineHeight: '1.6',
+              border: '1px solid rgba(220, 53, 69, 0.3)'
+            }}>
+              <h3 style={{ margin: '0 0 15px 0', color: '#8B0000', textAlign: 'left', fontWeight: 'bold', fontSize: '18px', textShadow: '0 1px 2px rgba(0, 0, 0, 0.5)' }}>⚠️ {t('gameOver')}</h3>
+              <p style={{ margin: '0', textAlign: 'left' }}>
+                {t('gameOverDescription')}
+              </p>
+            </div>
+
+            {/* Tips Section */}
+            <div style={{
+              background: 'linear-gradient(135deg, rgba(40, 167, 69, 0.15), rgba(40, 167, 69, 0.05))',
+              borderRadius: '15px',
+              padding: '20px',
+              textAlign: 'left',
+              color: 'white',
+              fontSize: '16px',
+              lineHeight: '1.6',
+              border: '1px solid rgba(40, 167, 69, 0.3)'
+            }}>
+              <h3 style={{ margin: '0 0 15px 0', color: '#006400', textAlign: 'left', fontWeight: 'bold', fontSize: '18px', textShadow: '0 1px 2px rgba(0, 0, 0, 0.5)' }}>💡 {t('tips')}</h3>
+              <ul style={{ margin: '0', paddingLeft: '0', listStyle: 'none' }}>
+                <li style={{ margin: '0 0 8px 0', textAlign: 'left' }}>{t('tip1')}</li>
+                <li style={{ margin: '0 0 8px 0', textAlign: 'left' }}>{t('tip2')}</li>
+                <li style={{ margin: '0 0 8px 0', textAlign: 'left' }}>{t('tip3')}</li>
+                <li style={{ margin: '0 0 8px 0', textAlign: 'left' }}>{t('tip4')}</li>
+              </ul>
+            </div>
           </div>
         </Modal>
 

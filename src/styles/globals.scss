@@ -257,6 +257,32 @@ $radius-size_base: 6px;
             right: 20px;
           }
         }
+        
+        // Enhanced 3D buttons for mobile
+        .bubble-shooter__game-score-container > div {
+          padding: 12px 18px !important;
+          min-width: 130px !important;
+          border-radius: 20px !important;
+          
+          span:first-child {
+            font-size: 20px !important;
+          }
+          
+          #score {
+            font-size: 22px !important;
+          }
+        }
+        
+        .bubble-shooter__game-hamburger-bar button {
+          min-width: 50px !important;
+          height: 50px !important;
+          border-radius: 18px !important;
+          padding: 12px !important;
+          
+          span {
+            font-size: 24px !important;
+          }
+        }
       }
       &-score-bar,
       &-time-bar {
@@ -324,6 +350,32 @@ $radius-size_base: 6px;
           &#time {
             top: 52px;
             right: 20px;
+          }
+        }
+        
+        // Enhanced 3D buttons for smaller mobile
+        .bubble-shooter__game-score-container > div {
+          padding: 10px 15px !important;
+          min-width: 120px !important;
+          border-radius: 18px !important;
+          
+          span:first-child {
+            font-size: 18px !important;
+          }
+          
+          #score {
+            font-size: 20px !important;
+          }
+        }
+        
+        .bubble-shooter__game-hamburger-bar button {
+          min-width: 45px !important;
+          height: 45px !important;
+          border-radius: 16px !important;
+          padding: 10px !important;
+          
+          span {
+            font-size: 22px !important;
           }
         }
       }
@@ -718,6 +770,201 @@ $radius-size_base: 6px;
           }
         }
       }
+    }
+  }
+}
+
+// Enhanced 3D button styles for score and menu buttons
+.bubble-shooter__game-score-container,
+.bubble-shooter__game-hamburger-bar {
+  .bubble-shooter__game-score-container > div,
+  button {
+    // Enhanced 3D effect with better shadows
+    box-shadow: 
+      0 8px 25px rgba(93, 173, 226, 0.4),
+      inset 0 2px 4px rgba(255, 255, 255, 0.5),
+      inset 0 -2px 4px rgba(0, 0, 0, 0.1) !important;
+    
+    // Smooth transitions
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    
+    // No border for cleaner look
+    border: none !important;
+    
+    // Sky-inspired gradient
+    background: linear-gradient(145deg, #5DADE2, #85C1E9, #AED6F1) !important;
+    
+    &:hover {
+      transform: translateY(-3px) scale(1.02) !important;
+      box-shadow: 
+        0 12px 35px rgba(93, 173, 226, 0.6),
+        inset 0 2px 4px rgba(255, 255, 255, 0.6),
+        inset 0 -2px 4px rgba(0, 0, 0, 0.15) !important;
+    }
+    
+    &:active {
+      transform: translateY(1px) scale(0.98) !important;
+      box-shadow: 
+        0 4px 15px rgba(93, 173, 226, 0.3),
+        inset 0 1px 2px rgba(255, 255, 255, 0.4),
+        inset 0 -1px 2px rgba(0, 0, 0, 0.05) !important;
+    }
+  }
+}
+
+// Menu button specific styles
+.bubble-shooter__game-hamburger-bar button {
+  background: linear-gradient(145deg, #5499C7, #7FB3D3, #A9CCE3) !important;
+  box-shadow: 
+    0 8px 25px rgba(84, 153, 199, 0.4),
+    inset 0 2px 4px rgba(255, 255, 255, 0.5),
+    inset 0 -2px 4px rgba(0, 0, 0, 0.1) !important;
+  
+  &:hover {
+    box-shadow: 
+      0 12px 35px rgba(84, 153, 199, 0.6),
+      inset 0 2px 4px rgba(255, 255, 255, 0.6),
+      inset 0 -2px 4px rgba(0, 0, 0, 0.15) !important;
+  }
+  
+  &:active {
+    box-shadow: 
+      0 4px 15px rgba(84, 153, 199, 0.3),
+      inset 0 1px 2px rgba(255, 255, 255, 0.4),
+      inset 0 -1px 2px rgba(0, 0, 0, 0.05) !important;
+  }
+}
+
+// Sky-inspired animations
+@keyframes scoreButtonGlow {
+  0%, 100% {
+    box-shadow: 
+      0 8px 25px rgba(93, 173, 226, 0.4),
+      inset 0 2px 4px rgba(255, 255, 255, 0.5),
+      inset 0 -2px 4px rgba(0, 0, 0, 0.1);
+  }
+  50% {
+    box-shadow: 
+      0 8px 25px rgba(93, 173, 226, 0.6),
+      inset 0 2px 4px rgba(255, 255, 255, 0.6),
+      inset 0 -2px 4px rgba(0, 0, 0, 0.1),
+      0 0 20px rgba(93, 173, 226, 0.3);
+  }
+}
+
+@keyframes scoreButtonPulse {
+  0% {
+    transform: translateY(-3px) scale(1.02);
+  }
+  50% {
+    transform: translateY(-3px) scale(1.05);
+  }
+  100% {
+    transform: translateY(-3px) scale(1.02);
+  }
+}
+
+@keyframes menuButtonFloat {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-2px);
+  }
+}
+
+@keyframes menuButtonPulse {
+  0% {
+    transform: translateY(-3px) scale(1.05);
+  }
+  50% {
+    transform: translateY(-3px) scale(1.08);
+  }
+  100% {
+    transform: translateY(-3px) scale(1.05);
+  }
+}
+
+@keyframes coinSpin {
+  0% {
+    transform: rotateY(0deg);
+  }
+  100% {
+    transform: rotateY(360deg);
+  }
+}
+
+// Info button animations
+@keyframes infoButtonPulse {
+  0%, 100% {
+    transform: translateY(0) scale(1);
+    box-shadow: 
+      0 8px 25px rgba(93, 173, 226, 0.4),
+      inset 0 2px 4px rgba(255, 255, 255, 0.5),
+      inset 0 -2px 4px rgba(0, 0, 0, 0.1);
+  }
+  50% {
+    transform: translateY(-2px) scale(1.05);
+    box-shadow: 
+      0 12px 35px rgba(93, 173, 226, 0.6),
+      inset 0 2px 4px rgba(255, 255, 255, 0.6),
+      inset 0 -2px 4px rgba(0, 0, 0, 0.1),
+      0 0 20px rgba(93, 173, 226, 0.3);
+  }
+}
+
+@keyframes infoButtonGlow {
+  0% {
+    transform: translateY(-3px) scale(1.1);
+  }
+  50% {
+    transform: translateY(-3px) scale(1.15);
+  }
+  100% {
+    transform: translateY(-3px) scale(1.1);
+  }
+}
+
+@keyframes infoIconSpin {
+  0% {
+    transform: rotateY(0deg);
+  }
+  100% {
+    transform: rotateY(360deg);
+  }
+}
+
+// Info modal styles
+.bubble-shooter__info-modal {
+  .ant-modal {
+    width: 90% !important;
+    max-width: 500px !important;
+    
+    .ant-modal-content {
+      background: linear-gradient(135deg, rgba(93, 173, 226, 0.9) 0%, rgba(133, 193, 233, 0.9) 100%) !important;
+      border: 1px solid rgba(255, 255, 255, 0.2) !important;
+      box-shadow: 0 15px 40px rgba(0, 0, 0, 0.3) !important;
+      border-radius: 20px !important;
+      backdrop-filter: blur(10px) !important;
+      
+      .ant-modal-header {
+        display: none !important;
+      }
+      
+      .ant-modal-body {
+        padding: 0 !important;
+        background: transparent !important;
+      }
+    }
+  }
+}
+
+// Responsive info modal
+@media only screen and (max-width: 480px) {
+  .bubble-shooter__info-modal {
+    .ant-modal {
+      width: 95% !important;
+      max-width: 95% !important;
     }
   }
 }
