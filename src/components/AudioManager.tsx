@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState, forwardRef } from 'react';
+import { isAndroid } from 'react-device-detect';
 
 interface AudioManagerProps {
     isMuted?: boolean;
@@ -16,7 +17,15 @@ const AudioManager = forwardRef<HTMLAudioElement, AudioManagerProps>(({
     onVolumeChange
 }, ref) => {
     const [isPlaying, setIsPlaying] = useState(false);
-    const [volume, setVolume] = useState(isIOS() ? 0.005 : 0.15);
+    const [volume, setVolume] = useState(() => {
+        if (isIOS()) {
+            return 0.005;
+        } else if (isAndroid) {
+            return 0.8; // Higher volume for Android devices
+        } else {
+            return 0.15;
+        }
+    });
     const [isLoaded, setIsLoaded] = useState(false);
     const [hasUserInteracted, setHasUserInteracted] = useState(false);
 
@@ -241,6 +250,9 @@ const AudioManager = forwardRef<HTMLAudioElement, AudioManagerProps>(({
         let clampedVolume = Math.max(0, Math.min(1, newVolume));
         if (isIOS()) {
             clampedVolume = Math.min(clampedVolume, 0.2);
+        } else if (isAndroid) {
+            // Allow higher volume for Android devices
+            clampedVolume = Math.min(clampedVolume, 0.8);
         }
         setVolume(clampedVolume);
     };

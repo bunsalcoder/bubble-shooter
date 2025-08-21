@@ -2884,6 +2884,7 @@ const Board: React.FC = () => {
           position: 'absolute',
           bottom: '30px',
           right: '30px',
+          marginBottom: '60px',
           background: 'linear-gradient(145deg, #5DADE2, #85C1E9, #AED6F1)',
           borderRadius: '50%',
           width: '60px',
@@ -3061,8 +3062,7 @@ const Board: React.FC = () => {
             msUserSelect: 'none'
           }}
           style={{
-            maxHeight: '90vh',
-            overflow: 'hidden'
+            maxHeight: '90vh'
           }}
           okButtonProps={{
             style: {
@@ -3120,30 +3120,6 @@ const Board: React.FC = () => {
           
           <div 
             style={{ marginBottom: '15px' }}
-            onTouchStart={(e) => {
-              // Prevent default touch behavior that might interfere with scrolling
-              e.stopPropagation();
-            }}
-            onTouchMove={(e) => {
-              // Allow touch scrolling
-              e.stopPropagation();
-            }}
-            onTouchEnd={(e) => {
-              // Handle touch end
-              e.stopPropagation();
-            }}
-            onMouseDown={(e) => {
-              // Prevent mouse events from interfering with touch
-              e.stopPropagation();
-            }}
-            onMouseMove={(e) => {
-              // Allow mouse scrolling
-              e.stopPropagation();
-            }}
-            onMouseUp={(e) => {
-              // Handle mouse up
-              e.stopPropagation();
-            }}
           >
             {leaderboardLoading ? (
               <div style={{
@@ -3237,18 +3213,7 @@ const Board: React.FC = () => {
                       ? '0 4px 12px rgba(135, 206, 235, 0.4)'
                       : '0 2px 6px rgba(0, 0, 0, 0.1)';
                   }}
-                  onTouchStart={(e) => {
-                    // Prevent default touch behavior
-                    e.stopPropagation();
-                  }}
-                  onTouchMove={(e) => {
-                    // Allow touch scrolling
-                    e.stopPropagation();
-                  }}
-                  onTouchEnd={(e) => {
-                    // Handle touch end
-                    e.stopPropagation();
-                  }}
+
                 >
                   {isCurrentPlayer && (
                     <div style={{
@@ -3669,7 +3634,7 @@ const Board: React.FC = () => {
             display: 'flex',
             flexDirection: 'column',
             gap: '20px',
-            padding: '25px 20px',
+            // padding: '25px 20px',
             position: 'relative',
             zIndex: 1
           }}>
