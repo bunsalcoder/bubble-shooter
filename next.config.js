@@ -4,7 +4,7 @@ const nextConfig = {
   images: {
     unoptimized: true,
   },
-  webpack: (config, { isServer }) => {
+  webpack: (config, { isServer, dev }) => {
     if (!isServer) {
       config.resolve.fallback = {
         ...config.resolve.fallback,
@@ -13,6 +13,13 @@ const nextConfig = {
         tls: false,
       };
     }
+    
+    // Only include vConsole in development builds
+    if (!dev) {
+      config.externals = config.externals || [];
+      config.externals.push('vconsole');
+    }
+    
     return config;
   },
 }

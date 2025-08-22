@@ -2978,10 +2978,10 @@ const Board: React.FC = () => {
             </div>
           }
           open={isLeaderboardOpen}
-          onOk={handleLeaderboardOk}
           onCancel={handleLeaderboardCancel}
           width={isMobile ? '90vw' : 600}
           centered={true}
+          footer={null}
           bodyStyle={{
             maxHeight: '60vh',
             overflowY: 'auto',
@@ -2999,28 +2999,6 @@ const Board: React.FC = () => {
           }}
           style={{
             maxHeight: '90vh'
-          }}
-          okButtonProps={{
-            style: {
-              background: 'linear-gradient(135deg, #87CEEB, #4682B4)',
-              border: 'none',
-              borderRadius: '8px',
-              color: 'white',
-              fontWeight: 'bold',
-              boxShadow: '0 2px 8px rgba(135, 206, 235, 0.3)',
-              transition: 'all 0.3s ease'
-            }
-          }}
-          cancelButtonProps={{
-            style: {
-              background: 'linear-gradient(135deg, #87CEEB, #4682B4)',
-              border: 'none',
-              borderRadius: '8px',
-              color: 'white',
-              fontWeight: 'bold',
-              boxShadow: '0 2px 8px rgba(135, 206, 235, 0.3)',
-              transition: 'all 0.3s ease'
-            }
           }}
         >
           <div style={{ marginBottom: '15px' }}>

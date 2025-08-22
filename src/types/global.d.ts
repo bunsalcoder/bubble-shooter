@@ -41,6 +41,9 @@ declare global {
       playGameOver: () => void;
       playGameWin: () => void;
     };
+    vConsole?: {
+      destroy: () => void;
+    };
   }
 }
 
