@@ -237,6 +237,12 @@ const Board: React.FC = () => {
   // Local storage functions
   const saveGameToLocalStorage = () => {
     try {
+      // Don't save if activeBubble is currently moving
+      if (activeBubble.current && activeBubble.current.isMoving) {
+        console.log('Skipping save - activeBubble is moving');
+        return;
+      }
+
       const gameData = {
         gridBubble: gridBubble.current,
         gameProperties: gameProperties.current,
@@ -279,7 +285,6 @@ const Board: React.FC = () => {
             gridBubble.current = gameData.gridBubble;
             gridRef.current = gameData.grid;
             bubbleNext.current = gameData.bubbleQueue;
-            activeBubble.current = gameData.activeBubble;
             secondaryBubble.current = gameData.secondaryBubble;
             tertiaryBubble.current = gameData.tertiaryBubble;
 
@@ -297,6 +302,32 @@ const Board: React.FC = () => {
             Object.keys(gridBubble.current).forEach(key => {
               if (gridBubble.current[key].animationProps) {
                 gridBubble.current[key].animationProps = undefined;
+              }
+            });
+
+            // Reset activeBubble to static position to prevent showing previous shooting action
+            if (gameData.activeBubble) {
+              activeBubble.current = {
+                ...gameData.activeBubble,
+                x: bubbleStartX,
+                y: bubbleStartY,
+                speedX: 0,
+                speedY: 0,
+                isMoving: false,
+                animationProps: undefined
+              };
+            } else {
+              // Fallback to first bubble in queue
+              activeBubble.current = bubbleNext.current[0];
+            }
+            
+            // Also reset any other moving bubbles in the grid to prevent visual glitches
+            Object.keys(gridBubble.current).forEach(key => {
+              const bubble = gridBubble.current[key];
+              if (bubble.isMoving) {
+                bubble.isMoving = false;
+                bubble.speedX = 0;
+                bubble.speedY = 0;
               }
             });
             
@@ -554,10 +585,14 @@ const Board: React.FC = () => {
   };
 
   const checkGamePause = () => {
-    if (isModalOpen || isModalSettingOpen || isMenuVisible || isLeaderboardOpen || isLanguageSelectorOpen || isInfoVisible || gameState.isPause) {
-      return true;
+    const shouldPause = isModalOpen || isModalSettingOpen || isMenuVisible || isLeaderboardOpen || isLanguageSelectorOpen || isInfoVisible || gameState.isPause;
+    
+    // Save game state when pausing (but only if bubble is not moving)
+    if (shouldPause && activeBubble.current && !activeBubble.current.isMoving) {
+      setTimeout(() => saveGameToLocalStorage(), 100);
     }
-    return false;
+    
+    return shouldPause;
   };
 
   const moveDown = (gridBubble: Record<string, Bubble>, p5: p5Types) => {
@@ -1839,6 +1874,9 @@ const Board: React.FC = () => {
         isShowingTrajectory.current = false; // Clear trajectory when bubble stops
         isFollowingPredictedPath.current = false; // Reset predicted path following
         predictedPathIndex.current = 0;
+        
+        // Save game after bubble attaches to grid
+        setTimeout(() => saveGameToLocalStorage(), 100);
       } else if (activeBubble.current.isMoving && activeBubble.current.y <= 0) {
         // Shot missed completely (went off screen) - count this shot
         gameProperties.current.shotsInRound++;
@@ -1853,6 +1891,9 @@ const Board: React.FC = () => {
         isShowingTrajectory.current = false; // Clear trajectory when bubble stops
         isFollowingPredictedPath.current = false; // Reset predicted path following
         predictedPathIndex.current = 0;
+        
+        // Save game after bubble goes off screen
+        setTimeout(() => saveGameToLocalStorage(), 100);
       }
       
       // Check if we've used all 5 shots without breaking bubbles (moved outside collision detection)
@@ -2043,9 +2084,6 @@ const Board: React.FC = () => {
             
             // Play shoot sound
             playShootSound();
-            
-            // Save game after each shot
-            setTimeout(() => saveGameToLocalStorage(), 100);
           } else {
             // Fallback to mouse direction
             let dx = clickX - activeBubble.current.x;
@@ -2065,9 +2103,6 @@ const Board: React.FC = () => {
               
               // Play shoot sound
               playShootSound();
-              
-              // Save game after each shot
-              setTimeout(() => saveGameToLocalStorage(), 100);
             }
           }
         }
@@ -2137,9 +2172,6 @@ const Board: React.FC = () => {
             
             // Play shoot sound
             playShootSound();
-            
-            // Save game after each shot
-            setTimeout(() => saveGameToLocalStorage(), 100);
           } else {
             // Fallback to mouse direction
             let dx = releaseX - launcherX;
@@ -2357,9 +2389,6 @@ const Board: React.FC = () => {
             
             // Play shoot sound
             playShootSound();
-            
-            // Save game after each shot
-            setTimeout(() => saveGameToLocalStorage(), 100);
           } else {
             // Fallback to mouse direction
             let dx = releaseX - launcherX;
@@ -2382,9 +2411,6 @@ const Board: React.FC = () => {
               
               // Play shoot sound
               playShootSound();
-              
-              // Save game after each shot
-              setTimeout(() => saveGameToLocalStorage(), 100);
             }
           }
         }
