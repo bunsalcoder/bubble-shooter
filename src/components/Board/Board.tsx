@@ -1012,6 +1012,7 @@ const Board: React.FC = () => {
   const isShowingTrajectory = useRef<boolean>(false);
   const isFollowingPredictedPath = useRef<boolean>(false);
   const predictedPathIndex = useRef<number>(0);
+  const isShootingBlocked = useRef<boolean>(false); // Global flag to block all shooting
   
   // Score animations
   const scoreAnimations = useRef<any[]>([]);
@@ -1429,6 +1430,27 @@ const Board: React.FC = () => {
     if (!isShowingTrajectory.current || predictedTrajectory.current.length < 2) {
       return;
     }
+
+    // Check if trajectory goes below the active bubble's Y position
+    const activeBubbleY = gameHeight - 80 - 35; // Active bubble Y position
+    const trajectoryPath = predictedTrajectory.current;
+
+    // Check if any point goes below the active bubble's Y position
+    let shouldHide = false;
+    for (let i = 0; i < trajectoryPath.length; i++) {
+      if (trajectoryPath[i].y > activeBubbleY) {
+        shouldHide = true;
+        break;
+      }
+    }
+    
+    if (shouldHide) {
+      isShootingBlocked.current = true; // Set global blocking flag
+      return; // Don't draw the trajectory if it goes below the active bubble's Y position
+    }
+    
+    isShootingBlocked.current = false; // Clear global blocking flag
+    console.log('drawTrajectoryArrow: Setting isShootingBlocked = false');
     
     p5.push();
     
@@ -1519,6 +1541,28 @@ const Board: React.FC = () => {
     if (isSwapAnimating.current || swapAnimationProgress.current > 0 || isInSwapArea.current) {
       return;
     }
+
+    // Check if hover arrow goes below the active bubble's Y position
+    const activeBubbleY = gameHeight - 80 - 35; // Active bubble Y position
+    
+    // Calculate if the hover arrow goes below the active bubble
+    const checkDx = targetX - startX;
+    const checkDy = targetY - startY;
+    const checkAngle = Math.atan2(checkDy, checkDx);
+    const checkDistance = Math.sqrt(checkDx * checkDx + checkDy * checkDy);
+    const checkMaxArrowLength = 150;
+    const checkArrowLength = Math.min(checkDistance, checkMaxArrowLength);
+    
+    // Check if the end point of the arrow goes below the active bubble
+    const checkEndX = startX + Math.cos(checkAngle) * checkArrowLength;
+    const checkEndY = startY + Math.sin(checkAngle) * checkArrowLength;
+    
+    if (checkEndY > activeBubbleY) {
+      isShootingBlocked.current = true; // Set global blocking flag
+      return; // Don't draw the hover arrow if it goes below the active bubble's Y position
+    }
+    
+    isShootingBlocked.current = false; // Clear global blocking flag
     
     p5.push();
     p5.noStroke();
@@ -2022,8 +2066,16 @@ const Board: React.FC = () => {
     }
 
     // Normal physics movement (always use this for smooth, fast movement)
-    activeBubble.current.x += activeBubble.current.speedX;
-    activeBubble.current.y += activeBubble.current.speedY;
+    // Prevent movement if shooting is blocked
+    if (!isShootingBlocked.current) {
+      activeBubble.current.x += activeBubble.current.speedX;
+      activeBubble.current.y += activeBubble.current.speedY;
+    } else {
+      // Reset movement if blocked
+      activeBubble.current.isMoving = false;
+      activeBubble.current.speedX = 0;
+      activeBubble.current.speedY = 0;
+    }
     
     if (
       activeBubble.current.isSpecial &&
@@ -2104,6 +2156,15 @@ const Board: React.FC = () => {
           clickX <= gameWidth &&
           !activeBubble.current.isMoving
         ) {
+          // Global shooting block check
+          if (isShootingBlocked.current) {
+            return;
+          }
+          
+          // Don't shoot if trajectory is hidden
+          if (isShowingTrajectory.current === false) {
+            return;
+          }
           if (
             activeBubble.current.isSpecial &&
             specialBubble.current.isAnswered === Answer.NOT_YET
@@ -2416,6 +2477,15 @@ const Board: React.FC = () => {
           releaseY < launcherAreaY ||
           releaseY > launcherAreaY + launcherAreaHeight
         ) {
+          // Global shooting block check
+          if (isShootingBlocked.current) {
+            return;
+          }
+
+          if (isShowingTrajectory.current === false) {
+            return;
+          }
+
           // Use predicted trajectory if available, otherwise use mouse direction
           if (isShowingTrajectory.current && predictedTrajectory.current.length >= 2) {
             // Use trajectory prediction to set initial velocity

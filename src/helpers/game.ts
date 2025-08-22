@@ -553,6 +553,24 @@ export const predictTrajectory = (
     
     // Check wall collisions
     if (nextX - bubbleRadius <= 0 || nextX + bubbleRadius >= gameWidth) {
+      // Check if bounce occurs at the same or below the shooter's X position
+      const shooterX = startX; // Active bubble X position
+      const shooterY = startY; // Active bubble Y position
+      
+      // Calculate the actual bounce position (at the wall)
+      let bounceX;
+      if (nextX - bubbleRadius <= 0) {
+        bounceX = bubbleRadius; // Left wall
+      } else {
+        bounceX = gameWidth - bubbleRadius; // Right wall
+      }
+      
+      // Check if bounce occurs at the same, below, or just a little above the shooter's Y position
+      const minBounceHeight = 20// Minimum distance above shooter's Y position
+      if (nextY >= shooterY - minBounceHeight) { // Bounce too close to shooter's Y position
+        return []; // Return empty trajectory to block the shot
+      }
+      
       // Bounce off walls
       currentSpeedX = -currentSpeedX;
       x = nextX + currentSpeedX * stepSize;
@@ -566,6 +584,11 @@ export const predictTrajectory = (
     if (y <= 0) {
       trajectory.push({ x, y });
       break;
+    }
+    
+    // Check if trajectory goes below the shooter's Y position (downward)
+    if (y >= startY) {
+      return []; // Return empty trajectory to block downward shots
     }
     
     // Check collision with existing bubbles
