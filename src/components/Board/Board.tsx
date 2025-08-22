@@ -84,6 +84,35 @@ const Board: React.FC = () => {
     gameState.isGameOver = false;
   };
 
+  // Function to clean up any existing modals
+  const cleanupExistingModals = () => {
+    // Remove any existing alert modals
+    const existingOverlays = document.querySelectorAll('div[style*="z-index: 1000"]');
+    const existingAlertBoxes = document.querySelectorAll('div[style*="z-index: 1001"]');
+    const existingStyles = document.querySelectorAll('style[data-alert-style]');
+    
+    existingOverlays.forEach(overlay => {
+      if (document.body.contains(overlay)) {
+        document.body.removeChild(overlay);
+      }
+    });
+    
+    existingAlertBoxes.forEach(box => {
+      if (document.body.contains(box)) {
+        document.body.removeChild(box);
+      }
+    });
+    
+    existingStyles.forEach(style => {
+      if (document.head.contains(style)) {
+        document.head.removeChild(style);
+      }
+    });
+    
+    // Reset alertActive flag
+    alertActive = false;
+  };
+
   let image: any = {
     imageDraw: "",
     imageSpecialBall: "",
@@ -251,6 +280,7 @@ const Board: React.FC = () => {
         activeBubble: activeBubble.current,
         secondaryBubble: secondaryBubble.current,
         tertiaryBubble: tertiaryBubble.current,
+        alertActive: alertActive, // Persist the alertActive flag
         timestamp: new Date().toISOString()
       };
       // localStorage.setItem('bubbleShooterGame', JSON.stringify(gameData));
@@ -330,6 +360,13 @@ const Board: React.FC = () => {
                 bubble.speedY = 0;
               }
             });
+            
+            // Clean up any existing modals that might have been left from before the refresh
+            cleanupExistingModals();
+            
+            // If the game was in a game over state, we need to show the modal again
+            // but we don't want to restore the alertActive flag to prevent duplicate modals
+            // The checkGameOVer function will handle showing the modal if needed
             
             setIsGameLoadedFromStorage(true);
             console.log('Game loaded from API successfully');
@@ -532,6 +569,7 @@ const Board: React.FC = () => {
     gameState.isGameOver = false;
     gameState.isWin = false;
     gameState.countShoot = 0;
+    alertActive = false; // Reset alertActive flag when starting new game
     bubbleNext.current = createListBubbleNext(
       grid,
       bubbleStartX,
@@ -549,6 +587,9 @@ const Board: React.FC = () => {
     
     // Clear saved game when starting new game
     await clearSavedGame();
+    
+    // Clean up any existing modals
+    cleanupExistingModals();
   };
 
   // const checkIsWin = (gridBubble: Record<string, Bubble>) => {
@@ -578,9 +619,26 @@ const Board: React.FC = () => {
   };
 
   const checkGameOVer = (gridBubble: Record<string, Bubble>) => {
-    if (getHeight(gridBubble) >= LIMIT_HEIGHT) {
-      freezeGame();
-      showAlert(t('gameOver'));
+    // Don't check if alert is already active (modal is shown)
+    if (alertActive) {
+      return;
+    }
+    
+    const height = getHeight(gridBubble);
+    
+    // Check if game over condition is met
+    if (height >= LIMIT_HEIGHT) {
+      // If game is already in game over state but no alert is active, show the alert
+      if (gameState.isGameOver && !alertActive) {
+        showAlert(t('gameOver'));
+        return;
+      }
+      
+      // If not in game over state yet, set it and show alert
+      if (!gameState.isGameOver) {
+        freezeGame();
+        showAlert(t('gameOver'));
+      }
     }
   };
 
@@ -1618,6 +1676,9 @@ const Board: React.FC = () => {
   };
 
   const setup = async (p5: p5Types, canvasParentRef: Element) => {
+    // Clean up any existing modals from previous sessions
+    cleanupExistingModals();
+    
     p5.createCanvas(gameWidth, gameHeight).parent(canvasParentRef);
     
     // Prevent iOS selection menu and text selection
@@ -1696,6 +1757,9 @@ const Board: React.FC = () => {
       return;
     }
     
+    // Always check for game over, even when paused
+    checkGameOVer(gridBubble.current);
+    
     // COMPLETELY STOP rendering if any UI element is active
     if (isModalOpen || isModalSettingOpen || isMenuVisible || isLeaderboardOpen || isLanguageSelectorOpen || isInfoVisible) {
       return;
@@ -1710,9 +1774,6 @@ const Board: React.FC = () => {
 
     // check is win
     checkIsWin(gridBubble.current);
-
-    // game over
-    checkGameOVer(gridBubble.current);
 
     // Check for disconnected bubbles periodically
     checkDisconnectedBubbles(p5);
@@ -2440,7 +2501,12 @@ const Board: React.FC = () => {
   });
 
   const showAlert = (message: string) => {
-    if (alertActive) return;
+    if (alertActive) {
+      return;
+    }
+    
+    // Clean up any existing modals before creating a new one
+    cleanupExistingModals();
     
     alertActive = true;
     freezeGame();
@@ -2519,6 +2585,7 @@ const Board: React.FC = () => {
 
     // Add CSS animation for particles
     const style = document.createElement("style");
+    style.setAttribute('data-alert-style', 'true');
     style.textContent = `
       @keyframes float {
         0%, 100% { transform: translateY(0px) rotate(0deg); opacity: 0.3; }
