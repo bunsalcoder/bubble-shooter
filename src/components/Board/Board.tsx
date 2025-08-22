@@ -45,6 +45,7 @@ import { saveGameAPI, getGameAPI, clearGameAPI } from "@/services/mosAuth";
 import { useLeaderboard } from "@/hooks/useLeaderboard";
 import { getSafeAvatarEmoji, getRankEmoji, isValidAvatarUrl } from "@/utils/avatarUtils";
 import AvatarDisplay from "@/components/AvatarDisplay";
+import VolumeControl from "@/components/VolumeControl";
 
 const Board: React.FC = () => {
   let gameState: GameState = {
@@ -211,7 +212,7 @@ const Board: React.FC = () => {
   const [isGameLoadedFromStorage, setIsGameLoadedFromStorage] = useState<boolean>(false);
   const [isGameLoading, setIsGameLoading] = useState<boolean>(true);
   const [isLeaderboardOpen, setIsLeaderboardOpen] = useState<boolean>(false);
-  const [isMusicMuted, setIsMusicMuted] = useState<boolean>(false);
+
   const [isMenuVisible, setIsMenuVisible] = useState<boolean>(false);
   const [isInfoVisible, setIsInfoVisible] = useState<boolean>(false);
   const [isLanguageSelectorOpen, setIsLanguageSelectorOpen] = useState<boolean>(false);
@@ -469,27 +470,7 @@ const Board: React.FC = () => {
     setIsModalSettingOpen(false);
   };
 
-  // Music control functions
-  const toggleMusic = () => {
-    const newMutedState = !isMusicMuted;
-    setIsMusicMuted(newMutedState);
-    
-    try {
-      if ((window as any).audioManager) {
-        if (newMutedState) {
-          // Mute music
-          (window as any).audioManager.pauseMusic();
 
-        } else {
-          // Unmute music
-          (window as any).audioManager.resumeMusic();
-
-        }
-      }
-    } catch (error) {
-      console.error('Error toggling music:', error);
-    }
-  };
 
 
 
@@ -3509,49 +3490,8 @@ const Board: React.FC = () => {
               }}>{t('language')}</span>
             </button>
 
-            {/* Music Control Button */}
-            <button
-              onClick={toggleMusic}
-              className="bubble-shooter__menu-button"
-              style={{
-                background: 'linear-gradient(135deg, rgba(135, 206, 235, 0.9), rgba(70, 130, 180, 0.9))',
-                color: 'white',
-                borderRadius: '12px',
-                padding: '12px 18px',
-                fontSize: '16px',
-                fontWeight: 'bold',
-                cursor: 'pointer',
-                transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
-                boxShadow: '0 6px 20px rgba(135, 206, 235, 0.3)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '12px',
-                position: 'relative',
-                overflow: 'hidden',
-                border: '2px solid rgba(255, 255, 255, 0.2)'
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.transform = 'translateY(-4px) scale(1.02)';
-                e.currentTarget.style.boxShadow = '0 12px 35px rgba(135, 206, 235, 0.5)';
-                e.currentTarget.style.background = 'linear-gradient(135deg, rgba(135, 206, 235, 1), rgba(70, 130, 180, 1))';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.transform = 'translateY(0) scale(1)';
-                e.currentTarget.style.boxShadow = '0 8px 25px rgba(135, 206, 235, 0.3)';
-                e.currentTarget.style.background = 'linear-gradient(135deg, rgba(135, 206, 235, 0.9), rgba(70, 130, 180, 0.9))';
-              }}
-            >
-              <span style={{ 
-                fontSize: '18px',
-                filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.3))',
-                transition: 'transform 0.3s ease'
-              }}>{isMusicMuted ? '🔇' : '🎵'}</span>
-              <span style={{
-                textShadow: '0 2px 4px rgba(0,0,0,0.3)',
-                letterSpacing: '0.5px'
-              }}>{isMusicMuted ? t('unmute') : t('mute')}</span>
-            </button>
+            {/* Volume Control */}
+            <VolumeControl />
           </div>
         </Modal>
 

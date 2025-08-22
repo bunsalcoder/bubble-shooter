@@ -1,8 +1,8 @@
 import '@/styles/globals.scss';
 import type { AppProps } from 'next/app';
 import { useRef } from 'react';
-import AudioManager from '@/components/AudioManager';
 import SoundEffects from '@/components/SoundEffects';
+import ClientOnlyAudio from '@/components/ClientOnlyAudio';
 import { LanguageProvider } from '@/contexts/LanguageContext';
 
 export default function App({ Component, pageProps }: AppProps) {
@@ -10,7 +10,7 @@ export default function App({ Component, pageProps }: AppProps) {
 
   return (
     <LanguageProvider>
-      <AudioManager ref={audioManagerRef} />
+      <ClientOnlyAudio ref={audioManagerRef} showStatusIndicator={false} showTestPanel={false} />
       <SoundEffects backgroundMusicRef={audioManagerRef} />
       <Component {...pageProps} />
     </LanguageProvider>
