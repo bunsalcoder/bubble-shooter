@@ -3296,7 +3296,7 @@ const Board: React.FC = () => {
                     <div style={{
                       position: 'absolute',
                       top: '-8px',
-                      right: '-8px',
+                      left: '-8px',
                       background: 'linear-gradient(135deg, #87CEEB, #4682B4)',
                       color: 'white',
                       borderRadius: '50%',
