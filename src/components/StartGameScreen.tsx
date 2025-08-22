@@ -154,7 +154,15 @@ const StartGameScreen: React.FC<StartGameScreenProps> = ({ onStart }) => {
                 borderRadius: '50%',
                 objectFit: 'cover',
                 border: '4px solid rgba(255,255,255,0.4)',
-                boxShadow: '0 0 30px rgba(255,255,255,0.3)'
+                boxShadow: '0 0 30px rgba(255,255,255,0.3)',
+                // iOS-specific fixes for image rendering artifacts
+                WebkitTransform: 'translateZ(0)',
+                transform: 'translateZ(0)',
+                WebkitBackfaceVisibility: 'hidden',
+                backfaceVisibility: 'hidden',
+                WebkitPerspective: '1000',
+                perspective: '1000',
+                imageRendering: '-webkit-optimize-contrast'
               }}
               priority
             />

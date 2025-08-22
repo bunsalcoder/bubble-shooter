@@ -144,7 +144,15 @@ const SplashScreen: React.FC<SplashScreenProps> = ({ onComplete }) => {
                 borderRadius: '50%',
                 objectFit: 'cover',
                 border: '3px solid rgba(255,255,255,0.3)',
-                boxShadow: '0 0 20px rgba(255,255,255,0.2)'
+                boxShadow: '0 0 20px rgba(255,255,255,0.2)',
+                // iOS-specific fixes for image rendering artifacts
+                WebkitTransform: 'translateZ(0)',
+                transform: 'translateZ(0)',
+                WebkitBackfaceVisibility: 'hidden',
+                backfaceVisibility: 'hidden',
+                WebkitPerspective: '1000',
+                perspective: '1000',
+                imageRendering: '-webkit-optimize-contrast'
               }}
               priority
             />
