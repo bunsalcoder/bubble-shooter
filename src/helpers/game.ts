@@ -248,15 +248,13 @@ export const flood = (
 
 // Helper function to normalize colors for collision detection
 const normalizeColorForCollision = (color: string): string => {
-  // Map all colors that use the same sprite to the same collision color
+  // Map colors that should collide (use same sprite) to the same collision color
   const collisionMapping: { [key: string]: string } = {
-    '#FFA500': '#FFFF00', // Orange → Yellow (same sprite)
-    '#00FFFF': '#6495ED', // Cyan → Cornflower Blue (same sprite)
-    '#800080': '#FF00FF', // Violet → Purple (same sprite)
-    '#FF6600': '#FFFF00', // Bright orange → Yellow (same sprite)
-    '#2196F3': '#6495ED', // More colorful blue → Cornflower Blue (same sprite)
-    '#FFD700': '#FFFF00', // More colorful yellow → Yellow (same sprite)
-    '#0000FF': '#6495ED', // Pure blue → Cornflower Blue (same sprite)
+    '#FFA500': '#FFFF00', // Orange → Yellow (should collide)
+    '#FF6600': '#FFFF00', // Bright orange → Yellow (should collide)
+    '#FFD700': '#FFFF00', // More colorful yellow → Yellow (should collide)
+    '#800080': '#FF00FF', // Violet → Purple (should collide)
+    // Note: Cyan (#00FFFF) and Blue (#0000FF) are kept separate - they should NOT collide
   };
   
   // Return the normalized collision color if it exists, otherwise return the original color

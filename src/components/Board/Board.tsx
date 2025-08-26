@@ -144,22 +144,17 @@ const Board: React.FC = () => {
   // Particle system for explosion effects
   let particles: any[] = [];
   
-  // Function to get the visual color for a bubble (mapped color or original)
+  // Function to get the visual color for a bubble (for trajectory and visual consistency)
   const getVisualColor = (color: string): string => {
-    // Map colors to their visual representation (sprite colors)
-    // Using more muted, sprite-like colors that match the actual game.png sprites
-    const colorMapping: { [key: string]: string } = {
-      '#FFA500': '#FFFF00', // Orange → Yellow (since orange uses yellow sprite)
-      '#00FFFF': '#2B4DFF', // Cyan → Cornflower Blue (lighter, sprite-like blue)
-      '#800080': '#FF00FF', // Violet → Purple (since violet uses purple sprite)
-      '#FF6600': '#FFFF00', // Bright orange → Yellow (since bright orange uses yellow sprite)
-      '#2196F3': '#2B4DFF', // More colorful blue → Cornflower Blue (lighter blue)
-      '#FFD700': '#FFFF00', // More colorful yellow → Yellow (since it uses yellow sprite)
-      '#0000FF': '#2B4DFF', // Pure blue → Cornflower Blue (lighter blue for sprite consistency)
+    // Map colors to their visual representation for trajectory and effects
+    const visualColorMapping: { [key: string]: string } = {
+      '#FFA500': '#FFFF00', // Orange → Yellow (for trajectory consistency)
+      '#FF6600': '#FFFF00', // Bright Orange → Yellow (for trajectory consistency)
+      '#FFD700': '#FFFF00', // More colorful yellow → Yellow (for trajectory consistency)
     };
     
     // Return the mapped color if it exists, otherwise return the original color
-    return colorMapping[color] || color;
+    return visualColorMapping[color] || color;
   };
 
 
@@ -187,11 +182,15 @@ const Board: React.FC = () => {
       } else {
         // Debug: log when sprite info is missing
         console.log(`❌ Sprite not found: ${spriteName} for color: ${color}`);
+        console.log(`Available sprites:`, Object.keys(image.spriteData.frames || {}));
       }
     } else {
-      // Debug: log when color mapping is missing
-      if (!SPRITE_ATLAS_CONFIG.COLOR_TO_SPRITE[color as keyof typeof SPRITE_ATLAS_CONFIG.COLOR_TO_SPRITE]) {
+      // Debug: log when color mapping is missing or sprites not loaded
+      if (!image.spritesLoaded) {
+        console.log(`❌ Sprites not loaded yet for color: ${color}`);
+      } else if (!SPRITE_ATLAS_CONFIG.COLOR_TO_SPRITE[color as keyof typeof SPRITE_ATLAS_CONFIG.COLOR_TO_SPRITE]) {
         console.log(`❌ No sprite mapping for color: ${color}`);
+        console.log(`Available color mappings:`, Object.keys(SPRITE_ATLAS_CONFIG.COLOR_TO_SPRITE));
       }
     }
     return false; // Fallback to original method
@@ -1810,6 +1809,8 @@ const Board: React.FC = () => {
       (data: any) => {
         image.spriteData = data;
         image.spritesLoaded = true;
+        console.log('✅ Sprite atlas JSON loaded successfully');
+        console.log('Available sprites:', Object.keys(data.frames || {}));
       },
       () => {
         console.error('❌ Failed to load sprite atlas JSON');
