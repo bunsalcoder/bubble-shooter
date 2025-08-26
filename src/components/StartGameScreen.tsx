@@ -87,7 +87,10 @@ const StartGameScreen: React.FC<StartGameScreenProps> = ({ onStart }) => {
       left: 0,
       width: '100vw',
       height: '100vh',
-      background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+      background: 'url("/bubble-shooter/BG.png")',
+      backgroundSize: 'cover',
+      backgroundPosition: 'center',
+      backgroundRepeat: 'no-repeat',
       display: 'flex',
       flexDirection: 'column',
       justifyContent: 'center',
@@ -95,32 +98,7 @@ const StartGameScreen: React.FC<StartGameScreenProps> = ({ onStart }) => {
       zIndex: 10000,
       overflow: 'hidden'
     }}>
-      {/* Animated background particles */}
-      <div style={{
-        position: 'absolute',
-        top: 0,
-        left: 0,
-        width: '100%',
-        height: '100%',
-        pointerEvents: 'none'
-      }}>
-        {Array.from({ length: 20 }, (_, i) => (
-          <div
-            key={i}
-            style={{
-              position: 'absolute',
-              left: `${Math.random() * 100}%`,
-              top: `${Math.random() * 100}%`,
-              width: `${Math.random() * 8 + 6}px`,
-              height: `${Math.random() * 8 + 6}px`,
-              background: 'rgba(255, 255, 255, 0.3)',
-              borderRadius: '50%',
-              animation: `float ${5 + Math.random() * 3}s ease-in-out infinite`,
-              animationDelay: `${Math.random() * 4}s`
-            }}
-          />
-        ))}
-      </div>
+
 
       {/* Main content */}
       <div style={{
@@ -131,7 +109,7 @@ const StartGameScreen: React.FC<StartGameScreenProps> = ({ onStart }) => {
         position: 'relative',
         zIndex: 2
       }}>
-        {/* Game icon */}
+        {/* Game Logo */}
         <div style={{
           marginBottom: '50px',
           display: 'flex',
@@ -141,20 +119,17 @@ const StartGameScreen: React.FC<StartGameScreenProps> = ({ onStart }) => {
         }}>
           <div style={{
             position: 'relative',
-            width: isSmallMobile ? '120px' : isMobile ? '140px' : '160px',
-            height: isSmallMobile ? '120px' : isMobile ? '140px' : '160px',
+            width: isSmallMobile ? '240px' : isMobile ? '280px' : '320px',
+            height: isSmallMobile ? '240px' : isMobile ? '280px' : '320px',
             filter: 'drop-shadow(0 12px 24px rgba(0,0,0,0.3))'
           }}>
             <Image
-              src="/bubble-shooter/background/wait.jpg"
-              alt="Bubble Shooter Icon"
-              width={isSmallMobile ? 120 : isMobile ? 140 : 160}
-              height={isSmallMobile ? 120 : isMobile ? 140 : 160}
+              src="/bubble-shooter/bubble-logo.png"
+              alt="Bubble Shooter Logo"
+              width={isSmallMobile ? 240 : isMobile ? 280 : 320}
+              height={isSmallMobile ? 240 : isMobile ? 280 : 320}
               style={{
-                borderRadius: '50%',
-                objectFit: 'cover',
-                border: '4px solid rgba(255,255,255,0.4)',
-                boxShadow: '0 0 30px rgba(255,255,255,0.3)',
+                objectFit: 'contain',
                 // iOS-specific fixes for image rendering artifacts
                 WebkitTransform: 'translateZ(0)',
                 transform: 'translateZ(0)',
@@ -169,40 +144,7 @@ const StartGameScreen: React.FC<StartGameScreenProps> = ({ onStart }) => {
           </div>
         </div>
 
-        {/* Game title */}
-        <div style={{
-          marginBottom: isSmallMobile ? '50px' : '60px'
-        }}>
-          <h1 style={{
-            fontSize: isSmallMobile ? '3rem' : isMobile ? '4rem' : '5rem',
-            fontWeight: '900',
-            background: 'linear-gradient(45deg, #FFFFFF, #E8F4FD, #FFFFFF)',
-            backgroundSize: '200% 200%',
-            WebkitBackgroundClip: 'text',
-            WebkitTextFillColor: 'transparent',
-            textShadow: '3px 3px 6px rgba(0,0,0,0.4)',
-            margin: '0 0 20px 0',
-            letterSpacing: '4px',
-            lineHeight: '1.1',
-            fontFamily: '"Poppins", "Segoe UI", "Roboto", "Helvetica Neue", Arial, sans-serif',
-            textTransform: 'uppercase',
-            animation: 'textShimmer 4s ease-in-out infinite'
-          }}>
-            {t('bubbleShooter')}
-          </h1>
-          <p style={{
-            fontSize: isSmallMobile ? '1.2rem' : '1.4rem',
-            color: 'rgba(255,255,255,0.9)',
-            margin: '0',
-            textShadow: '2px 2px 4px rgba(0,0,0,0.4)',
-            fontWeight: '500',
-            letterSpacing: '3px',
-            fontFamily: '"Poppins", "Segoe UI", "Roboto", "Helvetica Neue", Arial, sans-serif',
-            animation: 'fadeInUp 3s ease-in-out infinite alternate'
-          }}>
-            {t('classicEdition')}
-          </p>
-        </div>
+
 
         {/* Start Game Button */}
         <button
@@ -213,27 +155,24 @@ const StartGameScreen: React.FC<StartGameScreenProps> = ({ onStart }) => {
           onMouseUp={() => setIsPressed(false)}
           onTouchStart={() => setIsPressed(true)}
           onTouchEnd={() => setIsPressed(false)}
-          style={{
-            background: isHovered 
-              ? 'linear-gradient(135deg, #FF6B6B, #4ECDC4, #45B7D1, #96CEB4, #FFEAA7)'
-              : 'linear-gradient(135deg, #667eea, #764ba2)',
+                      style={{
+              background: isHovered 
+                ? 'linear-gradient(to bottom,rgb(235, 166, 243), #D682DF)'
+                : 'linear-gradient(to bottom,rgb(240, 185, 246), #D682DF)',
             color: 'white',
-            border: 'none',
-            borderRadius: '50px',
-            padding: isSmallMobile ? '18px 40px' : isMobile ? '20px 50px' : '25px 60px',
-            fontSize: isSmallMobile ? '1.3rem' : isMobile ? '1.5rem' : '1.8rem',
-            fontWeight: 'bold',
+            border: '7px solid white',
+            borderRadius: '20px',
+            padding: isSmallMobile ? '18px 50px' : isMobile ? '20px 60px' : '25px 70px',
+            fontSize: isSmallMobile ? '1.3rem' : isMobile ? '1.5rem' : '1.7rem',
+            fontWeight: '900',
             cursor: 'pointer',
-            boxShadow: isHovered 
-              ? '0 15px 35px rgba(255, 107, 107, 0.4), 0 0 30px rgba(255, 255, 255, 0.3)'
-              : '0 8px 25px rgba(102, 126, 234, 0.4), 0 0 20px rgba(255, 255, 255, 0.2)',
-            transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
-            transform: isPressed ? 'scale(0.95)' : isHovered ? 'scale(1.05)' : 'scale(1)',
+            transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+            transform: isPressed ? 'scale(0.98)' : isHovered ? 'scale(1.02)' : 'scale(1)',
             position: 'relative',
             overflow: 'hidden',
-            letterSpacing: '2px',
+            letterSpacing: '1px',
             textTransform: 'uppercase',
-            fontFamily: '"Poppins", "Segoe UI", "Roboto", "Helvetica Neue", Arial, sans-serif',
+            fontFamily: '"Space Grotesk", "Poppins", "Segoe UI", "Roboto", "Helvetica Neue", Arial, sans-serif',
             animation: isHovered ? 'none' : 'pulse 2s ease-in-out infinite'
           }}
         >
@@ -245,27 +184,17 @@ const StartGameScreen: React.FC<StartGameScreenProps> = ({ onStart }) => {
               left: '-100%',
               width: '100%',
               height: '100%',
-              background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent)',
-              animation: 'shimmer 0.8s ease-in-out'
+              background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent)',
+              animation: 'shimmer 0.6s ease-in-out'
             }} />
           )}
           
           <span style={{ position: 'relative', zIndex: 1 }}>
-            🎮 {t('startGame') || 'Start Game'}
+            {t('startGame') || 'Start Game'}
           </span>
         </button>
 
-        {/* Subtitle */}
-        <p style={{
-          fontSize: isSmallMobile ? '0.9rem' : '1rem',
-          color: 'rgba(255,255,255,0.7)',
-          marginTop: '30px',
-          fontFamily: '"Poppins", "Segoe UI", "Roboto", "Helvetica Neue", Arial, sans-serif',
-          fontWeight: '300',
-          animation: 'fadeInOut 4s ease-in-out infinite'
-        }}>
-          {t('tapToStart') || 'Tap to start your bubble shooting adventure!'}
-        </p>
+
       </div>
 
       {/* CSS Animations */}

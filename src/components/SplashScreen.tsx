@@ -75,7 +75,10 @@ const SplashScreen: React.FC<SplashScreenProps> = ({ onComplete }) => {
       left: 0,
       width: '100vw',
       height: '100vh',
-      background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+      background: 'url("/bubble-shooter/BG.png")',
+      backgroundSize: 'cover',
+      backgroundPosition: 'center',
+      backgroundRepeat: 'no-repeat',
       display: 'flex',
       flexDirection: 'column',
       justifyContent: 'center',
@@ -119,7 +122,7 @@ const SplashScreen: React.FC<SplashScreenProps> = ({ onComplete }) => {
         position: 'relative',
         zIndex: 2
       }}>
-        {/* Game icon using wait.jpg */}
+        {/* Game logo using bubble-logo.png */}
         <div style={{
           marginBottom: '40px',
           opacity: animationPhase >= 1 ? 1 : 0,
@@ -131,20 +134,17 @@ const SplashScreen: React.FC<SplashScreenProps> = ({ onComplete }) => {
         }}>
           <div style={{
             position: 'relative',
-            width: isSmallMobile ? '100px' : isMobile ? '120px' : '140px',
-            height: isSmallMobile ? '100px' : isMobile ? '120px' : '140px',
+            width: isSmallMobile ? '240px' : isMobile ? '280px' : '320px',
+            height: isSmallMobile ? '240px' : isMobile ? '280px' : '320px',
             filter: 'drop-shadow(0 8px 16px rgba(0,0,0,0.2))'
           }}>
             <Image
-              src="/bubble-shooter/background/wait.jpg"
-              alt="Bubble Shooter Icon"
-              width={isSmallMobile ? 100 : isMobile ? 120 : 140}
-              height={isSmallMobile ? 100 : isMobile ? 120 : 140}
+              src="/bubble-shooter/bubble-logo.png"
+              alt="Bubble Shooter Logo"
+              width={isSmallMobile ? 240 : isMobile ? 280 : 320}
+              height={isSmallMobile ? 240 : isMobile ? 280 : 320}
               style={{
-                borderRadius: '50%',
-                objectFit: 'cover',
-                border: '3px solid rgba(255,255,255,0.3)',
-                boxShadow: '0 0 20px rgba(255,255,255,0.2)',
+                objectFit: 'contain',
                 // iOS-specific fixes for image rendering artifacts
                 WebkitTransform: 'translateZ(0)',
                 transform: 'translateZ(0)',
@@ -159,46 +159,7 @@ const SplashScreen: React.FC<SplashScreenProps> = ({ onComplete }) => {
           </div>
         </div>
 
-        {/* Game title with animated text */}
-        <div style={{
-          marginBottom: isSmallMobile ? '40px' : '50px',
-          opacity: animationPhase >= 1 ? 1 : 0,
-          transform: animationPhase >= 1 ? 'translateY(0)' : 'translateY(20px)',
-          transition: 'all 1s cubic-bezier(0.25, 0.46, 0.45, 0.94) 0.2s'
-        }}>
-          <h1 style={{
-            fontSize: isSmallMobile ? '2.5rem' : isMobile ? '3.5rem' : '4rem',
-            fontWeight: '800',
-            background: 'linear-gradient(45deg, #FFFFFF, #E8F4FD, #FFFFFF)',
-            backgroundSize: '200% 200%',
-            WebkitBackgroundClip: 'text',
-            WebkitTextFillColor: 'transparent',
-            textShadow: '2px 2px 4px rgba(0,0,0,0.3)',
-            margin: '0 0 15px 0',
-            letterSpacing: '3px',
-            lineHeight: '1.1',
-            fontFamily: '"Poppins", "Segoe UI", "Roboto", "Helvetica Neue", Arial, sans-serif',
-            textTransform: 'uppercase',
-            animation: 'textShimmer 3s ease-in-out infinite'
-          }}>
-            {t('bubbleShooter')}
-          </h1>
-          <p style={{
-            fontSize: isSmallMobile ? '1.1rem' : '1.3rem',
-            color: 'rgba(255,255,255,0.9)',
-            margin: '0',
-            textShadow: '1px 1px 2px rgba(0,0,0,0.3)',
-            fontWeight: '400',
-            letterSpacing: '2px',
-            opacity: animationPhase >= 1 ? 1 : 0,
-            transform: animationPhase >= 1 ? 'translateY(0)' : 'translateY(15px)',
-            transition: 'all 1s cubic-bezier(0.25, 0.46, 0.45, 0.94) 0.4s',
-            fontFamily: '"Poppins", "Segoe UI", "Roboto", "Helvetica Neue", Arial, sans-serif',
-            animation: 'fadeInUp 2s ease-in-out infinite alternate'
-          }}>
-            {t('classicEdition')}
-          </p>
-        </div>
+
 
         {/* Enhanced colorful loading progress bar */}
         <div style={{
@@ -253,7 +214,7 @@ const SplashScreen: React.FC<SplashScreenProps> = ({ onComplete }) => {
           opacity: animationPhase >= 1 ? 1 : 0,
           transform: animationPhase >= 1 ? 'translateY(0)' : 'translateY(15px)',
           transition: 'all 1s cubic-bezier(0.25, 0.46, 0.45, 0.94) 0.8s',
-          fontFamily: '"Poppins", "Segoe UI", "Roboto", "Helvetica Neue", Arial, sans-serif',
+          fontFamily: '"Space Grotesk", "Poppins", "Segoe UI", "Roboto", "Helvetica Neue", Arial, sans-serif',
           animation: 'pulse 2s ease-in-out infinite'
         }}>
           {progress}%
@@ -267,7 +228,7 @@ const SplashScreen: React.FC<SplashScreenProps> = ({ onComplete }) => {
           opacity: animationPhase >= 1 ? 1 : 0,
           transform: animationPhase >= 1 ? 'translateY(0)' : 'translateY(15px)',
           transition: 'all 1s cubic-bezier(0.25, 0.46, 0.45, 0.94) 1s',
-          fontFamily: '"Poppins", "Segoe UI", "Roboto", "Helvetica Neue", Arial, sans-serif',
+          fontFamily: '"Space Grotesk", "Poppins", "Segoe UI", "Roboto", "Helvetica Neue", Arial, sans-serif',
           fontWeight: '300',
           animation: 'fadeInOut 3s ease-in-out infinite'
         }}>
