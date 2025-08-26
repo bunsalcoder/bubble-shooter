@@ -64,7 +64,7 @@ export default function Home() {
           color: 'white',
           fontSize: '1.2rem',
           textAlign: 'center',
-          fontFamily: '"Segoe UI", "Roboto", "Helvetica Neue", Arial, sans-serif'
+          fontFamily: '"TypoGrotek", "Space Grotesk", "Poppins", "Segoe UI", "Roboto", "Helvetica Neue", Arial, sans-serif'
         }}>
           {t('loading')}
         </div>

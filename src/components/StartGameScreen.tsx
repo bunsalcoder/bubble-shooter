@@ -171,8 +171,7 @@ const StartGameScreen: React.FC<StartGameScreenProps> = ({ onStart }) => {
             position: 'relative',
             overflow: 'hidden',
             letterSpacing: '1px',
-            textTransform: 'uppercase',
-            fontFamily: '"Space Grotesk", "Poppins", "Segoe UI", "Roboto", "Helvetica Neue", Arial, sans-serif',
+            fontFamily: '"TypoGrotek", "Space Grotesk", "Poppins", "Segoe UI", "Roboto", "Helvetica Neue", Arial, sans-serif',
             animation: isHovered ? 'none' : 'pulse 2s ease-in-out infinite'
           }}
         >

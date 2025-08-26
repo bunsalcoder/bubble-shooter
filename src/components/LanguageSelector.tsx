@@ -32,9 +32,10 @@ const LanguageSelector: React.FC<LanguageSelectorProps> = ({ isOpen, onClose }) 
           gap: '10px',
           fontSize: '20px',
           fontWeight: 'bold',
-          color: '#1e3a8a',
+          color: 'white',
           textAlign: 'center',
-          justifyContent: 'center'
+          justifyContent: 'center',
+          fontFamily: '"TypoGrotek", "Space Grotesk", "Poppins", "Segoe UI", "Roboto", "Helvetica Neue", Arial, sans-serif'
         }}>
           🌐 {t('selectLanguage')}
         </div>
@@ -64,42 +65,41 @@ const LanguageSelector: React.FC<LanguageSelectorProps> = ({ isOpen, onClose }) 
             onClick={() => handleLanguageSelect(lang.code)}
             style={{
               background: language === lang.code 
-                ? 'linear-gradient(135deg, rgba(135, 206, 235, 0.9), rgba(70, 130, 180, 0.9))'
-                : 'linear-gradient(135deg, rgba(255, 255, 255, 0.9), rgba(240, 248, 255, 0.9))',
-              color: language === lang.code ? 'white' : '#1e3a8a',
+                ? 'rgba(214, 130, 223, 0.8)'
+                : 'rgba(255, 255, 255, 0.1)',
+              color: language === lang.code ? 'white' : 'white',
               borderRadius: '12px',
               padding: '10px 15px',
               fontSize: '14px',
               fontWeight: 'bold',
               cursor: 'pointer',
               transition: 'all 0.3s ease',
-              boxShadow: language === lang.code 
-                ? '0 4px 15px rgba(135, 206, 235, 0.3)'
-                : '0 2px 10px rgba(0, 0, 0, 0.1)',
+              boxShadow: 'none',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               gap: '10px',
               border: language === lang.code 
-                ? '2px solid rgba(255, 255, 255, 0.3)'
-                : '2px solid rgba(135, 206, 235, 0.2)',
+                ? '2px solid rgba(214, 130, 223, 0.8)'
+                : '2px solid rgba(255, 255, 255, 0.2)',
               position: 'relative',
-              overflow: 'hidden'
+              overflow: 'hidden',
+              fontFamily: '"TypoGrotek", "Space Grotesk", "Poppins", "Segoe UI", "Roboto", "Helvetica Neue", Arial, sans-serif'
             }}
             onMouseEnter={(e) => {
               if (language !== lang.code) {
                 e.currentTarget.style.transform = 'translateY(-2px) scale(1.02)';
-                e.currentTarget.style.boxShadow = '0 8px 25px rgba(135, 206, 235, 0.2)';
-                e.currentTarget.style.background = 'linear-gradient(135deg, rgba(135, 206, 235, 0.7), rgba(70, 130, 180, 0.7))';
+                e.currentTarget.style.boxShadow = 'none';
+                e.currentTarget.style.background = 'rgba(214, 130, 223, 0.6)';
                 e.currentTarget.style.color = 'white';
               }
             }}
             onMouseLeave={(e) => {
               if (language !== lang.code) {
                 e.currentTarget.style.transform = 'translateY(0) scale(1)';
-                e.currentTarget.style.boxShadow = '0 4px 15px rgba(0, 0, 0, 0.1)';
-                e.currentTarget.style.background = 'linear-gradient(135deg, rgba(255, 255, 255, 0.9), rgba(240, 248, 255, 0.9))';
-                e.currentTarget.style.color = '#1e3a8a';
+                e.currentTarget.style.boxShadow = 'none';
+                e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)';
+                e.currentTarget.style.color = 'white';
               }
             }}
           >
@@ -147,12 +147,13 @@ const LanguageSelector: React.FC<LanguageSelectorProps> = ({ isOpen, onClose }) 
         <div style={{
           marginTop: '15px',
           padding: '10px',
-          background: 'linear-gradient(135deg, rgba(135, 206, 235, 0.1), rgba(70, 130, 180, 0.1))',
+          background: 'rgba(214, 130, 223, 0.2)',
           borderRadius: '8px',
-          border: '1px solid rgba(135, 206, 235, 0.2)',
+          border: '1px solid rgba(214, 130, 223, 0.3)',
           fontSize: '12px',
-          color: '#666',
-          fontStyle: 'italic'
+          color: 'white',
+          fontStyle: 'italic',
+          fontFamily: '"TypoGrotek", "Space Grotesk", "Poppins", "Segoe UI", "Roboto", "Helvetica Neue", Arial, sans-serif'
         }}>
           💡 {t('selectLanguage')} - ជ្រើសរើសភាសា - 选择语言
         </div>

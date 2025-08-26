@@ -61,6 +61,25 @@ const Board: React.FC = () => {
   const [bubbleStartX, bubbleStartY] = setBubblePosition();
   const [gameWidth, gameHeight] = setGameSize();
   const girdColumns = setGridCols();
+  const [isMuted, setIsMuted] = useState(false);
+
+  // Check actual audio state to sync button
+  useEffect(() => {
+    const checkAudioState = () => {
+      if ((window as any).audioManager?.getAudioState) {
+        const audioState = (window as any).audioManager.getAudioState();
+        setIsMuted(!audioState.isPlaying);
+      }
+    };
+
+    // Check immediately
+    checkAudioState();
+
+    // Set up interval to check audio state
+    const interval = setInterval(checkAudioState, 500);
+
+    return () => clearInterval(interval);
+  }, []);
   let grid: Grid = {
     numRows: GRID_ROWS,
     numCols: girdColumns,
@@ -2877,14 +2896,14 @@ const Board: React.FC = () => {
           <div 
             onClick={(e) => e.stopPropagation()}
             style={{
-              background: 'linear-gradient(145deg, #5DADE2, #85C1E9, #AED6F1)',
+              background: '#D682DF',
               borderRadius: '25px',
               padding: '15px 25px',
               display: 'flex',
               alignItems: 'center',
               gap: '15px',
               boxShadow: 
-                '0 8px 25px rgba(93, 173, 226, 0.4), ' +
+                '0 8px 25px rgba(214, 130, 223, 0.4), ' +
                 'inset 0 2px 4px rgba(255, 255, 255, 0.5), ' +
                 'inset 0 -2px 4px rgba(0, 0, 0, 0.1)',
               border: 'none',
@@ -2899,7 +2918,7 @@ const Board: React.FC = () => {
             onMouseEnter={(e) => {
               e.currentTarget.style.transform = 'translateY(-3px) scale(1.02)';
               e.currentTarget.style.boxShadow = 
-                '0 12px 35px rgba(93, 173, 226, 0.6), ' +
+                '0 12px 35px rgba(214, 130, 223, 0.6), ' +
                 'inset 0 2px 4px rgba(255, 255, 255, 0.6), ' +
                 'inset 0 -2px 4px rgba(0, 0, 0, 0.15)';
               e.currentTarget.style.animation = 'scoreButtonPulse 0.5s ease-in-out';
@@ -2907,7 +2926,7 @@ const Board: React.FC = () => {
             onMouseLeave={(e) => {
               e.currentTarget.style.transform = 'translateY(0) scale(1)';
               e.currentTarget.style.boxShadow = 
-                '0 8px 25px rgba(93, 173, 226, 0.4), ' +
+                '0 8px 25px rgba(214, 130, 223, 0.4), ' +
                 'inset 0 2px 4px rgba(255, 255, 255, 0.5), ' +
                 'inset 0 -2px 4px rgba(0, 0, 0, 0.1)';
               e.currentTarget.style.animation = 'scoreButtonGlow 3s ease-in-out infinite';
@@ -2971,7 +2990,7 @@ const Board: React.FC = () => {
               setIsMenuVisible(true);
             }}
             style={{
-              background: 'linear-gradient(145deg, #5499C7, #7FB3D3, #A9CCE3)',
+              background: '#D682DF',
               borderRadius: '20px',
               padding: '15px',
               color: 'white',
@@ -2979,7 +2998,7 @@ const Board: React.FC = () => {
               fontWeight: 'bold',
               cursor: 'pointer',
               boxShadow: 
-                '0 8px 25px rgba(84, 153, 199, 0.4), ' +
+                '0 8px 25px rgba(214, 130, 223, 0.4), ' +
                 'inset 0 2px 4px rgba(255, 255, 255, 0.5), ' +
                 'inset 0 -2px 4px rgba(0, 0, 0, 0.1)',
               transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
@@ -2997,7 +3016,7 @@ const Board: React.FC = () => {
             onMouseEnter={(e) => {
               e.currentTarget.style.transform = 'translateY(-3px) scale(1.05)';
               e.currentTarget.style.boxShadow = 
-                '0 12px 35px rgba(84, 153, 199, 0.6), ' +
+                '0 12px 35px rgba(214, 130, 223, 0.6), ' +
                 'inset 0 2px 4px rgba(255, 255, 255, 0.6), ' +
                 'inset 0 -2px 4px rgba(0, 0, 0, 0.15)';
               e.currentTarget.style.animation = 'menuButtonPulse 0.5s ease-in-out';
@@ -3005,7 +3024,7 @@ const Board: React.FC = () => {
             onMouseLeave={(e) => {
               e.currentTarget.style.transform = 'translateY(0) scale(1)';
               e.currentTarget.style.boxShadow = 
-                '0 8px 25px rgba(84, 153, 199, 0.4), ' +
+                '0 8px 25px rgba(214, 130, 223, 0.4), ' +
                 'inset 0 2px 4px rgba(255, 255, 255, 0.5), ' +
                 'inset 0 -2px 4px rgba(0, 0, 0, 0.1)';
               e.currentTarget.style.animation = 'menuButtonFloat 4s ease-in-out infinite';
@@ -3083,7 +3102,7 @@ const Board: React.FC = () => {
           bottom: '30px',
           right: '30px',
           marginBottom: isAndroid ? '5px' : '60px',
-          background: 'linear-gradient(145deg, #5DADE2, #85C1E9, #AED6F1)',
+          background: '#D682DF',
           borderRadius: '50%',
           width: '60px',
           height: '60px',
@@ -3092,7 +3111,7 @@ const Board: React.FC = () => {
           justifyContent: 'center',
           cursor: 'pointer',
           boxShadow: 
-            '0 8px 25px rgba(93, 173, 226, 0.4), ' +
+            '0 8px 25px rgba(214, 130, 223, 0.4), ' +
             'inset 0 2px 4px rgba(255, 255, 255, 0.5), ' +
             'inset 0 -2px 4px rgba(0, 0, 0, 0.1)',
           border: 'none',
@@ -3104,7 +3123,7 @@ const Board: React.FC = () => {
         onMouseEnter={(e) => {
           e.currentTarget.style.transform = 'translateY(-3px) scale(1.1)';
           e.currentTarget.style.boxShadow = 
-            '0 12px 35px rgba(93, 173, 226, 0.6), ' +
+            '0 12px 35px rgba(214, 130, 223, 0.6), ' +
             'inset 0 2px 4px rgba(255, 255, 255, 0.6), ' +
             'inset 0 -2px 4px rgba(0, 0, 0, 0.15)';
           e.currentTarget.style.animation = 'infoButtonGlow 0.5s ease-in-out';
@@ -3112,7 +3131,7 @@ const Board: React.FC = () => {
         onMouseLeave={(e) => {
           e.currentTarget.style.transform = 'translateY(0) scale(1)';
           e.currentTarget.style.boxShadow = 
-            '0 8px 25px rgba(93, 173, 226, 0.4), ' +
+            '0 8px 25px rgba(214, 130, 223, 0.4), ' +
             'inset 0 2px 4px rgba(255, 255, 255, 0.5), ' +
             'inset 0 -2px 4px rgba(0, 0, 0, 0.1)';
           e.currentTarget.style.animation = 'infoButtonPulse 2s ease-in-out infinite';
@@ -3234,7 +3253,8 @@ const Board: React.FC = () => {
               gap: '10px',
               fontSize: '20px',
               fontWeight: 'bold',
-              color: '#1e3a8a'
+              color: 'white',
+              fontFamily: '"TypoGrotek", "Space Grotesk", "Poppins", "Segoe UI", "Roboto", "Helvetica Neue", Arial, sans-serif'
             }}>
               {t('globalLeaderboard')}
             </div>
@@ -3271,7 +3291,7 @@ const Board: React.FC = () => {
                 justifyContent: 'space-between',
                 alignItems: 'center',
                 padding: isMobile ? '8px 12px' : '10px 15px',
-                background: 'linear-gradient(135deg, rgba(30, 58, 138, 0.9), rgba(59, 130, 246, 0.9))',
+                background: 'rgba(214, 130, 223, 0.8)',
                 borderRadius: '10px',
                 color: 'white',
                 fontWeight: 'bold',
@@ -3340,12 +3360,12 @@ const Board: React.FC = () => {
                     marginBottom: isMobile ? '6px' : '8px',
                     borderRadius: '10px',
                     background: isCurrentPlayer 
-                      ? 'linear-gradient(135deg, rgba(135, 206, 235, 0.5), rgba(70, 130, 180, 0.5))'
+                      ? 'rgba(214, 130, 223, 0.6)'
                       : isTop3 
-                        ? 'linear-gradient(135deg, rgba(255, 215, 0, 0.15), rgba(255, 165, 0, 0.15))'
-                        : 'linear-gradient(135deg, rgba(255, 255, 255, 0.1), rgba(240, 248, 255, 0.1))',
+                        ? 'rgba(255, 215, 0, 0.2)'
+                        : 'rgba(255, 255, 255, 0.1)',
                     border: isCurrentPlayer 
-                      ? '4px solid rgba(135, 206, 235, 1)'
+                      ? '2px solid rgba(214, 130, 223, 0.8)'
                       : isTop3 
                         ? '1px solid rgba(255, 215, 0, 0.3)'
                         : '1px solid rgba(255, 255, 255, 0.2)',
@@ -3364,29 +3384,29 @@ const Board: React.FC = () => {
                     msUserSelect: 'none',
                     transform: isCurrentPlayer ? 'scale(1.02)' : 'scale(1)',
                     boxShadow: isCurrentPlayer 
-                      ? '0 4px 12px rgba(135, 206, 235, 0.4)'
+                      ? '0 4px 12px rgba(214, 130, 223, 0.4)'
                       : '0 2px 6px rgba(0, 0, 0, 0.1)'
                   }}
                   onMouseEnter={(e) => {
                     e.currentTarget.style.transform = isCurrentPlayer ? 'scale(1.05)' : 'scale(1.02)';
                     e.currentTarget.style.background = isCurrentPlayer 
-                      ? 'linear-gradient(135deg, rgba(135, 206, 235, 0.6), rgba(70, 130, 180, 0.6))'
+                      ? 'rgba(214, 130, 223, 0.7)'
                       : isTop3 
-                        ? 'linear-gradient(135deg, rgba(255, 215, 0, 0.2), rgba(255, 165, 0, 0.2))'
-                        : 'linear-gradient(135deg, rgba(255, 255, 255, 0.15), rgba(240, 248, 255, 0.15))';
+                        ? 'rgba(255, 215, 0, 0.25)'
+                        : 'rgba(255, 255, 255, 0.15)';
                     e.currentTarget.style.boxShadow = isCurrentPlayer 
-                      ? '0 6px 20px rgba(135, 206, 235, 0.6)'
+                      ? '0 6px 20px rgba(214, 130, 223, 0.6)'
                       : '0 3px 10px rgba(0, 0, 0, 0.15)';
                   }}
                   onMouseLeave={(e) => {
                     e.currentTarget.style.transform = isCurrentPlayer ? 'scale(1.02)' : 'scale(1)';
                     e.currentTarget.style.background = isCurrentPlayer 
-                      ? 'linear-gradient(135deg, rgba(135, 206, 235, 0.5), rgba(70, 130, 180, 0.5))'
+                      ? 'rgba(214, 130, 223, 0.6)'
                       : isTop3 
-                        ? 'linear-gradient(135deg, rgba(255, 215, 0, 0.15), rgba(255, 165, 0, 0.15))'
-                        : 'linear-gradient(135deg, rgba(255, 255, 255, 0.1), rgba(240, 248, 255, 0.1))';
+                        ? 'rgba(255, 215, 0, 0.2)'
+                        : 'rgba(255, 255, 255, 0.1)';
                     e.currentTarget.style.boxShadow = isCurrentPlayer 
-                      ? '0 4px 12px rgba(135, 206, 235, 0.4)'
+                      ? '0 4px 12px rgba(214, 130, 223, 0.4)'
                       : '0 2px 6px rgba(0, 0, 0, 0.1)';
                   }}
 
@@ -3396,8 +3416,8 @@ const Board: React.FC = () => {
                       position: 'absolute',
                       top: '-8px',
                       left: '-8px',
-                      background: 'linear-gradient(135deg, #87CEEB, #4682B4)',
-                      color: 'white',
+                      background: 'white',
+                      color: 'rgba(214, 130, 223, 1)',
                       borderRadius: '50%',
                       width: '28px',
                       height: '28px',
@@ -3406,12 +3426,11 @@ const Board: React.FC = () => {
                       justifyContent: 'center',
                       fontSize: '14px',
                       fontWeight: 'bold',
-                      boxShadow: '0 4px 12px rgba(135, 206, 235, 0.6)',
                       zIndex: 1,
-                      border: '2px solid rgba(255, 255, 255, 0.8)',
+                      border: '2px solid rgba(214, 130, 223, 0.8)',
                       animation: 'pulse 2s infinite'
                     }}>
-                      👤
+                      <span style={{ filter: 'drop-shadow(none)' }}>👤</span>
                     </div>
                   )}
                 <div style={{
@@ -3457,7 +3476,8 @@ const Board: React.FC = () => {
                       fontWeight: 'bold',
                       color: 'white',
                       fontSize: isMobile ? '14px' : '16px',
-                      textShadow: '0 1px 2px rgba(0, 0, 0, 0.4)'
+                      textShadow: '0 1px 2px rgba(0, 0, 0, 0.4)',
+                      fontFamily: '"TypoGrotek", "Space Grotesk", "Poppins", "Segoe UI", "Roboto", "Helvetica Neue", Arial, sans-serif'
                     }}>
                       {player.name}
                     </span>
@@ -3467,7 +3487,8 @@ const Board: React.FC = () => {
                     fontWeight: 'bold',
                     fontSize: isMobile ? '16px' : '18px',
                     color: 'white',
-                    textShadow: '0 1px 2px rgba(0, 0, 0, 0.4)'
+                    textShadow: '0 1px 2px rgba(0, 0, 0, 0.4)',
+                    fontFamily: '"TypoGrotek", "Space Grotesk", "Poppins", "Segoe UI", "Roboto", "Helvetica Neue", Arial, sans-serif'
                   }}>
                     {player.score.toLocaleString()}
                   </div>
@@ -3490,7 +3511,8 @@ const Board: React.FC = () => {
               color: 'white',
               fontSize: '14px',
               fontStyle: 'italic',
-              textShadow: '0 1px 2px rgba(0, 0, 0, 0.4)'
+              textShadow: '0 1px 2px rgba(0, 0, 0, 0.4)',
+              fontFamily: '"TypoGrotek", "Space Grotesk", "Poppins", "Segoe UI", "Roboto", "Helvetica Neue", Arial, sans-serif'
             }}>
               {t('tip')}
             </p>
@@ -3548,7 +3570,7 @@ const Board: React.FC = () => {
               }}
               className="bubble-shooter__menu-button"
               style={{
-                background: 'linear-gradient(135deg, rgba(135, 206, 235, 0.9), rgba(70, 130, 180, 0.9))',
+                background: 'rgba(214, 130, 223, 0.7)',
                 color: 'white',
                 borderRadius: '12px',
                 padding: '12px 18px',
@@ -3556,24 +3578,25 @@ const Board: React.FC = () => {
                 fontWeight: 'bold',
                 cursor: 'pointer',
                 transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
-                boxShadow: '0 6px 20px rgba(135, 206, 235, 0.3)',
+                boxShadow: 'none',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 gap: '12px',
                 position: 'relative',
                 overflow: 'hidden',
-                border: '2px solid rgba(255, 255, 255, 0.2)'
+                border: '2px solid rgba(255, 255, 255, 0.2)',
+                fontFamily: '"TypoGrotek", "Space Grotesk", "Poppins", "Segoe UI", "Roboto", "Helvetica Neue", Arial, sans-serif'
               }}
               onMouseEnter={(e) => {
                 e.currentTarget.style.transform = 'translateY(-4px) scale(1.02)';
-                e.currentTarget.style.boxShadow = '0 12px 35px rgba(135, 206, 235, 0.5)';
-                e.currentTarget.style.background = 'linear-gradient(135deg, rgba(135, 206, 235, 1), rgba(70, 130, 180, 1))';
+                e.currentTarget.style.boxShadow = 'none';
+                e.currentTarget.style.background = 'rgba(214, 130, 223, 0.7)';
               }}
               onMouseLeave={(e) => {
                 e.currentTarget.style.transform = 'translateY(0) scale(1)';
-                e.currentTarget.style.boxShadow = '0 8px 25px rgba(135, 206, 235, 0.3)';
-                e.currentTarget.style.background = 'linear-gradient(135deg, rgba(135, 206, 235, 0.9), rgba(70, 130, 180, 0.9))';
+                e.currentTarget.style.boxShadow = 'none';
+                e.currentTarget.style.background = 'rgba(214, 130, 223, 0.7)';
               }}
             >
               <span style={{ 
@@ -3595,7 +3618,7 @@ const Board: React.FC = () => {
               }}
               className="bubble-shooter__menu-button"
               style={{
-                background: 'linear-gradient(135deg, rgba(135, 206, 235, 0.9), rgba(70, 130, 180, 0.9))',
+                background: 'rgba(214, 130, 223, 0.7)',
                 color: 'white',
                 borderRadius: '12px',
                 padding: '12px 18px',
@@ -3603,24 +3626,25 @@ const Board: React.FC = () => {
                 fontWeight: 'bold',
                 cursor: 'pointer',
                 transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
-                boxShadow: '0 6px 20px rgba(135, 206, 235, 0.3)',
+                boxShadow: 'none',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 gap: '12px',
                 position: 'relative',
                 overflow: 'hidden',
-                border: '2px solid rgba(255, 255, 255, 0.2)'
+                border: '2px solid rgba(255, 255, 255, 0.2)',
+                fontFamily: '"TypoGrotek", "Space Grotesk", "Poppins", "Segoe UI", "Roboto", "Helvetica Neue", Arial, sans-serif'
               }}
               onMouseEnter={(e) => {
                 e.currentTarget.style.transform = 'translateY(-4px) scale(1.02)';
-                e.currentTarget.style.boxShadow = '0 12px 35px rgba(135, 206, 235, 0.5)';
-                e.currentTarget.style.background = 'linear-gradient(135deg, rgba(135, 206, 235, 1), rgba(70, 130, 180, 1))';
+                e.currentTarget.style.boxShadow = 'none';
+                e.currentTarget.style.background = 'rgba(214, 130, 223, 0.7)';
               }}
               onMouseLeave={(e) => {
                 e.currentTarget.style.transform = 'translateY(0) scale(1)';
-                e.currentTarget.style.boxShadow = '0 8px 25px rgba(135, 206, 235, 0.3)';
-                e.currentTarget.style.background = 'linear-gradient(135deg, rgba(135, 206, 235, 0.9), rgba(70, 130, 180, 0.9))';
+                e.currentTarget.style.boxShadow = 'none';
+                e.currentTarget.style.background = 'rgba(214, 130, 223, 0.7)';
               }}
             >
               <span style={{ 
@@ -3644,7 +3668,7 @@ const Board: React.FC = () => {
               }}
               className="bubble-shooter__menu-button"
               style={{
-                background: 'linear-gradient(135deg, rgba(135, 206, 235, 0.9), rgba(70, 130, 180, 0.9))',
+                background: 'rgba(214, 130, 223, 0.7)',
                 color: 'white',
                 borderRadius: '12px',
                 padding: '12px 18px',
@@ -3652,24 +3676,25 @@ const Board: React.FC = () => {
                 fontWeight: 'bold',
                 cursor: 'pointer',
                 transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
-                boxShadow: '0 6px 20px rgba(135, 206, 235, 0.3)',
+                boxShadow: 'none',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 gap: '12px',
                 position: 'relative',
                 overflow: 'hidden',
-                border: '2px solid rgba(255, 255, 255, 0.2)'
+                border: '2px solid rgba(255, 255, 255, 0.2)',
+                fontFamily: '"TypoGrotek", "Space Grotesk", "Poppins", "Segoe UI", "Roboto", "Helvetica Neue", Arial, sans-serif'
               }}
               onMouseEnter={(e) => {
                 e.currentTarget.style.transform = 'translateY(-4px) scale(1.02)';
-                e.currentTarget.style.boxShadow = '0 12px 35px rgba(135, 206, 235, 0.5)';
-                e.currentTarget.style.background = 'linear-gradient(135deg, rgba(135, 206, 235, 1), rgba(70, 130, 180, 1))';
+                e.currentTarget.style.boxShadow = 'none';
+                e.currentTarget.style.background = 'rgba(214, 130, 223, 0.7)';
               }}
               onMouseLeave={(e) => {
                 e.currentTarget.style.transform = 'translateY(0) scale(1)';
-                e.currentTarget.style.boxShadow = '0 8px 25px rgba(135, 206, 235, 0.3)';
-                e.currentTarget.style.background = 'linear-gradient(135deg, rgba(135, 206, 235, 0.9), rgba(70, 130, 180, 0.9))';
+                e.currentTarget.style.boxShadow = 'none';
+                e.currentTarget.style.background = 'rgba(214, 130, 223, 0.7)';
               }}
             >
               <span style={{ 
@@ -3683,7 +3708,7 @@ const Board: React.FC = () => {
               }}>{t('leaderboard')}</span>
             </button>
 
-            {/* Language Button */}
+                        {/* Language Button */}
             <button
               onClick={() => {
                 setIsMenuVisible(false);
@@ -3691,7 +3716,7 @@ const Board: React.FC = () => {
               }}
               className="bubble-shooter__menu-button"
               style={{
-                background: 'linear-gradient(135deg, rgba(135, 206, 235, 0.9), rgba(70, 130, 180, 0.9))',
+                background: 'rgba(214, 130, 223, 0.7)',
                 color: 'white',
                 borderRadius: '12px',
                 padding: '12px 18px',
@@ -3699,24 +3724,25 @@ const Board: React.FC = () => {
                 fontWeight: 'bold',
                 cursor: 'pointer',
                 transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
-                boxShadow: '0 6px 20px rgba(135, 206, 235, 0.3)',
+                boxShadow: 'none',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 gap: '12px',
                 position: 'relative',
                 overflow: 'hidden',
-                border: '2px solid rgba(255, 255, 255, 0.2)'
+                border: '2px solid rgba(255, 255, 255, 0.2)',
+                fontFamily: '"TypoGrotek", "Space Grotesk", "Poppins", "Segoe UI", "Roboto", "Helvetica Neue", Arial, sans-serif'
               }}
               onMouseEnter={(e) => {
                 e.currentTarget.style.transform = 'translateY(-4px) scale(1.02)';
-                e.currentTarget.style.boxShadow = '0 12px 35px rgba(135, 206, 235, 0.5)';
-                e.currentTarget.style.background = 'linear-gradient(135deg, rgba(135, 206, 235, 1), rgba(70, 130, 180, 1))';
+                e.currentTarget.style.boxShadow = 'none';
+                e.currentTarget.style.background = 'rgba(214, 130, 223, 0.7)';
               }}
               onMouseLeave={(e) => {
                 e.currentTarget.style.transform = 'translateY(0) scale(1)';
-                e.currentTarget.style.boxShadow = '0 8px 25px rgba(135, 206, 235, 0.3)';
-                e.currentTarget.style.background = 'linear-gradient(135deg, rgba(135, 206, 235, 0.9), rgba(70, 130, 180, 0.9))';
+                e.currentTarget.style.boxShadow = 'none';
+                e.currentTarget.style.background = 'rgba(214, 130, 223, 0.7)';
               }}
             >
               <span style={{ 
@@ -3730,8 +3756,75 @@ const Board: React.FC = () => {
               }}>{t('language')}</span>
             </button>
 
-            {/* Volume Control */}
-            <VolumeControl />
+            {/* Mute Button Only */}
+            <button
+              onClick={() => {
+                // Toggle mute functionality using the global audio manager
+                if ((window as any).audioManager) {
+                  const audioState = (window as any).audioManager.getAudioState();
+                  
+                  if (audioState.isPlaying) {
+                    // Music is playing, so mute it
+                    (window as any).audioManager.pauseMusic();
+                  } else {
+                    // Music is not playing, so unmute it
+                    (window as any).audioManager.resumeMusic();
+                  }
+                }
+                
+                // Also mute/unmute any regular audio elements
+                const audioElements = document.querySelectorAll('audio');
+                audioElements.forEach(audio => {
+                  audio.muted = !audio.muted;
+                });
+              }}
+              className="bubble-shooter__menu-button mute-button"
+              style={{
+                background: 'rgba(214, 130, 223, 0.7)',
+                color: 'white',
+                borderRadius: '12px',
+                padding: '12px 18px',
+                fontSize: '16px',
+                fontWeight: 'bold',
+                cursor: 'pointer',
+                transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
+                boxShadow: 'none',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '12px',
+                position: 'relative',
+                overflow: 'hidden',
+                border: '2px solid rgba(255, 255, 255, 0.2)',
+                fontFamily: '"TypoGrotek", "Space Grotesk", "Poppins", "Segoe UI", "Roboto", "Helvetica Neue", Arial, sans-serif'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.transform = 'translateY(-4px) scale(1.02)';
+                e.currentTarget.style.boxShadow = 'none';
+                e.currentTarget.style.background = 'rgba(214, 130, 223, 0.7)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.transform = 'translateY(0) scale(1)';
+                e.currentTarget.style.boxShadow = 'none';
+                e.currentTarget.style.background = 'rgba(214, 130, 223, 0.7)';
+              }}
+            >
+              <span 
+                className="mute-icon"
+                style={{ 
+                  fontSize: '18px',
+                  filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.3))',
+                  transition: 'transform 0.3s ease'
+                }}
+              >{isMuted ? '🔇' : '🔊'}</span>
+              <span 
+                className="mute-text"
+                style={{
+                  textShadow: '0 2px 4px rgba(0,0,0,0.3)',
+                  letterSpacing: '0.5px'
+                }}
+              >{isMuted ? t('unmute') : t('mute')}</span>
+            </button>
           </div>
         </Modal>
 
@@ -3781,7 +3874,8 @@ const Board: React.FC = () => {
               fontSize: '24px',
               fontWeight: 'bold',
               margin: '0 0 10px 0',
-              textShadow: '0 2px 4px rgba(0, 0, 0, 0.5)'
+              textShadow: '0 2px 4px rgba(0, 0, 0, 0.5)',
+              fontFamily: '"TypoGrotek", "Space Grotesk", "Poppins", "Segoe UI", "Roboto", "Helvetica Neue", Arial, sans-serif'
             }}>
               {t('howToPlay')}
             </h2>
@@ -3795,10 +3889,11 @@ const Board: React.FC = () => {
               color: 'white',
               fontSize: '16px',
               lineHeight: '1.6',
-              border: '1px solid rgba(255, 215, 0, 0.3)'
+              border: '1px solid rgba(255, 215, 0, 0.3)',
+              fontFamily: '"TypoGrotek", "Space Grotesk", "Poppins", "Segoe UI", "Roboto", "Helvetica Neue", Arial, sans-serif'
             }}>
-              <h3 style={{ margin: '0 0 15px 0', color: '#FFD700', textAlign: 'left', fontWeight: 'bold', fontSize: '18px', textShadow: '0 1px 2px rgba(0, 0, 0, 0.5)' }}>🎯 {t('objective')}</h3>
-              <p style={{ margin: '0', textAlign: 'left' }}>
+              <h3 style={{ margin: '0 0 15px 0', color: '#FFD700', textAlign: 'left', fontWeight: 'bold', fontSize: '18px', textShadow: '0 1px 2px rgba(0, 0, 0, 0.5)', fontFamily: '"TypoGrotek", "Space Grotesk", "Poppins", "Segoe UI", "Roboto", "Helvetica Neue", Arial, sans-serif' }}>🎯 {t('objective')}</h3>
+              <p style={{ margin: '0', textAlign: 'left', fontFamily: '"TypoGrotek", "Space Grotesk", "Poppins", "Segoe UI", "Roboto", "Helvetica Neue", Arial, sans-serif', fontWeight: 'normal' }}>
                 {t('objectiveDescription')}
               </p>
             </div>
@@ -3812,13 +3907,14 @@ const Board: React.FC = () => {
               color: 'white',
               fontSize: '16px',
               lineHeight: '1.6',
-              border: '1px solid rgba(93, 173, 226, 0.3)'
+              border: '1px solid rgba(93, 173, 226, 0.3)',
+              fontFamily: '"TypoGrotek", "Space Grotesk", "Poppins", "Segoe UI", "Roboto", "Helvetica Neue", Arial, sans-serif'
             }}>
-              <h3 style={{ margin: '0 0 15px 0', color: '#1E3A8A', textAlign: 'left', fontWeight: 'bold', fontSize: '18px', textShadow: '0 1px 2px rgba(0, 0, 0, 0.5)' }}>🎮 {t('controls')}</h3>
-              <ul style={{ margin: '0', paddingLeft: '0', listStyle: 'none' }}>
-                <li style={{ margin: '0 0 8px 0', textAlign: 'left' }}>{t('control1')}</li>
-                <li style={{ margin: '0 0 8px 0', textAlign: 'left' }}>{t('control2')}</li>
-                <li style={{ margin: '0 0 8px 0', textAlign: 'left' }}>{t('control3')}</li>
+              <h3 style={{ margin: '0 0 15px 0', color: '#1E3A8A', textAlign: 'left', fontWeight: 'bold', fontSize: '18px', textShadow: '0 1px 2px rgba(0, 0, 0, 0.5)', fontFamily: '"TypoGrotek", "Space Grotesk", "Poppins", "Segoe UI", "Roboto", "Helvetica Neue", Arial, sans-serif' }}>🎮 {t('controls')}</h3>
+              <ul style={{ margin: '0', paddingLeft: '0', listStyle: 'none', fontFamily: '"TypoGrotek", "Space Grotesk", "Poppins", "Segoe UI", "Roboto", "Helvetica Neue", Arial, sans-serif' }}>
+                <li style={{ margin: '0 0 8px 0', textAlign: 'left', fontFamily: '"TypoGrotek", "Space Grotesk", "Poppins", "Segoe UI", "Roboto", "Helvetica Neue", Arial, sans-serif', fontWeight: 'normal' }}>{t('control1')}</li>
+                <li style={{ margin: '0 0 8px 0', textAlign: 'left', fontFamily: '"TypoGrotek", "Space Grotesk", "Poppins", "Segoe UI", "Roboto", "Helvetica Neue", Arial, sans-serif', fontWeight: 'normal' }}>{t('control2')}</li>
+                <li style={{ margin: '0 0 8px 0', textAlign: 'left', fontFamily: '"TypoGrotek", "Space Grotesk", "Poppins", "Segoe UI", "Roboto", "Helvetica Neue", Arial, sans-serif', fontWeight: 'normal' }}>{t('control3')}</li>
               </ul>
             </div>
 
@@ -3831,13 +3927,14 @@ const Board: React.FC = () => {
               color: 'white',
               fontSize: '16px',
               lineHeight: '1.6',
-              border: '1px solid rgba(255, 193, 7, 0.3)'
+              border: '1px solid rgba(255, 193, 7, 0.3)',
+              fontFamily: '"TypoGrotek", "Space Grotesk", "Poppins", "Segoe UI", "Roboto", "Helvetica Neue", Arial, sans-serif'
             }}>
-              <h3 style={{ margin: '0 0 15px 0', color: '#B8860B', textAlign: 'left', fontWeight: 'bold', fontSize: '18px', textShadow: '0 1px 2px rgba(0, 0, 0, 0.5)' }}>🏆 {t('scoring')}</h3>
-              <ul style={{ margin: '0', paddingLeft: '0', listStyle: 'none' }}>
-                <li style={{ margin: '0 0 8px 0', textAlign: 'left' }}>{t('score1')}</li>
-                <li style={{ margin: '0 0 8px 0', textAlign: 'left' }}>{t('score2')}</li>
-                <li style={{ margin: '0 0 8px 0', textAlign: 'left' }}>{t('score3')}</li>
+              <h3 style={{ margin: '0 0 15px 0', color: '#B8860B', textAlign: 'left', fontWeight: 'bold', fontSize: '18px', textShadow: '0 1px 2px rgba(0, 0, 0, 0.5)', fontFamily: '"TypoGrotek", "Space Grotesk", "Poppins", "Segoe UI", "Roboto", "Helvetica Neue", Arial, sans-serif' }}>🏆 {t('scoring')}</h3>
+              <ul style={{ margin: '0', paddingLeft: '0', listStyle: 'none', fontFamily: '"TypoGrotek", "Space Grotesk", "Poppins", "Segoe UI", "Roboto", "Helvetica Neue", Arial, sans-serif' }}>
+                <li style={{ margin: '0 0 8px 0', textAlign: 'left', fontFamily: '"TypoGrotek", "Space Grotesk", "Poppins", "Segoe UI", "Roboto", "Helvetica Neue", Arial, sans-serif', fontWeight: 'normal' }}>{t('score1')}</li>
+                <li style={{ margin: '0 0 8px 0', textAlign: 'left', fontFamily: '"TypoGrotek", "Space Grotesk", "Poppins", "Segoe UI", "Roboto", "Helvetica Neue", Arial, sans-serif', fontWeight: 'normal' }}>{t('score2')}</li>
+                <li style={{ margin: '0 0 8px 0', textAlign: 'left', fontFamily: '"TypoGrotek", "Space Grotesk", "Poppins", "Segoe UI", "Roboto", "Helvetica Neue", Arial, sans-serif', fontWeight: 'normal' }}>{t('score3')}</li>
               </ul>
             </div>
 
@@ -3850,10 +3947,11 @@ const Board: React.FC = () => {
               color: 'white',
               fontSize: '16px',
               lineHeight: '1.6',
-              border: '1px solid rgba(220, 53, 69, 0.3)'
+              border: '1px solid rgba(220, 53, 69, 0.3)',
+              fontFamily: '"TypoGrotek", "Space Grotesk", "Poppins", "Segoe UI", "Roboto", "Helvetica Neue", Arial, sans-serif'
             }}>
-              <h3 style={{ margin: '0 0 15px 0', color: '#8B0000', textAlign: 'left', fontWeight: 'bold', fontSize: '18px', textShadow: '0 1px 2px rgba(0, 0, 0, 0.5)' }}>⚠️ {t('gameOver')}</h3>
-              <p style={{ margin: '0', textAlign: 'left' }}>
+              <h3 style={{ margin: '0 0 15px 0', color: '#8B0000', textAlign: 'left', fontWeight: 'bold', fontSize: '18px', textShadow: '0 1px 2px rgba(0, 0, 0, 0.5)', fontFamily: '"TypoGrotek", "Space Grotesk", "Poppins", "Segoe UI", "Roboto", "Helvetica Neue", Arial, sans-serif' }}>⚠️ {t('gameOver')}</h3>
+              <p style={{ margin: '0', textAlign: 'left', fontFamily: '"TypoGrotek", "Space Grotesk", "Poppins", "Segoe UI", "Roboto", "Helvetica Neue", Arial, sans-serif', fontWeight: 'normal' }}>
                 {t('gameOverDescription')}
               </p>
             </div>
@@ -3867,14 +3965,15 @@ const Board: React.FC = () => {
               color: 'white',
               fontSize: '16px',
               lineHeight: '1.6',
-              border: '1px solid rgba(40, 167, 69, 0.3)'
+              border: '1px solid rgba(40, 167, 69, 0.3)',
+              fontFamily: '"TypoGrotek", "Space Grotesk", "Poppins", "Segoe UI", "Roboto", "Helvetica Neue", Arial, sans-serif'
             }}>
-              <h3 style={{ margin: '0 0 15px 0', color: '#006400', textAlign: 'left', fontWeight: 'bold', fontSize: '18px', textShadow: '0 1px 2px rgba(0, 0, 0, 0.5)' }}>💡 {t('tips')}</h3>
-              <ul style={{ margin: '0', paddingLeft: '0', listStyle: 'none' }}>
-                <li style={{ margin: '0 0 8px 0', textAlign: 'left' }}>{t('tip1')}</li>
-                <li style={{ margin: '0 0 8px 0', textAlign: 'left' }}>{t('tip2')}</li>
-                <li style={{ margin: '0 0 8px 0', textAlign: 'left' }}>{t('tip3')}</li>
-                <li style={{ margin: '0 0 8px 0', textAlign: 'left' }}>{t('tip4')}</li>
+              <h3 style={{ margin: '0 0 15px 0', color: '#006400', textAlign: 'left', fontWeight: 'bold', fontSize: '18px', textShadow: '0 1px 2px rgba(0, 0, 0, 0.5)', fontFamily: '"TypoGrotek", "Space Grotesk", "Poppins", "Segoe UI", "Roboto", "Helvetica Neue", Arial, sans-serif' }}>💡 {t('tips')}</h3>
+              <ul style={{ margin: '0', paddingLeft: '0', listStyle: 'none', fontFamily: '"TypoGrotek", "Space Grotesk", "Poppins", "Segoe UI", "Roboto", "Helvetica Neue", Arial, sans-serif' }}>
+                <li style={{ margin: '0 0 8px 0', textAlign: 'left', fontFamily: '"TypoGrotek", "Space Grotesk", "Poppins", "Segoe UI", "Roboto", "Helvetica Neue", Arial, sans-serif', fontWeight: 'normal' }}>{t('tip1')}</li>
+                <li style={{ margin: '0 0 8px 0', textAlign: 'left', fontFamily: '"TypoGrotek", "Space Grotesk", "Poppins", "Segoe UI", "Roboto", "Helvetica Neue", Arial, sans-serif', fontWeight: 'normal' }}>{t('tip2')}</li>
+                <li style={{ margin: '0 0 8px 0', textAlign: 'left', fontFamily: '"TypoGrotek", "Space Grotesk", "Poppins", "Segoe UI", "Roboto", "Helvetica Neue", Arial, sans-serif', fontWeight: 'normal' }}>{t('tip3')}</li>
+                <li style={{ margin: '0 0 8px 0', textAlign: 'left', fontFamily: '"TypoGrotek", "Space Grotesk", "Poppins", "Segoe UI", "Roboto", "Helvetica Neue", Arial, sans-serif', fontWeight: 'normal' }}>{t('tip4')}</li>
               </ul>
             </div>
           </div>

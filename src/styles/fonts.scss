@@ -1,0 +1,27 @@
+// Custom Font Definitions
+// TypoGrotek Black Font
+
+@font-face {
+  font-family: 'TypoGrotek';
+  src: url('/fonts/typogrotekblack.otf') format('opentype');
+  font-weight: 900; // Black weight
+  font-style: normal;
+  font-display: swap; // Optimizes font loading
+}
+
+// If you have multiple font weights, add them like this:
+// @font-face {
+//   font-family: 'YourFontName';
+//   src: url('/fonts/your-font-file-light.otf') format('opentype');
+//   font-weight: 300;
+//   font-style: normal;
+//   font-display: swap;
+// }
+
+// @font-face {
+//   font-family: 'YourFontName';
+//   src: url('/fonts/your-font-file-medium.otf') format('opentype');
+//   font-weight: 500;
+//   font-style: normal;
+//   font-display: swap;
+// } 

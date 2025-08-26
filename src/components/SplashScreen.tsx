@@ -214,7 +214,7 @@ const SplashScreen: React.FC<SplashScreenProps> = ({ onComplete }) => {
           opacity: animationPhase >= 1 ? 1 : 0,
           transform: animationPhase >= 1 ? 'translateY(0)' : 'translateY(15px)',
           transition: 'all 1s cubic-bezier(0.25, 0.46, 0.45, 0.94) 0.8s',
-          fontFamily: '"Space Grotesk", "Poppins", "Segoe UI", "Roboto", "Helvetica Neue", Arial, sans-serif',
+          fontFamily: '"TypoGrotek", "Space Grotesk", "Poppins", "Segoe UI", "Roboto", "Helvetica Neue", Arial, sans-serif',
           animation: 'pulse 2s ease-in-out infinite'
         }}>
           {progress}%
@@ -228,7 +228,7 @@ const SplashScreen: React.FC<SplashScreenProps> = ({ onComplete }) => {
           opacity: animationPhase >= 1 ? 1 : 0,
           transform: animationPhase >= 1 ? 'translateY(0)' : 'translateY(15px)',
           transition: 'all 1s cubic-bezier(0.25, 0.46, 0.45, 0.94) 1s',
-          fontFamily: '"Space Grotesk", "Poppins", "Segoe UI", "Roboto", "Helvetica Neue", Arial, sans-serif',
+          fontFamily: '"TypoGrotek", "Space Grotesk", "Poppins", "Segoe UI", "Roboto", "Helvetica Neue", Arial, sans-serif',
           fontWeight: '300',
           animation: 'fadeInOut 3s ease-in-out infinite'
         }}>
