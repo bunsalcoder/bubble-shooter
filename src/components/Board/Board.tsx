@@ -46,6 +46,7 @@ import { useLeaderboard } from "@/hooks/useLeaderboard";
 import { getSafeAvatarEmoji, getRankEmoji, isValidAvatarUrl } from "@/utils/avatarUtils";
 import AvatarDisplay from "@/components/AvatarDisplay";
 import VolumeControl from "@/components/VolumeControl";
+import { SPRITE_ATLAS_CONFIG } from "@/utils/spriteAtlas";
 
 const Board: React.FC = () => {
   let gameState: GameState = {
@@ -116,11 +117,67 @@ const Board: React.FC = () => {
   let image: any = {
     imageDraw: "",
     imageSpecialBall: "",
+    spriteAtlas: null,
+    spriteData: null,
+    spritesLoaded: false,
   };
   
   // Particle system for explosion effects
   let particles: any[] = [];
   
+  // Function to get the visual color for a bubble (mapped color or original)
+  const getVisualColor = (color: string): string => {
+    // Map colors to their visual representation (sprite colors)
+    // Using more muted, sprite-like colors that match the actual game.png sprites
+    const colorMapping: { [key: string]: string } = {
+      '#FFA500': '#FFFF00', // Orange → Yellow (since orange uses yellow sprite)
+      '#00FFFF': '#2B4DFF', // Cyan → Cornflower Blue (lighter, sprite-like blue)
+      '#800080': '#FF00FF', // Violet → Purple (since violet uses purple sprite)
+      '#FF6600': '#FFFF00', // Bright orange → Yellow (since bright orange uses yellow sprite)
+      '#2196F3': '#2B4DFF', // More colorful blue → Cornflower Blue (lighter blue)
+      '#FFD700': '#FFFF00', // More colorful yellow → Yellow (since it uses yellow sprite)
+      '#0000FF': '#2B4DFF', // Pure blue → Cornflower Blue (lighter blue for sprite consistency)
+    };
+    
+    // Return the mapped color if it exists, otherwise return the original color
+    return colorMapping[color] || color;
+  };
+
+
+
+  // Function to draw bubble using sprite atlas
+  const drawBubbleSprite = (p5: p5Types, x: number, y: number, color: string, radius: number, bounceScale: number = 1, bounceOffset: number = 0) => {
+    if (image.spritesLoaded && image.spriteAtlas && image.spriteData && SPRITE_ATLAS_CONFIG.COLOR_TO_SPRITE[color as keyof typeof SPRITE_ATLAS_CONFIG.COLOR_TO_SPRITE]) {
+      const spriteName = SPRITE_ATLAS_CONFIG.COLOR_TO_SPRITE[color as keyof typeof SPRITE_ATLAS_CONFIG.COLOR_TO_SPRITE];
+      const spriteInfo = image.spriteData.frames?.[spriteName];
+      
+      if (spriteInfo && spriteInfo.frame) {
+        const { x: sx, y: sy, w, h } = spriteInfo.frame;
+        const scale = (radius * 2) / Math.max(w, h);
+        
+        p5.push();
+        p5.translate(x, y + bounceOffset);
+        p5.scale(bounceScale * scale);
+        p5.imageMode(p5.CENTER);
+        
+        // Draw the sprite from the atlas
+        p5.image(image.spriteAtlas, 0, 0, w, h, sx, sy, w, h);
+        
+        p5.pop();
+        return true; // Successfully drew sprite
+      } else {
+        // Debug: log when sprite info is missing
+        console.log(`❌ Sprite not found: ${spriteName} for color: ${color}`);
+      }
+    } else {
+      // Debug: log when color mapping is missing
+      if (!SPRITE_ATLAS_CONFIG.COLOR_TO_SPRITE[color as keyof typeof SPRITE_ATLAS_CONFIG.COLOR_TO_SPRITE]) {
+        console.log(`❌ No sprite mapping for color: ${color}`);
+      }
+    }
+    return false; // Fallback to original method
+  };
+
   const createParticles = (x: number, y: number, color: string, p5: p5Types) => {
     const particleCount = 16; // Reduced particles
     for (let i = 0; i < particleCount; i++) {
@@ -225,15 +282,7 @@ const Board: React.FC = () => {
     score: 0,
     highestScore: 0,
     shotsInRound: 0, // Shots taken in current round (0-5)
-    color: [
-      "#FF0000", // Pure red
-      "#00FF00", // Pure green
-      "#2196F3", // More colorful blue
-      "#FFD700", // More colorful yellow
-      "#FF00FF", // Magenta
-      "#00FFFF", // Cyan
-      "#FF6600", // Bright orange
-    ],
+    color: SPRITE_ATLAS_CONFIG.COLORS,
     moveDownInterval: 20,
   });
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
@@ -801,29 +850,35 @@ const Board: React.FC = () => {
         p5.ellipse(0, 0, bubble.r * 2);
         p5.pop();
       } else {
-        const centerX: number = bubble.x;
-        const centerY: number = bubble.y;
-        const imgWidth: number = image.imageDraw.width;
-        const imgHeight: number = image.imageDraw.height;
-        const imgDiameter: number = Math.max(imgWidth, imgHeight);
-        const imgScale: number = (bubble.r * 2) / imgDiameter;
-        const imgX: number = centerX - (imgWidth / 2) * imgScale;
-        const imgY: number = centerY - (imgHeight / 2) * imgScale;
+        // Try to draw using sprite atlas first
+        const spriteDrawn = drawBubbleSprite(p5, bubble.x, bubble.y, bubble.color, bubble.r, bounceScale, bounceOffset);
         
-        p5.push();
-        p5.translate(bubble.x, bubble.y + bounceOffset);
-        p5.scale(bounceScale);
-        p5.fill(bubble.color);
-        p5.noStroke();
-        p5.ellipse(0, 0, bubble.r * 2);
-        p5.image(
-          image.imageDraw,
-          -imgWidth * imgScale / 2,
-          -imgHeight * imgScale / 2,
-          imgWidth * imgScale,
-          imgHeight * imgScale
-        );
-        p5.pop();
+        // If sprite drawing failed, fall back to original method
+        if (!spriteDrawn) {
+          const centerX: number = bubble.x;
+          const centerY: number = bubble.y;
+          const imgWidth: number = image.imageDraw.width;
+          const imgHeight: number = image.imageDraw.height;
+          const imgDiameter: number = Math.max(imgWidth, imgHeight);
+          const imgScale: number = (bubble.r * 2) / imgDiameter;
+          const imgX: number = centerX - (imgWidth / 2) * imgScale;
+          const imgY: number = centerY - (imgHeight / 2) * imgScale;
+          
+          p5.push();
+          p5.translate(bubble.x, bubble.y + bounceOffset);
+          p5.scale(bounceScale);
+          p5.fill(bubble.color);
+          p5.noStroke();
+          p5.ellipse(0, 0, bubble.r * 2);
+          p5.image(
+            image.imageDraw,
+            -imgWidth * imgScale / 2,
+            -imgHeight * imgScale / 2,
+            imgWidth * imgScale,
+            imgHeight * imgScale
+          );
+          p5.pop();
+        }
       }
     }
   };
@@ -884,11 +939,16 @@ const Board: React.FC = () => {
         p5.ellipse(0, 0, bubble.r * 2 + 20);
         p5.pop();
         
-        // Draw real bubble image
-        p5.push();
-        p5.tint(255, bubble.popAlpha * 255);
-        p5.image(imageBubble, -bubble.r, -bubble.r, bubble.r * 2, bubble.r * 2);
-        p5.pop();
+        // Try to draw using sprite atlas first
+        const spriteDrawn = drawBubbleSprite(p5, 0, 0, bubble.color, bubble.r, 1, 0);
+        
+        // If sprite drawing failed, fall back to original method
+        if (!spriteDrawn) {
+          p5.push();
+          p5.tint(255, bubble.popAlpha * 255);
+          p5.image(imageBubble, -bubble.r, -bubble.r, bubble.r * 2, bubble.r * 2);
+          p5.pop();
+        }
         
         p5.pop();
       }
@@ -1193,7 +1253,7 @@ const Board: React.FC = () => {
     const centerY = (topBubbleY + leftBubbleY + rightBubbleY) / 3;
     
     // Calculate the exact radius to connect from bubble centers
-    const bubbleRadius = 18; // Same as launcher bubble radius
+    const bubbleRadius = 18; // Slightly smaller than main bubbles for launcher
     const distance1 = Math.sqrt(Math.pow(topBubbleX - centerX, 2) + Math.pow(topBubbleY - centerY, 2));
     const distance2 = Math.sqrt(Math.pow(leftBubbleX - centerX, 2) + Math.pow(leftBubbleY - centerY, 2));
     const distance3 = Math.sqrt(Math.pow(rightBubbleX - centerX, 2) + Math.pow(rightBubbleY - centerY, 2));
@@ -1232,58 +1292,40 @@ const Board: React.FC = () => {
         return; // Don't draw animation if bubbles are undefined
       }
       
-      // Draw flowing bubbles with opposite colors during animation
+      // Draw flowing bubbles with sprites during animation
       p5.push();
       
       // Top bubble flowing to left position
-      p5.fill(secondaryBubble.current.color || '#ffffff');
-      p5.noStroke();
       const topToLeftX = p5.lerp(topBubbleX, leftBubbleX, easeProgress);
       const topToLeftY = p5.lerp(topBubbleY, leftBubbleY, easeProgress);
-      p5.ellipse(topToLeftX, topToLeftY, 36);
+      const topToLeftSpriteDrawn = drawBubbleSprite(p5, topToLeftX, topToLeftY, secondaryBubble.current.color, 18);
+      if (!topToLeftSpriteDrawn) {
+        p5.fill(secondaryBubble.current.color || '#ffffff');
+        p5.noStroke();
+        p5.ellipse(topToLeftX, topToLeftY, 36);
+      }
       
       // Left bubble flowing to right position
-      p5.fill(tertiaryBubble.current.color || '#ffffff');
-      p5.noStroke();
       const leftToRightX = p5.lerp(leftBubbleX, rightBubbleX, easeProgress);
       const leftToRightY = p5.lerp(leftBubbleY, rightBubbleY, easeProgress);
-      p5.ellipse(leftToRightX, leftToRightY, 36);
+      const leftToRightSpriteDrawn = drawBubbleSprite(p5, leftToRightX, leftToRightY, tertiaryBubble.current.color, 18);
+      if (!leftToRightSpriteDrawn) {
+        p5.fill(tertiaryBubble.current.color || '#ffffff');
+        p5.noStroke();
+        p5.ellipse(leftToRightX, leftToRightY, 36);
+      }
       
       // Right bubble flowing to top position
-      p5.fill(activeBubble.current.color || '#ffffff');
-      p5.noStroke();
       const rightToTopX = p5.lerp(rightBubbleX, topBubbleX, easeProgress);
       const rightToTopY = p5.lerp(rightBubbleY, topBubbleY, easeProgress);
-      p5.ellipse(rightToTopX, rightToTopY, 36);
+      const rightToTopSpriteDrawn = drawBubbleSprite(p5, rightToTopX, rightToTopY, activeBubble.current.color, 18);
+      if (!rightToTopSpriteDrawn) {
+        p5.fill(activeBubble.current.color || '#ffffff');
+        p5.noStroke();
+        p5.ellipse(rightToTopX, rightToTopY, 36);
+      }
       
-      // Overlay bubble images
-      const imgWidth = image.imageDraw.width;
-      const imgHeight = image.imageDraw.height;
-      const imgScale = 36 / Math.max(imgWidth, imgHeight);
-      
-      p5.image(
-        image.imageDraw,
-        topToLeftX - imgWidth * imgScale / 2,
-        topToLeftY - imgHeight * imgScale / 2,
-        imgWidth * imgScale,
-        imgHeight * imgScale
-      );
-      
-      p5.image(
-        image.imageDraw,
-        leftToRightX - imgWidth * imgScale / 2,
-        leftToRightY - imgHeight * imgScale / 2,
-        imgWidth * imgScale,
-        imgHeight * imgScale
-      );
-      
-      p5.image(
-        image.imageDraw,
-        rightToTopX - imgWidth * imgScale / 2,
-        rightToTopY - imgHeight * imgScale / 2,
-        imgWidth * imgScale,
-        imgHeight * imgScale
-      );
+      // Note: Sprites are already drawn above, no need for overlay images
       
       p5.pop();
     }
@@ -1455,7 +1497,7 @@ const Board: React.FC = () => {
     p5.push();
     
     const trajectory = predictedTrajectory.current;
-    const bubbleColor = activeBubble.current.color;
+    const bubbleColor = getVisualColor(activeBubble.current.color);
     
     // Calculate angle from start to end for direction
     const startPoint = trajectory[0];
@@ -1622,7 +1664,7 @@ const Board: React.FC = () => {
   const drawTripleBubbleLauncher = (p5: p5Types) => {
     const launcherX = gameWidth / 2;
     const launcherY = gameHeight - 80;
-    const bubbleRadius = 18; // Slightly bigger bubbles for better visibility
+    const bubbleRadius = 18; // Slightly smaller than main bubbles for launcher
     
     // Draw circular outline first (behind bubbles - lower z-index)
     drawCircleArc(p5);
@@ -1637,57 +1679,84 @@ const Board: React.FC = () => {
       // Draw active bubble (top)
       p5.push();
       p5.translate(launcherX, launcherY - 35);
-      p5.fill(activeBubble.current.color || '#ffffff'); // Fallback color
-      p5.noStroke();
-      p5.ellipse(0, 0, bubbleRadius * 2);
-      // Overlay bubble image
-      const imgWidth = image.imageDraw.width;
-      const imgHeight = image.imageDraw.height;
-      const imgScale = (bubbleRadius * 2) / Math.max(imgWidth, imgHeight);
-      p5.image(
-        image.imageDraw,
-        -imgWidth * imgScale / 2,
-        -imgHeight * imgScale / 2,
-        imgWidth * imgScale,
-        imgHeight * imgScale
-      );
+      
+      // Try to draw using sprite atlas first
+      const activeSpriteDrawn = drawBubbleSprite(p5, 0, 0, activeBubble.current.color, bubbleRadius);
+      
+      // If sprite drawing failed, fall back to original method
+      if (!activeSpriteDrawn) {
+        p5.fill(activeBubble.current.color || '#ffffff'); // Fallback color
+        p5.noStroke();
+        p5.ellipse(0, 0, bubbleRadius * 2);
+        // Overlay bubble image
+        const imgWidth = image.imageDraw.width;
+        const imgHeight = image.imageDraw.height;
+        const imgScale = (bubbleRadius * 2) / Math.max(imgWidth, imgHeight);
+        p5.image(
+          image.imageDraw,
+          -imgWidth * imgScale / 2,
+          -imgHeight * imgScale / 2,
+          imgWidth * imgScale,
+          imgHeight * imgScale
+        );
+      }
       p5.pop();
       
       // Draw secondary bubble (bottom-left)
       p5.push();
       p5.translate(launcherX - 30, launcherY + 20);
-      p5.fill(secondaryBubble.current.color || '#ffffff'); // Fallback color
-      p5.noStroke();
-      p5.ellipse(0, 0, bubbleRadius * 2);
-      // Overlay bubble image
-      p5.image(
-        image.imageDraw,
-        -imgWidth * imgScale / 2,
-        -imgHeight * imgScale / 2,
-        imgWidth * imgScale,
-        imgHeight * imgScale
-      );
+      
+      // Try to draw using sprite atlas first
+      const secondarySpriteDrawn = drawBubbleSprite(p5, 0, 0, secondaryBubble.current.color, bubbleRadius);
+      
+      // If sprite drawing failed, fall back to original method
+      if (!secondarySpriteDrawn) {
+        p5.fill(secondaryBubble.current.color || '#ffffff'); // Fallback color
+        p5.noStroke();
+        p5.ellipse(0, 0, bubbleRadius * 2);
+        // Overlay bubble image
+        const imgWidth = image.imageDraw.width;
+        const imgHeight = image.imageDraw.height;
+        const imgScale = (bubbleRadius * 2) / Math.max(imgWidth, imgHeight);
+        p5.image(
+          image.imageDraw,
+          -imgWidth * imgScale / 2,
+          -imgHeight * imgScale / 2,
+          imgWidth * imgScale,
+          imgHeight * imgScale
+        );
+      }
       p5.pop();
       
       // Draw tertiary bubble (bottom-right)
       p5.push();
       p5.translate(launcherX + 30, launcherY + 20);
-      p5.fill(tertiaryBubble.current.color || '#ffffff'); // Fallback color
-      p5.noStroke();
-      p5.ellipse(0, 0, bubbleRadius * 2);
-      // Overlay bubble image
-      p5.image(
-        image.imageDraw,
-        -imgWidth * imgScale / 2,
-        -imgHeight * imgScale / 2,
-        imgWidth * imgScale,
-        imgHeight * imgScale
-      );
+      
+      // Try to draw using sprite atlas first
+      const tertiarySpriteDrawn = drawBubbleSprite(p5, 0, 0, tertiaryBubble.current.color, bubbleRadius);
+      
+      // If sprite drawing failed, fall back to original method
+      if (!tertiarySpriteDrawn) {
+        p5.fill(tertiaryBubble.current.color || '#ffffff'); // Fallback color
+        p5.noStroke();
+        p5.ellipse(0, 0, bubbleRadius * 2);
+        // Overlay bubble image
+        const imgWidth = image.imageDraw.width;
+        const imgHeight = image.imageDraw.height;
+        const imgScale = (bubbleRadius * 2) / Math.max(imgWidth, imgHeight);
+        p5.image(
+          image.imageDraw,
+          -imgWidth * imgScale / 2,
+          -imgHeight * imgScale / 2,
+          imgWidth * imgScale,
+          imgHeight * imgScale
+        );
+      }
       p5.pop();
       
       // Draw hover arrow if holding (but not during swap animation or in swap area)
       if (isHolding.current && !isSwapAnimating.current && swapAnimationProgress.current === 0 && !isInSwapArea.current && !isShowingTrajectory.current) {
-        drawHoverArrow(p5, launcherX, launcherY - 35, p5.mouseX, p5.mouseY, activeBubble.current.color || '#ffffff');
+        drawHoverArrow(p5, launcherX, launcherY - 35, p5.mouseX, p5.mouseY, getVisualColor(activeBubble.current.color) || '#ffffff');
       }
     }
   };
@@ -1705,6 +1774,30 @@ const Board: React.FC = () => {
   };
 
   const preload = (p5: p5Types) => {
+    // Load sprite atlas image
+    image.spriteAtlas = p5.loadImage(
+      SPRITE_ATLAS_CONFIG.IMAGE_PATH,
+      () => {
+        console.log('✅ Sprite atlas image loaded successfully');
+      },
+      () => {
+        console.error('❌ Failed to load sprite atlas image');
+      }
+    );
+    
+    // Load sprite atlas JSON data
+    p5.loadJSON(
+      SPRITE_ATLAS_CONFIG.JSON_PATH,
+      (data: any) => {
+        image.spriteData = data;
+        image.spritesLoaded = true;
+      },
+      () => {
+        console.error('❌ Failed to load sprite atlas JSON');
+      }
+    );
+    
+    // Keep original images as fallback
     image.imageSpecialBall = p5.loadImage(
       "/bubble-shooter/element/special-ball.png",
       () => {
@@ -1800,6 +1893,12 @@ const Board: React.FC = () => {
     if (isGameLoading) {
       return;
     }
+    
+    // Draw debug info for sprite loading
+    p5.fill(255, 255, 255);
+    p5.noStroke();
+    p5.textSize(12);
+                // Debug text removed for clean game appearance
     
     // Always check for game over, even when paused
     checkGameOVer(gridBubble.current);
@@ -2042,7 +2141,7 @@ const Board: React.FC = () => {
       }
       
       // Use actual mouse/touch position instead of hoverTarget
-      drawHoverArrow(p5, launcherX, launcherY - 35, targetX, targetY, activeBubble.current.color || '#ffffff');
+      drawHoverArrow(p5, launcherX, launcherY - 35, targetX, targetY, getVisualColor(activeBubble.current.color) || '#ffffff');
     }
 
     // Arrow trajectory removed - will be re-implemented later
