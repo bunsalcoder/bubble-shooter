@@ -2745,47 +2745,17 @@ const Board: React.FC = () => {
       top: 50%;
       left: 50%;
       transform: translate(-50%, -50%) scale(0.3);
-      background: linear-gradient(135deg, #1e3a8a, #3b82f6);
-      padding: 30px 40px;
-      border-radius: 20px;
+      background: linear-gradient(to bottom, #FFFFFF, #D0D0D0);
+      padding: 15px;
+      border-radius: 40px;
+      border: 4px solid #D682DF;
       z-index: 1001;
       text-align: center;
       box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
-      border: 3px solid #1e40af;
-      min-width: 280px;
+      min-width: 350px;
       opacity: 0;
       transition: all 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55);
     `;
-
-    // Create animated background particles
-    const particlesContainer = document.createElement("div");
-    particlesContainer.style.cssText = `
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      overflow: hidden;
-      border-radius: 20px;
-      pointer-events: none;
-    `;
-
-    // Add floating particles
-    for (let i = 0; i < 8; i++) {
-      const particle = document.createElement("div");
-      particle.style.cssText = `
-        position: absolute;
-        width: ${Math.random() * 8 + 4}px;
-        height: ${Math.random() * 8 + 4}px;
-        background: rgba(255, 255, 255, 0.7);
-        border-radius: 50%;
-        left: ${Math.random() * 100}%;
-        top: ${Math.random() * 100}%;
-        animation: float 3s ease-in-out infinite;
-        animation-delay: ${Math.random() * 2}s;
-      `;
-      particlesContainer.appendChild(particle);
-    }
 
     // Add CSS animation for particles
     const style = document.createElement("style");
@@ -2809,37 +2779,54 @@ const Board: React.FC = () => {
 
     alertBox.innerHTML = `
       <div style="position: relative; z-index: 2;">
-        <div style="
-          font-size: 32px;
-          font-weight: bold;
-          color: white;
-          margin-bottom: 20px;
-          text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
-          animation: bounce 1s ease-in-out;
-        ">${message}</div>
-        <div style="
-          font-size: 16px;
-          color: rgba(255, 255, 255, 0.9);
-          margin-bottom: 25px;
-          text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
-        ">${isWin ? t('congratulations') : t('tryAgain')}</div>
+        ${isWin ? `
+          <img 
+            src="/bubble-shooter/game-win.png" 
+            alt="Game Win" 
+            style="
+              width: 100%;
+              max-width: 300px;
+              height: auto;
+              margin-bottom: 20px;
+              display: block;
+              margin-left: auto;
+              margin-right: auto;
+            "
+          />
+        ` : `
+          <div style="
+            font-size: 56px;
+            font-weight: 900;
+            color: #FF69B4;
+            margin-bottom: 20px;
+            margin-top: 20px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
+            line-height: 1.1;
+            letter-spacing: 2px;
+            font-family: 'TypoGrotek', 'Space Grotesk', 'Poppins', 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
+          ">GAME<br>OVER</div>
+        `}
         <button id="alert-ok-btn" style="
-          padding: 12px 30px;
-          background: linear-gradient(135deg, rgba(255, 255, 255, 0.3), rgba(255, 255, 255, 0.1));
+          background: #D682DF;
           color: white;
-          border: 2px solid rgba(255, 255, 255, 0.4);
-          border-radius: 25px;
+          border: 4px solid white;
+          border-radius: 20px;
+          padding: 15px;
+          font-size: 1.5rem;
+          font-weight: 900;
           cursor: pointer;
-          font-size: 16px;
-          font-weight: bold;
-          transition: all 0.3s ease;
-          box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
-          animation: pulse 2s ease-in-out infinite;
-        ">${t('ok')}</button>
+          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+          position: relative;
+          overflow: hidden;
+          letter-spacing: 1px;
+          font-family: 'TypoGrotek', 'Space Grotesk', 'Poppins', 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
+          min-width: 250px;
+          box-shadow: 0 8px 25px rgba(214, 130, 223, 0.3);
+        ">${isWin ? 'Play Again' : 'New Game'}</button>
       </div>
     `;
 
-    alertBox.appendChild(particlesContainer);
+    // alertBox.appendChild(particlesContainer);
     document.body.appendChild(overlay);
     document.body.appendChild(alertBox);
 
@@ -2854,15 +2841,15 @@ const Board: React.FC = () => {
     const okBtn = document.getElementById("alert-ok-btn");
     if (okBtn) {
       okBtn.addEventListener("mouseenter", () => {
-        okBtn.style.transform = 'scale(1.1)';
-        okBtn.style.background = 'linear-gradient(135deg, rgba(255, 255, 255, 0.4), rgba(255, 255, 255, 0.2))';
-        okBtn.style.boxShadow = '0 6px 20px rgba(0, 0, 0, 0.4)';
+        okBtn.style.transform = 'scale(1.02)';
+        okBtn.style.background = '#C973D0';
+        okBtn.style.boxShadow = '0 10px 30px rgba(214, 130, 223, 0.4)';
       });
       
       okBtn.addEventListener("mouseleave", () => {
         okBtn.style.transform = 'scale(1)';
-        okBtn.style.background = 'linear-gradient(135deg, rgba(255, 255, 255, 0.3), rgba(255, 255, 255, 0.1))';
-        okBtn.style.boxShadow = '0 4px 15px rgba(0, 0, 0, 0.3)';
+        okBtn.style.background = '#D682DF';
+        okBtn.style.boxShadow = '0 8px 25px rgba(214, 130, 223, 0.3)';
       });
 
       okBtn.addEventListener("click", async () => {
