@@ -87,10 +87,6 @@ const StartGameScreen: React.FC<StartGameScreenProps> = ({ onStart }) => {
       left: 0,
       width: '100vw',
       height: '100vh',
-      background: 'url("/bubble-shooter/BG.png")',
-      backgroundSize: 'cover',
-      backgroundPosition: 'center',
-      backgroundRepeat: 'no-repeat',
       display: 'flex',
       flexDirection: 'column',
       justifyContent: 'center',
@@ -98,6 +94,20 @@ const StartGameScreen: React.FC<StartGameScreenProps> = ({ onStart }) => {
       zIndex: 10000,
       overflow: 'hidden'
     }}>
+      {/* Flipped background */}
+      <div style={{
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        width: '100%',
+        height: '100%',
+        background: 'url("/bubble-shooter/BG.png")',
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        backgroundRepeat: 'no-repeat',
+        transform: 'scaleY(-1)', // Flip the background vertically
+        zIndex: -1
+      }} />
 
 
       {/* Main content */}
