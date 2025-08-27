@@ -693,8 +693,30 @@ const Board: React.FC = () => {
     
     const height = getHeight(gridBubble);
     
+    // Get external container bounds
+    const containerBounds = getExternalContainerBounds();
+    if (!containerBounds) {
+      return; // Container not found, skip check
+    }
+    
+    // Check if any bubble reaches the bottom of the external container
+    let bubblesAtBottom = false;
+    for (const key in gridBubble) {
+      const bubble = gridBubble[key];
+      // Convert canvas Y position to screen Y position for comparison
+      const canvasElement = document.querySelector('canvas');
+      if (canvasElement) {
+        const canvasRect = canvasElement.getBoundingClientRect();
+        const bubbleScreenY = canvasRect.top + bubble.y;
+        if (bubbleScreenY + bubble.r >= containerBounds.bottom) {
+          bubblesAtBottom = true;
+          break;
+        }
+      }
+    }
+    
     // Check if game over condition is met
-    if (height >= LIMIT_HEIGHT) {
+    if (bubblesAtBottom) {
       // If game is already in game over state but no alert is active, show the alert
       if (gameState.isGameOver && !alertActive) {
         showAlert(t('gameOver'));
@@ -1349,59 +1371,21 @@ const Board: React.FC = () => {
     }
   };
 
-  const drawGameOverWarningLine = (p5: p5Types) => {
-    // Calculate the Y position for the game-over warning line
-    // This should be at row 9 (LIMIT_HEIGHT) from the top
-    const warningLineY = grid.startY + (LIMIT_HEIGHT * grid.bubbleDiameter * 0.866); // Hexagonal grid spacing
-    
-    p5.push();
-    
-    // Draw elegant animated warning line
-    const time = p5.frameCount * 0.03;
-    const alpha = 200 + Math.sin(time) * 55; // Much more vibrant pulsing effect
-    
-    // Main warning line with saw-tooth pattern
-    const lineWidth = gameWidth;
-    const toothCount = 25; // Number of saw teeth
-    const toothWidth = lineWidth / toothCount;
-    const toothHeight = 8; // Height of each tooth
-    
-    for (let i = 0; i < toothCount; i++) {
-      const x1 = i * toothWidth;
-      const x2 = (i + 1) * toothWidth;
-      const segmentAlpha = alpha + Math.sin(time + i * 0.3) * 30;
-      
-      // Draw saw tooth pattern
-      const y1 = warningLineY - toothHeight/2;
-      const y2 = warningLineY + toothHeight/2;
-      
-      p5.stroke(255, 0, 0, segmentAlpha); // Bright vibrant red color
-      p5.strokeWeight(3); // Thicker line for more impact
-      
-      // Draw the tooth (diagonal line up, then down)
-      p5.line(x1, y2, x1 + toothWidth/2, y1); // Up diagonal
-      p5.line(x1 + toothWidth/2, y1, x2, y2); // Down diagonal
+  // External container positioning - removed P5.js drawing
+  const getExternalContainerBounds = () => {
+    const containerElement = document.querySelector('.external-grid-container') as HTMLElement;
+    if (containerElement) {
+      const rect = containerElement.getBoundingClientRect();
+      return {
+        top: rect.top,
+        bottom: rect.bottom,
+        left: rect.left,
+        right: rect.right,
+        width: rect.width,
+        height: rect.height
+      };
     }
-    
-    // Add elegant animated dots along the line
-    const dotCount = 15;
-    for (let i = 0; i < dotCount; i++) {
-      const x = (i / (dotCount - 1)) * gameWidth;
-      const dotTime = time + i * 0.3;
-      const dotAlpha = alpha + Math.sin(dotTime) * 40;
-      const dotSize = 4 + Math.sin(dotTime * 2) * 1; // Slightly larger size variation
-      
-      p5.fill(255, 50, 50, dotAlpha); // More vibrant red dots
-      p5.noStroke();
-      p5.ellipse(x, warningLineY, dotSize);
-    }
-    
-    // Add vibrant glow effect above and below the line
-    p5.fill(255, 0, 0, 40); // More vibrant red glow
-    p5.noStroke();
-    p5.rect(0, warningLineY - 3, gameWidth, 6); // Thicker glow
-    
-    p5.pop();
+    return null;
   };
 
   const updateTrajectoryPrediction = (p5: p5Types) => {
@@ -1941,11 +1925,14 @@ const Board: React.FC = () => {
     // Check for disconnected bubbles periodically
     checkDisconnectedBubbles(p5);
 
+    // Draw game container background
+    // External container is now drawn with CSS, no need for P5.js drawing
+    
     // render bubble list
     renderBubbleList(p5, gridBubble.current);
     
-    // Draw game over warning line
-    drawGameOverWarningLine(p5);
+    // Draw game over warning line - REMOVED
+    // drawGameOverWarningLine(p5);
     
     // Update trajectory prediction
     updateTrajectoryPrediction(p5);
@@ -2203,6 +2190,34 @@ const Board: React.FC = () => {
       return;
     }
   };
+
+  const Monster = React.memo(() => {
+    return (
+      <div 
+        className="monster-character"
+        style={{
+          position: 'absolute',
+          bottom: '80px',
+          right: '10px',
+          zIndex: 10,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center'
+        }}
+      >
+        <img 
+          src="/bubble-shooter/monster.gif" 
+          alt="Monster Character" 
+          width={150} 
+          height={200} 
+          style={{
+            width: '100%',
+            height: '100%'
+          }}
+        />
+      </div>
+    )
+  })
 
   const mouseClicked = (p5: p5Types) => {
     // COMPLETELY BLOCK all game interactions if any UI element is active
@@ -3100,8 +3115,8 @@ const Board: React.FC = () => {
         }}
         style={{
           position: 'absolute',
-          bottom: '30px',
-          right: '30px',
+          bottom: '80px',
+          left: '30px',
           marginBottom: isAndroid ? '5px' : '60px',
           background: '#D682DF',
           borderRadius: '50%',
@@ -3152,6 +3167,49 @@ const Board: React.FC = () => {
         }}>❓</span>
       </div>
       
+      {/* Bottom Rectangle Background */}
+      <div 
+        style={{
+          position: 'absolute',
+          bottom: '0',
+          left: '0',
+          right: '0',
+          height: '80px',
+          backgroundColor: '#580062',
+          borderTopLeftRadius: '20px',
+          borderTopRightRadius: '20px',
+          zIndex: 5
+        }}
+      />
+      
+      {/* Monster Character */}
+      {/* <div 
+        className="monster-character"
+        style={{
+          position: 'absolute',
+          bottom: '80px',
+          right: '10px',
+          // marginBottom: isAndroid ? '5px' : '60px',
+          zIndex: 10,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center'
+        }}
+      >
+        <Image 
+          src="/bubble-shooter/monster.gif" 
+          alt="Monster Character" 
+          width={150}
+          height={200}
+          style={{
+            width: '100%',
+            height: '100%'
+          }}
+        />
+      </div> */}
+
+      <Monster />
+
       <article className="bubble-shooter__game-main">
         <div 
           style={{
@@ -3176,6 +3234,9 @@ const Board: React.FC = () => {
             touchMoved={touchMoved}
             touchEnded={touchEnded}
           />
+          
+          {/* External grid container */}
+          <div className="external-grid-container"></div>
         </div>
         <Modal
           title={t('question')}

@@ -1035,6 +1035,36 @@ $radius-size_base: 6px;
   }
 }
 
+// Monster character responsive sizing
+.monster-character {
+  width: 150px;
+  height: 200px;
+  
+  // Large screens (iPhone 14 Pro Max, etc.)
+  @media only screen and (min-width: 428px) {
+    width: 180px;
+    height: 220px;
+  }
+  
+  // Medium-large screens (Pixel 7, etc.)
+  @media only screen and (min-width: 400px) and (max-width: 427px) {
+    width: 160px;
+    height: 200px;
+  }
+  
+  // Medium screens
+  @media only screen and (min-width: 360px) and (max-width: 399px) {
+    width: 140px;
+    height: 180px;
+  }
+  
+  // Small screens
+  @media only screen and (max-width: 359px) {
+    width: 110px;
+    height: 150px;
+  }
+}
+
 // iOS-specific styles to prevent text selection and selection menu
 * {
   -webkit-user-select: none;
@@ -1062,4 +1092,42 @@ canvas {
   user-select: none;
   touch-action: none;
   -webkit-touch-action: none;
+}
+
+// External grid container (outside canvas)
+.external-grid-container {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100%;
+  max-width: 100vw;
+  background: linear-gradient(135deg, rgba(214, 130, 223, 0.75) 0%, rgba(214, 130, 223, 0.6) 100%);
+  border: 2px solid rgba(255, 255, 255, 0.8);
+  border-radius: 25px;
+  box-shadow: 
+    0 4px 8px rgba(0, 0, 0, 0.2),
+    0 0 0 1px rgba(255, 255, 255, 0.1);
+  z-index: -1; // Lower z-index so bubbles appear above the container
+  pointer-events: none; // Allow clicks to pass through to canvas
+  
+  // Move higher and reduce height for perfect bubble fit
+  @media only screen and (min-width: 428px) {
+    top: -15px;
+    height: 320px; // Reduced height for better fit
+  }
+  
+  @media only screen and (min-width: 400px) and (max-width: 427px) {
+    top: -15px;
+    height: 300px;
+  }
+  
+  @media only screen and (min-width: 360px) and (max-width: 399px) {
+    top: -15px;
+    height: 280px;
+  }
+  
+  @media only screen and (max-width: 359px) {
+    top: -15px;
+    height: 260px;
+  }
 }

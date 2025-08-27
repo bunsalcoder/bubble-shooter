@@ -71,7 +71,7 @@ const AudioManager = forwardRef<HTMLAudioElement, AudioManagerProps>(({
                 await wakeUpAudioContext();
 
                 // Create audio element
-                audioRef.current = new Audio('/bubble-shooter/audio/background-music.wav');
+                audioRef.current = new Audio('/bubble-shooter/audio/bgm.mp3');
                 audioRef.current.loop = true;
                 audioRef.current.volume = volume;
                 audioRef.current.preload = 'auto';

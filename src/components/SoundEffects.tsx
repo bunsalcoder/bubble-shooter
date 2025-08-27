@@ -76,11 +76,11 @@ const SoundEffects: React.FC<SoundEffectsProps> = ({
         popSoundRef.current.preload = 'auto';
         popSoundRef.current.volume = getSoundVolumes().pop;
 
-        gameWinSoundRef.current = new Audio('/bubble-shooter/audio/gamewin.mp3');
+        gameWinSoundRef.current = new Audio('/bubble-shooter/audio/gamewin.wav');
         gameWinSoundRef.current.preload = 'auto';
         gameWinSoundRef.current.volume = getSoundVolumes().win;
 
-        gameOverSoundRef.current = new Audio('/bubble-shooter/audio/gameover.wav');
+        gameOverSoundRef.current = new Audio('/bubble-shooter/audio/gamelose.wav');
         gameOverSoundRef.current.preload = 'auto';
         gameOverSoundRef.current.volume = getSoundVolumes().over;
 

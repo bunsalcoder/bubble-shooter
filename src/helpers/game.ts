@@ -499,12 +499,16 @@ export const setBubbleSize = (): [number, number] => {
 export const setGameSize = (): [number, number] => {
   if (typeof window !== "undefined") {
     const deviceType = getDeviceType(window.innerWidth);
+    // Use screen width for all device types to maximize bubble grid space
+    const screenWidth = window.innerWidth;
+    const screenHeight = window.innerHeight;
+    
     if (deviceType === DeviceType.SMALL) {
-      return [GAME_WIDTH_SMALL, GAME_HEIGHT_SMALL];
+      return [screenWidth, GAME_HEIGHT_SMALL];
     } else if (deviceType === DeviceType.MEDIUM) {
-      return [GAME_WIDTH_MEDIUM, GAME_HEIGHT_MEDIUM];
+      return [screenWidth, GAME_HEIGHT_MEDIUM];
     } else {
-      return [GAME_WIDTH, GAME_HEIGHT];
+      return [screenWidth, GAME_HEIGHT];
     }
   }
   return [GAME_WIDTH, GAME_HEIGHT];
@@ -513,12 +517,15 @@ export const setGameSize = (): [number, number] => {
 export const setBubblePosition = (): [number, number] => {
   if (typeof window !== "undefined") {
     const deviceType = getDeviceType(window.innerWidth);
+    const screenWidth = window.innerWidth;
+    
+    // Calculate bubble start position with more space from top
     if (deviceType === DeviceType.SMALL) {
-      return [BUBBLE_START_X_SMALL, BUBBLE_START_Y_SMALL];
+      return [screenWidth / 2, BUBBLE_START_Y_SMALL + 40]; // Add 40px space from top
     } else if (deviceType === DeviceType.MEDIUM) {
-      return [BUBBLE_START_X_MEDIUM, BUBBLE_START_Y_MEDIUM];
+      return [screenWidth / 2, BUBBLE_START_Y_MEDIUM + 40]; // Add 40px space from top
     } else {
-      return [BUBBLE_START_X, BUBBLE_START_Y];
+      return [screenWidth / 2, BUBBLE_START_Y + 40]; // Add 40px space from top
     }
   }
   return [BUBBLE_START_X, BUBBLE_START_Y];
@@ -527,12 +534,15 @@ export const setBubblePosition = (): [number, number] => {
 export const setGridCols = (): number => {
   if (typeof window !== "undefined") {
     const deviceType = getDeviceType(window.innerWidth);
+    const screenWidth = window.innerWidth;
+    
+    // Calculate grid columns based on screen width and bubble diameter
     if (deviceType === DeviceType.SMALL) {
-      return GRID_COLUMNS_SMALL;
+      return Math.floor(screenWidth / BUBBLE_DIAMETER_SMALL) - 1;
     } else if (deviceType === DeviceType.MEDIUM) {
-      return GRID_COLUMNS_MEDIUM;
+      return Math.floor(screenWidth / BUBBLE_DIAMETER_MEDIUM) - 1;
     } else {
-      return GRID_COLUMNS;
+      return Math.floor(screenWidth / BUBBLE_DIAMETER) - 1;
     }
   }
   return GRID_COLUMNS;

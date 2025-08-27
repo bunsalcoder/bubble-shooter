@@ -114,8 +114,8 @@ export const translations: Record<Language, Translations> = {
     khmer: 'ភាសាខ្មែរ',
     
     // Loading
-    loading: 'Loading...',
-    loadingGame: 'Loading game...',
+    loading: 'Loading',
+    loadingGame: 'Loading game',
     
     // Start Game Screen
     startGame: 'Start Game',
@@ -185,8 +185,8 @@ export const translations: Record<Language, Translations> = {
     khmer: 'ភាសាខ្មែរ',
     
     // Loading
-    loading: '加载中...',
-    loadingGame: '游戏加载中...',
+    loading: '加载中',
+    loadingGame: '游戏加载中',
     
     // Start Game Screen
     startGame: '开始游戏',
@@ -256,8 +256,8 @@ export const translations: Record<Language, Translations> = {
     khmer: 'ភាសាខ្មែរ',
     
     // Loading
-    loading: 'កំពុងផ្ទុក...',
-    loadingGame: 'កំពុងផ្ទុកហ្គេម...',
+    loading: 'កំពុងផ្ទុក',
+    loadingGame: 'កំពុងផ្ទុកហ្គេម',
     
     // Start Game Screen
     startGame: 'ចាប់ផ្តើមហ្គេម',
