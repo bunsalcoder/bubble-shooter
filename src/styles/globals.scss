@@ -99,8 +99,8 @@ $radius-size_base: 6px;
       left: 0;
       width: 100%;
       height: 100%;
-      background-image: url("/bubble-shooter/background/home-background.jpg");
-      background-size: cover;
+    background-image: url("/bubble-shooter/background/home-background.jpg");
+    background-size: cover;
       transform: scaleY(-1); // Flip the background vertically
       z-index: -1;
     }
@@ -171,9 +171,9 @@ $radius-size_base: 6px;
       left: 0;
       width: 100%;
       height: 100%;
-      background-image: url("/bubble-shooter/BG.png");
-      background-size: cover;
-      background-position: center;
+    background-image: url("/bubble-shooter/BG.png");
+    background-size: cover;
+    background-position: center;
       transform: scaleY(-1); // Flip the background vertically
       z-index: -1;
     }

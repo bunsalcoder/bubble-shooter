@@ -2786,7 +2786,6 @@ const Board: React.FC = () => {
       particlesContainer.appendChild(particle);
     }
 
-    // Add CSS animation for particles
     const style = document.createElement("style");
     style.setAttribute('data-alert-style', 'true');
     style.textContent = `
@@ -2803,6 +2802,51 @@ const Board: React.FC = () => {
         40% { transform: translateY(-10px); }
         60% { transform: translateY(-5px); }
       }
+      @keyframes buttonGlow {
+        0%, 100% { 
+          box-shadow: 0 8px 25px rgba(214, 130, 223, 0.3);
+          transform: scale(1);
+        }
+        50% { 
+          box-shadow: 0 12px 35px rgba(214, 130, 223, 0.6);
+          transform: scale(1.02);
+        }
+      }
+      @keyframes buttonPulse {
+        0%, 100% { 
+          background: #D682DF;
+          transform: scale(1);
+        }
+        50% { 
+          background: #E691E8;
+          transform: scale(1.03);
+        }
+      }
+      @keyframes buttonFloat {
+        0%, 100% { 
+          transform: translateY(0px) scale(1);
+        }
+        50% { 
+          transform: translateY(-8px) scale(1.02);
+        }
+      }
+      @keyframes buttonRotate {
+        0% { 
+          transform: rotate(0deg) scale(1);
+        }
+        25% { 
+          transform: rotate(1deg) scale(1.01);
+        }
+        50% { 
+          transform: rotate(0deg) scale(1);
+        }
+        75% { 
+          transform: rotate(-1deg) scale(1.01);
+        }
+        100% { 
+          transform: rotate(0deg) scale(1);
+        }
+      }
     `;
     document.head.appendChild(style);
 
@@ -2810,30 +2854,56 @@ const Board: React.FC = () => {
       <div style="position: relative; z-index: 2;">
         ${isWin ? `
           <img 
-            src="/bubble-shooter/game-win.png" 
-            alt="Game Win" 
+            src="/bubble-shooter/you-win.png" 
+            alt="You Win" 
             style="
               width: 100%;
-              max-width: 300px;
+              max-width: 200px;
               height: auto;
-              margin-bottom: 20px;
+              margin-top: 10px;
+              display: block;
+              margin-left: auto;
+              margin-right: auto;
+            "
+          />
+          <img 
+            src="/bubble-shooter/game-win.gif" 
+            alt="Game Win Animation" 
+            style="
+              width: 100%;
+              max-width: 200px;
+              height: auto;
               display: block;
               margin-left: auto;
               margin-right: auto;
             "
           />
         ` : `
-          <div style="
-            font-size: 56px;
-            font-weight: 900;
-            color: #FF69B4;
-            margin-bottom: 20px;
-            margin-top: 20px;
-            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
-            line-height: 1.1;
-            letter-spacing: 2px;
-            font-family: 'TypoGrotek', 'Space Grotesk', 'Poppins', 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
-          ">GAME<br>OVER</div>
+          <img 
+            src="/bubble-shooter/you-lose.png" 
+            alt="You Lose" 
+            style="
+              width: 100%;
+              max-width: 200px;
+              height: auto;
+              margin-top: 10px;
+              display: block;
+              margin-left: auto;
+              margin-right: auto;
+            "
+          />
+          <img 
+            src="/bubble-shooter/game-over.gif" 
+            alt="Game Over Animation" 
+            style="
+              width: 100%;
+              max-width: 200px;
+              height: auto;
+              display: block;
+              margin-left: auto;
+              margin-right: auto;
+            "
+          />
         `}
         <button id="alert-ok-btn" style="
           background: #D682DF;
