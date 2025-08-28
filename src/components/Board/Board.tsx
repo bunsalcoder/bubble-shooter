@@ -637,6 +637,12 @@ const Board: React.FC = () => {
     gameState.isWin = false;
     gameState.countShoot = 0;
     alertActive = false; // Reset alertActive flag when starting new game
+    
+    // Reset the monster image back to cat.gif
+    const monsterImg = document.querySelector('.monster-character img') as HTMLImageElement;
+    if (monsterImg) {
+      monsterImg.src = '/bubble-shooter/cat.gif';
+    }
     bubbleNext.current = createListBubbleNext(
       grid,
       bubbleStartX,
@@ -723,10 +729,19 @@ const Board: React.FC = () => {
         return;
       }
       
-      // If not in game over state yet, set it and show alert
+      // If not in game over state yet, change image first, then show modal after 0.5 seconds
       if (!gameState.isGameOver) {
-        freezeGame();
-        showAlert(t('gameOver'));
+        // Change the image source directly without state
+        const monsterImg = document.querySelector('.monster-character img') as HTMLImageElement;
+        if (monsterImg) {
+          monsterImg.src = '/bubble-shooter/game-over-bg.gif';
+        }
+        
+        // Show modal after 0.5 seconds
+        setTimeout(() => {
+          freezeGame();
+          showAlert(t('gameOver'));
+        }, 500);
       }
     }
   };
@@ -2197,17 +2212,17 @@ const Board: React.FC = () => {
         className="monster-character"
         style={{
           position: 'absolute',
-          bottom: '80px',
+          bottom: '45px',
           right: '10px',
           zIndex: 10,
           display: 'flex',
           alignItems: 'center',
-          justifyContent: 'center'
+          justifyContent: 'center',
         }}
       >
         <img 
-          src="/bubble-shooter/monster.gif" 
-          alt="Monster Character" 
+          src="/bubble-shooter/cat.gif" 
+          alt="Cat Character" 
           width={150} 
           height={200} 
           style={{
@@ -3267,32 +3282,6 @@ const Board: React.FC = () => {
           zIndex: 5
         }}
       />
-      
-      {/* Monster Character */}
-      {/* <div 
-        className="monster-character"
-        style={{
-          position: 'absolute',
-          bottom: '80px',
-          right: '10px',
-          // marginBottom: isAndroid ? '5px' : '60px',
-          zIndex: 10,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center'
-        }}
-      >
-        <Image 
-          src="/bubble-shooter/monster.gif" 
-          alt="Monster Character" 
-          width={150}
-          height={200}
-          style={{
-            width: '100%',
-            height: '100%'
-          }}
-        />
-      </div> */}
 
       <Monster />
 
