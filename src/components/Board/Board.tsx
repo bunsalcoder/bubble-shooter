@@ -181,16 +181,12 @@ const Board: React.FC = () => {
         return true; // Successfully drew sprite
       } else {
         // Debug: log when sprite info is missing
-        console.log(`❌ Sprite not found: ${spriteName} for color: ${color}`);
-        console.log(`Available sprites:`, Object.keys(image.spriteData.frames || {}));
+
       }
     } else {
       // Debug: log when color mapping is missing or sprites not loaded
       if (!image.spritesLoaded) {
-        console.log(`❌ Sprites not loaded yet for color: ${color}`);
-      } else if (!SPRITE_ATLAS_CONFIG.COLOR_TO_SPRITE[color as keyof typeof SPRITE_ATLAS_CONFIG.COLOR_TO_SPRITE]) {
-        console.log(`❌ No sprite mapping for color: ${color}`);
-        console.log(`Available color mappings:`, Object.keys(SPRITE_ATLAS_CONFIG.COLOR_TO_SPRITE));
+
       }
     }
     return false; // Fallback to original method
@@ -335,7 +331,7 @@ const Board: React.FC = () => {
     try {
       // Don't save if activeBubble is currently moving
       if (activeBubble.current && activeBubble.current.isMoving) {
-        console.log('Skipping save - activeBubble is moving');
+
         return;
       }
 
@@ -359,7 +355,7 @@ const Board: React.FC = () => {
       saveGameToAPI(gameData, gameProperties.current.highestScore);
 
     } catch (error) {
-      console.error('Error saving game to localStorage:', error);
+
     }
   };
 
@@ -436,15 +432,15 @@ const Board: React.FC = () => {
             // The checkGameOVer function will handle showing the modal if needed
             
             setIsGameLoadedFromStorage(true);
-            console.log('Game loaded from API successfully');
+    
             return true;
           } else {
-            console.log('Saved game is too old (24+ hours), starting fresh');
+    
           }
         }
       }
     } catch (error) {
-      console.error('Error loading game from API:', error);
+
     }
     return false;
   };
@@ -455,9 +451,9 @@ const Board: React.FC = () => {
     // Also clear game progress from API
     try {
       await clearGameAPI();
-      console.log('Game progress cleared from API successfully');
+      
     } catch (error) {
-      console.error('Failed to clear game progress from API:', error);
+      
     }
   };
 
@@ -472,7 +468,7 @@ const Board: React.FC = () => {
         }
       }
     } catch (error) {
-      console.error('Error loading highest score:', error);
+
     }
   };
 
@@ -481,16 +477,16 @@ const Board: React.FC = () => {
       localStorage.setItem('bubbleShooterHighestScore', gameProperties.current.highestScore.toString());
 
     } catch (error) {
-      console.error('Error saving highest score:', error);
+
     }
   };
 
   const saveGameToAPI = async (gameData: any, highestScore: number) => {
     try {
       await saveGameAPI(gameData, highestScore);
-      console.log('Game saved to API successfully');
+      
     } catch (error) {
-      console.error('Error saving game to API:', error);
+      
     }
   };
 
@@ -1509,7 +1505,7 @@ const Board: React.FC = () => {
     }
     
     isShootingBlocked.current = false; // Clear global blocking flag
-    console.log('drawTrajectoryArrow: Setting isShootingBlocked = false');
+
     
     p5.push();
     
@@ -1795,10 +1791,10 @@ const Board: React.FC = () => {
     image.spriteAtlas = p5.loadImage(
       SPRITE_ATLAS_CONFIG.IMAGE_PATH,
       () => {
-        console.log('✅ Sprite atlas image loaded successfully');
+
       },
       () => {
-        console.error('❌ Failed to load sprite atlas image');
+        
       }
     );
     
@@ -1808,11 +1804,10 @@ const Board: React.FC = () => {
       (data: any) => {
         image.spriteData = data;
         image.spritesLoaded = true;
-        console.log('✅ Sprite atlas JSON loaded successfully');
-        console.log('Available sprites:', Object.keys(data.frames || {}));
+
       },
       () => {
-        console.error('❌ Failed to load sprite atlas JSON');
+        
       }
     );
     
@@ -2785,13 +2780,17 @@ const Board: React.FC = () => {
     `;
 
     // Add floating particles
-    for (let i = 0; i < 8; i++) {
+    for (let i = 0; i < 25; i++) {
       const particle = document.createElement("div");
+      const particleColor = isWin 
+        ? `rgba(255, 215, 0, ${0.6 + Math.random() * 0.4})` 
+        : `rgba(214, 130, 223, ${0.6 + Math.random() * 0.4})`;
+      
       particle.style.cssText = `
         position: absolute;
         width: ${Math.random() * 8 + 4}px;
         height: ${Math.random() * 8 + 4}px;
-        background: rgba(255, 255, 255, 0.7);
+        background: ${particleColor};
         border-radius: 50%;
         left: ${Math.random() * 100}%;
         top: ${Math.random() * 100}%;
