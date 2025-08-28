@@ -1940,11 +1940,15 @@ const Board: React.FC = () => {
           // Add combo text for multiple bubbles
           if (pop + extra >= 4) {
             const comboMessages = [t('nice'), t('great'), t('amazing'), t('incredible'), t('legendary')];
-            const comboColors = ['#4CAF50', '#2196F3', '#FF9800', '#E91E63', '#9C27B0']; // Green, Blue, Orange, Pink, Purple
             const messageIndex = Math.min(comboMessages.length - 1, Math.floor((pop + extra - 4) / 2));
+            
+            // Get the color of the popped bubbles
+            const firstPoppedBubble = removeBubbles[0];
+            const bubbleColor = firstPoppedBubble?.color || '#FFFFFF';
+            
             comboText.push({
               text: comboMessages[messageIndex].toUpperCase() + '!',
-              color: comboColors[messageIndex],
+              color: bubbleColor,
               x: activeBubble.current.x,
               y: activeBubble.current.y - 50,
               alpha: 1.0,
@@ -2778,9 +2782,7 @@ const Board: React.FC = () => {
     // Add floating particles
     for (let i = 0; i < 25; i++) {
       const particle = document.createElement("div");
-      const particleColor = isWin 
-        ? `rgba(255, 215, 0, ${0.6 + Math.random() * 0.4})` 
-        : `rgba(214, 130, 223, ${0.6 + Math.random() * 0.4})`;
+      const particleColor = `rgba(214, 130, 223, ${0.6 + Math.random() * 0.4})`;
       
       particle.style.cssText = `
         position: absolute;
