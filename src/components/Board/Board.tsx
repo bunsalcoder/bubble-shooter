@@ -2108,7 +2108,7 @@ const Board: React.FC = () => {
       }
       
       // Check if we've used all 5 shots without breaking bubbles (moved outside collision detection)
-      if (gameProperties.current.shotsInRound >= 5) {
+      if (gameProperties.current.shotsInRound >= 4) {
         // Drop the entire grid down
         gridRef.current.numRows++;
         addRowBubbleList(
@@ -2757,6 +2757,35 @@ const Board: React.FC = () => {
       transition: all 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55);
     `;
 
+    const particlesContainer = document.createElement("div");
+    particlesContainer.style.cssText = `
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      border-radius: 20px;
+      pointer-events: none;
+    `;
+
+    // Add floating particles
+    for (let i = 0; i < 8; i++) {
+      const particle = document.createElement("div");
+      particle.style.cssText = `
+        position: absolute;
+        width: ${Math.random() * 8 + 4}px;
+        height: ${Math.random() * 8 + 4}px;
+        background: rgba(255, 255, 255, 0.7);
+        border-radius: 50%;
+        left: ${Math.random() * 100}%;
+        top: ${Math.random() * 100}%;
+        animation: float 3s ease-in-out infinite;
+        animation-delay: ${Math.random() * 2}s;
+      `;
+      particlesContainer.appendChild(particle);
+    }
+
     // Add CSS animation for particles
     const style = document.createElement("style");
     style.setAttribute('data-alert-style', 'true');
@@ -2826,7 +2855,7 @@ const Board: React.FC = () => {
       </div>
     `;
 
-    // alertBox.appendChild(particlesContainer);
+    alertBox.appendChild(particlesContainer);
     document.body.appendChild(overlay);
     document.body.appendChild(alertBox);
 
@@ -3526,7 +3555,12 @@ const Board: React.FC = () => {
                       color: 'white',
                       fontSize: isMobile ? '14px' : '16px',
                       textShadow: '0 1px 2px rgba(0, 0, 0, 0.4)',
-                      fontFamily: '"TypoGrotek", "Space Grotesk", "Poppins", "Segoe UI", "Roboto", "Helvetica Neue", Arial, sans-serif'
+                      fontFamily: '"TypoGrotek", "Space Grotesk", "Poppins", "Segoe UI", "Roboto", "Helvetica Neue", Arial, sans-serif',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap',
+                      maxWidth: isMobile ? '120px' : '150px',
+                      display: 'block'
                     }}>
                       {player.name}
                     </span>
