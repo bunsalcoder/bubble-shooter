@@ -69,6 +69,13 @@ export interface Translations {
   tip2: string;
   tip3: string;
   tip4: string;
+  
+  // Combo text
+  nice: string;
+  great: string;
+  amazing: string;
+  incredible: string;
+  legendary: string;
 }
 
 export const translations: Record<Language, Translations> = {
@@ -140,7 +147,14 @@ export const translations: Record<Language, Translations> = {
     tip1: 'Think ahead! Look for groups of 3+ same-colored bubbles before shooting',
     tip2: 'Create chain reactions by popping bubbles that cause others to fall and match',
     tip3: 'Clear bubbles from the bottom first - they\'re closest to the danger line!',
-    tip4: 'Use the trajectory guide to plan precise shots and avoid wasting bubbles'
+    tip4: 'Use the trajectory guide to plan precise shots and avoid wasting bubbles',
+    
+    // Combo text
+    nice: 'Nice',
+    great: 'Great',
+    amazing: 'Amazing',
+    incredible: 'Incredible',
+    legendary: 'Legendary'
   },
   
   zh: {
@@ -211,7 +225,14 @@ export const translations: Record<Language, Translations> = {
     tip1: '提前思考！射击前寻找3+个相同颜色的泡泡群',
     tip2: '通过消除导致其他泡泡掉落并匹配的泡泡来创造连锁反应',
     tip3: '首先清除底部的泡泡 - 它们最接近危险线！',
-    tip4: '使用轨迹引导规划精确射击，避免浪费泡泡'
+    tip4: '使用轨迹引导规划精确射击，避免浪费泡泡',
+    
+    // Combo text
+    nice: '不错',
+    great: '很棒',
+    amazing: '太棒了',
+    incredible: '难以置信',
+    legendary: '传奇'
   },
   
   km: {
@@ -282,7 +303,14 @@ export const translations: Record<Language, Translations> = {
     tip1: 'គិតជាមុន! ស្វែងរកក្រុមព្រលាន 3+ ពណ៌ដូចគ្នាមុនពេលបាញ់',
     tip2: 'បង្កើតប្រតិកម្មខ្សែសង្វាក់ដោយការបំបែកព្រលានដែលបង្កឱ្យព្រលានផ្សេងទៀតធ្លាក់ និងប្រៀបធៀប',
     tip3: 'សម្អាតព្រលានពីផ្នែកខាងក្រោមជាមុន - ពួកវាជិតបន្ទាត់គ្រោះថ្នាក់ជាងគេ!',
-    tip4: 'ប្រើការណែនាំគន្លងដើម្បីធ្វើផែនការការបាញ់ត្រឹមត្រូវ និងជៀសវាងការខ្ជះខ្ជាយព្រលាន'
+    tip4: 'ប្រើការណែនាំគន្លងដើម្បីធ្វើផែនការការបាញ់ត្រឹមត្រូវ និងជៀសវាងការខ្ជះខ្ជាយព្រលាន',
+    
+    // Combo text
+    nice: 'ល្អ',
+    great: 'ល្អណាស់',
+    amazing: 'អស្ចារ្យ',
+    incredible: 'មិនគួរឱ្យជឿ',
+    legendary: 'រឿងព្រេង'
   }
 };
 

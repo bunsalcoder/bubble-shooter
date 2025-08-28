@@ -1064,30 +1064,30 @@ $radius-size_base: 6px;
 // Monster character responsive sizing
 .monster-character {
   width: 150px;
-  height: 200px;
+  height: 150px;
   
   // Large screens (iPhone 14 Pro Max, etc.)
   @media only screen and (min-width: 428px) {
     width: 180px;
-    height: 220px;
+    height: 180px;
   }
   
   // Medium-large screens (Pixel 7, etc.)
   @media only screen and (min-width: 400px) and (max-width: 427px) {
-    width: 160px;
-    height: 200px;
+    width: 180px;
+    height: 180px;
   }
   
   // Medium screens
   @media only screen and (min-width: 360px) and (max-width: 399px) {
     width: 140px;
-    height: 180px;
+    height: 140px;
   }
   
   // Small screens
   @media only screen and (max-width: 359px) {
     width: 110px;
-    height: 150px;
+    height: 110px;
   }
 }
 

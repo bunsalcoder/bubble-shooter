@@ -141,8 +141,9 @@ const Board: React.FC = () => {
     spritesLoaded: false,
   };
   
-  // Particle system for explosion effects
-  let particles: any[] = [];
+  // Screen effects and combo text
+  let flashEffect: { alpha: number, duration: number } = { alpha: 0, duration: 0 };
+  let comboText: { text: string, color: string, x: number, y: number, alpha: number, scale: number, duration: number, rotation: number, rotationSpeed: number, pulsePhase: number, glowIntensity: number }[] = [];
   
   // Function to get the visual color for a bubble (for trajectory and visual consistency)
   const getVisualColor = (color: string): string => {
@@ -192,106 +193,11 @@ const Board: React.FC = () => {
     return false; // Fallback to original method
   };
 
-  const createParticles = (x: number, y: number, color: string, p5: p5Types) => {
-    const particleCount = 16; // Reduced particles
-    for (let i = 0; i < particleCount; i++) {
-      const angle = (p5.TWO_PI * i) / particleCount;
-      const speed = p5.random(6, 14); // Reduced speed
-      particles.push({
-        x: x,
-        y: y,
-        vx: p5.cos(angle) * speed,
-        vy: p5.sin(angle) * speed,
-        life: 1,
-        maxLife: 1,
-        color: color,
-        size: p5.random(5, 12), // Smaller particles
-        rotation: 0,
-        rotationSpeed: p5.random(-0.4, 0.4), // Reduced rotation
-        scale: 1.1, // Smaller starting scale
-        scaleSpeed: -0.01, // Slower scale reduction
-        pulse: 0,
-        pulseSpeed: 0.3,
-        trail: [] // Initialize trail array
-      });
-    }
-  };
+
   
-  const updateAndDrawParticles = (p5: p5Types) => {
-    for (let i = particles.length - 1; i >= 0; i--) {
-      const particle = particles[i];
-      
-      // Update particle
-      particle.x += particle.vx;
-      particle.y += particle.vy;
-      particle.life -= 0.015; // Slightly faster fade
-      particle.rotation += particle.rotationSpeed;
-      particle.scale += particle.scaleSpeed;
-      particle.scale = Math.max(0.25, particle.scale); // Don't get too small
-      particle.pulse += particle.pulseSpeed;
-      
-      // Add trail effect for particles
-      particle.trail.push({ x: particle.x, y: particle.y, fade: 1 });
-      if (particle.trail.length > 4) { // Reduced trail length
-        particle.trail.shift();
-      }
-      
-      // Draw particle with enhanced effects
-      if (particle.life > 0 && particle.scale > 0.25) {
-        const pulseGlow = 1 + 0.3 * Math.sin(particle.pulse); // Reduced glow
-        
-        // Draw trail effect
-        for (let j = 0; j < particle.trail.length; j++) {
-          const trailPoint = particle.trail[j];
-          const trailFade = trailPoint.fade * particle.life;
-          const trailScale = particle.scale * (j / particle.trail.length);
-          
-          p5.push();
-          p5.translate(trailPoint.x, trailPoint.y);
-          p5.rotate(particle.rotation * 0.3);
-          p5.scale(trailScale);
-          
-          p5.push();
-          p5.noStroke();
-          p5.fill(particle.color + Math.floor(trailFade * 120).toString(16).padStart(2, '0'));
-          p5.ellipse(0, 0, particle.size * trailFade + 4); // Reduced trail glow
-          p5.pop();
-          
-          p5.push();
-          p5.tint(255, trailFade * 255);
-          p5.noStroke();
-          p5.fill(particle.color);
-          p5.ellipse(0, 0, particle.size * trailFade);
-          p5.pop();
-          
-          p5.pop();
-          
-          trailPoint.fade -= 0.18;
-        }
-        
-        p5.push();
-        p5.translate(particle.x, particle.y);
-        p5.rotate(particle.rotation);
-        p5.scale(particle.scale);
-        
-        // Draw glow effect
-        p5.push();
-        p5.noStroke();
-        p5.fill(particle.color + Math.floor(particle.life * 200).toString(16).padStart(2, '0'));
-        p5.ellipse(0, 0, particle.size * particle.life + 8 * pulseGlow); // Reduced glow
-        p5.pop();
-        
-        // Draw main particle
-        p5.noStroke();
-        p5.fill(particle.color + Math.floor(particle.life * 255).toString(16).padStart(2, '0'));
-        p5.ellipse(0, 0, particle.size * particle.life);
-        
-        p5.pop();
-      } else {
-        particles.splice(i, 1);
-      }
-    }
-  };
+
+  
+
   const gameProperties = useRef({
     score: 0,
     highestScore: 0,
@@ -548,8 +454,7 @@ const Board: React.FC = () => {
     tertiaryBubble.current = bubbleNext.current[2] || bubbleNext.current[0];
     isGenerateSpecialBall.current = false;
     
-    // Clear any particles or animations
-    particles.length = 0;
+    // Clear any animations
     removeBubbles.length = 0;
     
     // Reset the loaded from storage flag
@@ -939,15 +844,15 @@ const Board: React.FC = () => {
       const bubble = removeBubbles[i];
       
       // Initialize individual bubble pop animation
-      if (bubble.popStartTime === undefined) {
-        bubble.popStartTime = p5.millis();
-        bubble.popDelay = i * 80; // Each bubble starts 80ms after the previous one (faster)
-        bubble.popDuration = 350; // 350ms for smooth individual fade (faster)
-        bubble.popScale = 1.0;
-        bubble.popAlpha = 1.0;
-        bubble.popPhase = 0;
-        bubble.scoreShown = false; // Track if score animation has been shown
-      }
+              if (bubble.popStartTime === undefined) {
+          bubble.popStartTime = p5.millis();
+          bubble.popDelay = i * 80; // Each bubble starts 80ms after the previous one (even faster)
+          bubble.popDuration = 450; // 450ms for even faster, still visible fade
+          bubble.popScale = 1.0;
+          bubble.popAlpha = 1.0;
+          bubble.popPhase = 0;
+          bubble.scoreShown = false; // Track if score animation has been shown
+        }
       
       // Calculate animation progress with individual delay
       const elapsed = p5.millis() - bubble.popStartTime - bubble.popDelay;
@@ -1014,10 +919,12 @@ const Board: React.FC = () => {
           y: bubble.y,
           value: scoreValue,
           startTime: p5.millis(),
-          duration: 800, // Faster score animation (800ms)
+          duration: 1200, // Faster score animation (1200ms) for better responsiveness
           alpha: 1.0,
           scale: 1.0,
-          offsetY: 0
+          offsetY: 0,
+          rotation: 0,
+          rotationSpeed: p5.random(-0.04, 0.04) // Slightly faster rotation
         };
         
         // Add to score animations array
@@ -1050,14 +957,16 @@ const Board: React.FC = () => {
       
       // Update animation properties
       scoreAnim.alpha = 1.0 - easeOutCubic(progress);
-      scoreAnim.scale = 1.0 + (1.0 * easeOutCubic(progress)); // Increased scale effect
-      scoreAnim.offsetY = -50 * easeOutCubic(progress); // Increased upward movement
+      scoreAnim.scale = 1.0 + (1.2 * easeOutCubic(progress)); // Even more scale effect
+      scoreAnim.offsetY = -60 * easeOutCubic(progress); // More upward movement
+      scoreAnim.rotation += scoreAnim.rotationSpeed;
       
       // Draw score text with enhanced glow effect
       if (scoreAnim.alpha > 0) {
         p5.push();
         p5.translate(scoreAnim.x, scoreAnim.y + scoreAnim.offsetY);
         p5.scale(scoreAnim.scale);
+        p5.rotate(scoreAnim.rotation);
         
         // Draw outer glow effect (larger and more intense)
         p5.push();
@@ -1922,12 +1831,29 @@ const Board: React.FC = () => {
       return;
     }
 
-    // Update and draw particles
-    updateAndDrawParticles(p5);
-
-    // draw when ball fall down
-    drawBubblePopping(removeBubbles, p5);
-    drawScoreAnimations(p5);
+    
+    
+    // Update flash effect
+    if (flashEffect.duration > 0) {
+      flashEffect.duration--;
+      flashEffect.alpha = Math.max(0, flashEffect.alpha - 0.1);
+    }
+    
+      // Update combo text
+  for (let i = comboText.length - 1; i >= 0; i--) {
+    const text = comboText[i];
+    text.duration--;
+    text.alpha = Math.max(0, text.alpha - 0.015); // Faster fade
+    text.scale += 0.008; // Faster scale
+    text.y -= 0.4; // Faster upward movement
+    text.rotation += text.rotationSpeed;
+    text.pulsePhase += 0.1;
+    text.glowIntensity = 1 + 0.3 * Math.sin(text.pulsePhase);
+    
+    if (text.duration <= 0) {
+      comboText.splice(i, 1);
+    }
+  }
 
     // check is win
     checkIsWin(gridBubble.current);
@@ -1937,6 +1863,16 @@ const Board: React.FC = () => {
 
     // Draw game container background
     // External container is now drawn with CSS, no need for P5.js drawing
+    
+
+    
+    // Draw flash effect
+    if (flashEffect.alpha > 0) {
+      p5.push();
+      p5.fill(255, 255, 255, flashEffect.alpha * 255);
+      p5.rect(0, 0, gameWidth, gameHeight);
+      p5.pop();
+    }
     
     // render bubble list
     renderBubbleList(p5, gridBubble.current);
@@ -1993,41 +1929,32 @@ const Board: React.FC = () => {
           // Update highest score if current score is higher
           updateHighestScore();
           
-          // Create enhanced explosion particles at collision point
-          createParticles(activeBubble.current.x, activeBubble.current.y, activeBubble.current.color, p5);
+
           
-          // Add impact effect - create a ripple effect at collision point
-          const impactParticles = [];
-          for (let i = 0; i < 8; i++) {
-            const angle = (p5.TWO_PI * i) / 8;
-            const speed = p5.random(3, 8);
-            impactParticles.push({
-              x: activeBubble.current.x,
-              y: activeBubble.current.y,
-              vx: p5.cos(angle) * speed,
-              vy: p5.sin(angle) * speed,
-              life: 1,
-              maxLife: 1,
-              color: activeBubble.current.color,
-              size: p5.random(3, 6),
-              rotation: 0,
-              rotationSpeed: p5.random(-0.2, 0.2),
-              scale: 1.0,
-              scaleSpeed: -0.015,
-              pulse: 0,
-              pulseSpeed: 0.2,
-              trail: [] // Initialize trail array
-            });
+          // Trigger flash effect for large explosions
+          if (pop + extra >= 8) {
+            flashEffect.alpha = 0.3;
+            flashEffect.duration = 5;
           }
           
-          // Add impact particles to main particle array
-          particles.push(...impactParticles);
-          
-          // Create additional particles for each popped bubble with easing
-          for (let i = 0; i < Math.min(pop + extra, 3); i++) {
-            const randomX = activeBubble.current.x + p5.random(-15, 15);
-            const randomY = activeBubble.current.y + p5.random(-15, 15);
-            createParticles(randomX, randomY, activeBubble.current.color, p5);
+          // Add combo text for multiple bubbles
+          if (pop + extra >= 4) {
+            const comboMessages = [t('nice'), t('great'), t('amazing'), t('incredible'), t('legendary')];
+            const comboColors = ['#4CAF50', '#2196F3', '#FF9800', '#E91E63', '#9C27B0']; // Green, Blue, Orange, Pink, Purple
+            const messageIndex = Math.min(comboMessages.length - 1, Math.floor((pop + extra - 4) / 2));
+            comboText.push({
+              text: comboMessages[messageIndex].toUpperCase() + '!',
+              color: comboColors[messageIndex],
+              x: activeBubble.current.x,
+              y: activeBubble.current.y - 50,
+              alpha: 1.0,
+              scale: 0.5, // Start small for bounce effect
+              duration: 120,
+              rotation: 0,
+              rotationSpeed: p5.random(-0.02, 0.02),
+              pulsePhase: 0,
+              glowIntensity: 1.0
+            });
           }
         } else {
           // Shot attached but didn't break bubbles - count this shot
@@ -2198,6 +2125,75 @@ const Board: React.FC = () => {
       specialBubble.current.isAnswered === Answer.NOT_YET
     ) {
       return;
+    }
+    
+    // RENDER ALL ANIMATIONS ON TOP OF EVERYTHING (highest z-index)
+    // Draw bubble popping animations
+    drawBubblePopping(removeBubbles, p5);
+    
+    // Draw score animations
+    drawScoreAnimations(p5);
+    
+    // Draw combo text on top
+    for (const text of comboText) {
+      p5.push();
+      p5.translate(text.x, text.y);
+      p5.scale(text.scale);
+      p5.rotate(text.rotation);
+      
+      // Draw outer glow effect
+      p5.push();
+      p5.fill(text.color + Math.floor(text.alpha * 80).toString(16).padStart(2, '0'));
+      p5.noStroke();
+      p5.textSize(90);
+      p5.textAlign(p5.CENTER, p5.CENTER);
+      p5.textStyle(p5.BOLD);
+      p5.text(text.text, 0, 0);
+      p5.pop();
+      
+      // Draw middle glow effect
+      p5.push();
+      p5.fill(text.color + Math.floor(text.alpha * 150).toString(16).padStart(2, '0'));
+      p5.noStroke();
+      p5.textSize(81);
+      p5.textAlign(p5.CENTER, p5.CENTER);
+      p5.textStyle(p5.BOLD);
+      p5.text(text.text, 0, 0);
+      p5.pop();
+      
+      // Draw main text with glow
+      p5.push();
+      p5.fill(text.color + Math.floor(text.alpha * 255).toString(16).padStart(2, '0'));
+      p5.noStroke();
+      p5.textSize(72);
+      p5.textAlign(p5.CENTER, p5.CENTER);
+      p5.textStyle(p5.BOLD);
+      p5.text(text.text, 0, 0);
+      p5.pop();
+      
+      // Draw inner highlight
+      p5.push();
+      p5.fill(255, 255, 255, text.alpha * 100);
+      p5.noStroke();
+      p5.textSize(69);
+      p5.textAlign(p5.CENTER, p5.CENTER);
+      p5.textStyle(p5.BOLD);
+      p5.text(text.text, -3, -3);
+      p5.pop();
+      
+      // Draw sparkle effect
+      if (text.glowIntensity > 1.2) {
+        p5.push();
+        p5.fill(255, 255, 255, text.alpha * 150);
+        p5.noStroke();
+        p5.textSize(63);
+        p5.textAlign(p5.CENTER, p5.CENTER);
+        p5.textStyle(p5.BOLD);
+        p5.text("✨", 0, 0);
+        p5.pop();
+      }
+      
+      p5.pop();
     }
   };
 
