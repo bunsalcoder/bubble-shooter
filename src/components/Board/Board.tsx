@@ -2650,7 +2650,19 @@ const Board: React.FC = () => {
           }
 
           if (isShowingTrajectory.current === false) {
-            return;
+            // Force trajectory calculation as fallback
+            updateTrajectoryPrediction(p5);
+            if (isShowingTrajectory.current === false) {
+              // Create a simple fallback trajectory if calculation still fails
+              const launcherX = gameWidth / 2;
+              const launcherY = gameHeight - 80 - 35;
+              const fallbackTrajectory = [
+                { x: launcherX, y: launcherY },
+                { x: launcherX, y: launcherY - 50 }
+              ];
+              predictedTrajectory.current = fallbackTrajectory;
+              isShowingTrajectory.current = true;
+            }
           }
 
           // Use predicted trajectory if available, otherwise use mouse direction
@@ -4058,7 +4070,7 @@ const Board: React.FC = () => {
               border: '1px solid rgba(255, 215, 0, 0.3)',
               fontFamily: '"TypoGrotek", "Space Grotesk", "Poppins", "Segoe UI", "Roboto", "Helvetica Neue", Arial, sans-serif'
             }}>
-              <h3 style={{ margin: '0 0 15px 0', color: '#FFD700', textAlign: 'left', fontWeight: 'bold', fontSize: '18px', textShadow: '0 1px 2px rgba(0, 0, 0, 0.5)', fontFamily: '"TypoGrotek", "Space Grotesk", "Poppins", "Segoe UI", "Roboto", "Helvetica Neue", Arial, sans-serif' }}>🎯 {t('objective')}</h3>
+              <h3 style={{ margin: '0 0 15px 0', color: 'white', textAlign: 'left', fontWeight: 'bold', fontSize: '18px', textShadow: '0 1px 2px rgba(0, 0, 0, 0.5)', fontFamily: '"TypoGrotek", "Space Grotesk", "Poppins", "Segoe UI", "Roboto", "Helvetica Neue", Arial, sans-serif' }}>🎯 {t('objective')}</h3>
               <p style={{ margin: '0', textAlign: 'left', fontFamily: '"TypoGrotek", "Space Grotesk", "Poppins", "Segoe UI", "Roboto", "Helvetica Neue", Arial, sans-serif', fontWeight: 'normal' }}>
                 {t('objectiveDescription')}
               </p>
@@ -4076,7 +4088,7 @@ const Board: React.FC = () => {
               border: '1px solid rgba(93, 173, 226, 0.3)',
               fontFamily: '"TypoGrotek", "Space Grotesk", "Poppins", "Segoe UI", "Roboto", "Helvetica Neue", Arial, sans-serif'
             }}>
-              <h3 style={{ margin: '0 0 15px 0', color: '#1E3A8A', textAlign: 'left', fontWeight: 'bold', fontSize: '18px', textShadow: '0 1px 2px rgba(0, 0, 0, 0.5)', fontFamily: '"TypoGrotek", "Space Grotesk", "Poppins", "Segoe UI", "Roboto", "Helvetica Neue", Arial, sans-serif' }}>🎮 {t('controls')}</h3>
+              <h3 style={{ margin: '0 0 15px 0', color: 'white', textAlign: 'left', fontWeight: 'bold', fontSize: '18px', textShadow: '0 1px 2px rgba(0, 0, 0, 0.5)', fontFamily: '"TypoGrotek", "Space Grotesk", "Poppins", "Segoe UI", "Roboto", "Helvetica Neue", Arial, sans-serif' }}>🎮 {t('controls')}</h3>
               <ul style={{ margin: '0', paddingLeft: '0', listStyle: 'none', fontFamily: '"TypoGrotek", "Space Grotesk", "Poppins", "Segoe UI", "Roboto", "Helvetica Neue", Arial, sans-serif' }}>
                 <li style={{ margin: '0 0 8px 0', textAlign: 'left', fontFamily: '"TypoGrotek", "Space Grotesk", "Poppins", "Segoe UI", "Roboto", "Helvetica Neue", Arial, sans-serif', fontWeight: 'normal' }}>{t('control1')}</li>
                 <li style={{ margin: '0 0 8px 0', textAlign: 'left', fontFamily: '"TypoGrotek", "Space Grotesk", "Poppins", "Segoe UI", "Roboto", "Helvetica Neue", Arial, sans-serif', fontWeight: 'normal' }}>{t('control2')}</li>
@@ -4096,7 +4108,7 @@ const Board: React.FC = () => {
               border: '1px solid rgba(255, 193, 7, 0.3)',
               fontFamily: '"TypoGrotek", "Space Grotesk", "Poppins", "Segoe UI", "Roboto", "Helvetica Neue", Arial, sans-serif'
             }}>
-              <h3 style={{ margin: '0 0 15px 0', color: '#B8860B', textAlign: 'left', fontWeight: 'bold', fontSize: '18px', textShadow: '0 1px 2px rgba(0, 0, 0, 0.5)', fontFamily: '"TypoGrotek", "Space Grotesk", "Poppins", "Segoe UI", "Roboto", "Helvetica Neue", Arial, sans-serif' }}>🏆 {t('scoring')}</h3>
+              <h3 style={{ margin: '0 0 15px 0', color: 'white', textAlign: 'left', fontWeight: 'bold', fontSize: '18px', textShadow: '0 1px 2px rgba(0, 0, 0, 0.5)', fontFamily: '"TypoGrotek", "Space Grotesk", "Poppins", "Segoe UI", "Roboto", "Helvetica Neue", Arial, sans-serif' }}>🏆 {t('scoring')}</h3>
               <ul style={{ margin: '0', paddingLeft: '0', listStyle: 'none', fontFamily: '"TypoGrotek", "Space Grotesk", "Poppins", "Segoe UI", "Roboto", "Helvetica Neue", Arial, sans-serif' }}>
                 <li style={{ margin: '0 0 8px 0', textAlign: 'left', fontFamily: '"TypoGrotek", "Space Grotesk", "Poppins", "Segoe UI", "Roboto", "Helvetica Neue", Arial, sans-serif', fontWeight: 'normal' }}>{t('score1')}</li>
                 <li style={{ margin: '0 0 8px 0', textAlign: 'left', fontFamily: '"TypoGrotek", "Space Grotesk", "Poppins", "Segoe UI", "Roboto", "Helvetica Neue", Arial, sans-serif', fontWeight: 'normal' }}>{t('score2')}</li>
@@ -4116,7 +4128,7 @@ const Board: React.FC = () => {
               border: '1px solid rgba(220, 53, 69, 0.3)',
               fontFamily: '"TypoGrotek", "Space Grotesk", "Poppins", "Segoe UI", "Roboto", "Helvetica Neue", Arial, sans-serif'
             }}>
-              <h3 style={{ margin: '0 0 15px 0', color: '#8B0000', textAlign: 'left', fontWeight: 'bold', fontSize: '18px', textShadow: '0 1px 2px rgba(0, 0, 0, 0.5)', fontFamily: '"TypoGrotek", "Space Grotesk", "Poppins", "Segoe UI", "Roboto", "Helvetica Neue", Arial, sans-serif' }}>⚠️ {t('gameOver')}</h3>
+              <h3 style={{ margin: '0 0 15px 0', color: 'white', textAlign: 'left', fontWeight: 'bold', fontSize: '18px', textShadow: '0 1px 2px rgba(0, 0, 0, 0.5)', fontFamily: '"TypoGrotek", "Space Grotesk", "Poppins", "Segoe UI", "Roboto", "Helvetica Neue", Arial, sans-serif' }}>⚠️ {t('gameOver')}</h3>
               <p style={{ margin: '0', textAlign: 'left', fontFamily: '"TypoGrotek", "Space Grotesk", "Poppins", "Segoe UI", "Roboto", "Helvetica Neue", Arial, sans-serif', fontWeight: 'normal' }}>
                 {t('gameOverDescription')}
               </p>
@@ -4134,7 +4146,7 @@ const Board: React.FC = () => {
               border: '1px solid rgba(40, 167, 69, 0.3)',
               fontFamily: '"TypoGrotek", "Space Grotesk", "Poppins", "Segoe UI", "Roboto", "Helvetica Neue", Arial, sans-serif'
             }}>
-              <h3 style={{ margin: '0 0 15px 0', color: '#006400', textAlign: 'left', fontWeight: 'bold', fontSize: '18px', textShadow: '0 1px 2px rgba(0, 0, 0, 0.5)', fontFamily: '"TypoGrotek", "Space Grotesk", "Poppins", "Segoe UI", "Roboto", "Helvetica Neue", Arial, sans-serif' }}>💡 {t('tips')}</h3>
+              <h3 style={{ margin: '0 0 15px 0', color: 'white', textAlign: 'left', fontWeight: 'bold', fontSize: '18px', textShadow: '0 1px 2px rgba(0, 0, 0, 0.5)', fontFamily: '"TypoGrotek", "Space Grotesk", "Poppins", "Segoe UI", "Roboto", "Helvetica Neue", Arial, sans-serif' }}>💡 {t('tips')}</h3>
               <ul style={{ margin: '0', paddingLeft: '0', listStyle: 'none', fontFamily: '"TypoGrotek", "Space Grotesk", "Poppins", "Segoe UI", "Roboto", "Helvetica Neue", Arial, sans-serif' }}>
                 <li style={{ margin: '0 0 8px 0', textAlign: 'left', fontFamily: '"TypoGrotek", "Space Grotesk", "Poppins", "Segoe UI", "Roboto", "Helvetica Neue", Arial, sans-serif', fontWeight: 'normal' }}>{t('tip1')}</li>
                 <li style={{ margin: '0 0 8px 0', textAlign: 'left', fontFamily: '"TypoGrotek", "Space Grotesk", "Poppins", "Segoe UI", "Roboto", "Helvetica Neue", Arial, sans-serif', fontWeight: 'normal' }}>{t('tip2')}</li>
