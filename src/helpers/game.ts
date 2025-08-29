@@ -565,6 +565,11 @@ export const predictTrajectory = (
   let currentSpeedX = speedX;
   let currentSpeedY = speedY;
   const bubbleRadius = grid.bubbleDiameter / 2;
+
+  const externalContainerRight = gameWidth;
+  
+  const minX = (-10) + bubbleRadius; // 10px from left border
+  const maxX = externalContainerRight - (-10) - bubbleRadius; // 10px from right border
   
   // Maximum steps to prevent infinite loops
   const maxSteps = 1000;
@@ -579,29 +584,43 @@ export const predictTrajectory = (
     const nextX = x + currentSpeedX * stepSize;
     const nextY = y + currentSpeedY * stepSize;
     
-    // Check wall collisions
-    if (nextX - bubbleRadius <= 0 || nextX + bubbleRadius >= gameWidth) {
-      // Check if bounce occurs at the same or below the shooter's X position
+    // HARD BOUNDARY CHECK: Ensure bubble stays within external container bounds
+    if (nextX - bubbleRadius < minX || nextX + bubbleRadius > maxX) {
+      // Check if bounce occurs at the same or below the shooter's Y position
       const shooterX = startX; // Active bubble X position
       const shooterY = startY; // Active bubble Y position
       
-      // Calculate the actual bounce position (at the wall)
-      let bounceX;
-      if (nextX - bubbleRadius <= 0) {
-        bounceX = bubbleRadius; // Left wall
-      } else {
-        bounceX = gameWidth - bubbleRadius; // Right wall
-      }
-      
       // Check if bounce occurs at the same, below, or just a little above the shooter's Y position
-      const minBounceHeight = 20// Minimum distance above shooter's Y position
+      const minBounceHeight = 20; // Minimum distance above shooter's Y position
       if (nextY >= shooterY - minBounceHeight) { // Bounce too close to shooter's Y position
         return []; // Return empty trajectory to block the shot
       }
       
-      // Bounce off walls
-      currentSpeedX = -currentSpeedX;
-      x = nextX + currentSpeedX * stepSize;
+      // HARD BOUNDARY BOUNCE: Bounce off the external container boundaries
+      let bounceX;
+      let newX;
+      
+      if (nextX - bubbleRadius < minX) {
+        // Left boundary bounce
+        bounceX = minX;
+        currentSpeedX = -currentSpeedX;
+        newX = bounceX + currentSpeedX * stepSize;
+      } else {
+        // Right boundary bounce
+        bounceX = maxX;
+        currentSpeedX = -currentSpeedX;
+        newX = bounceX + currentSpeedX * stepSize;
+      }
+      
+      // ENSURE BOUNCE STAYS WITHIN BOUNDARIES
+      if (newX - bubbleRadius < minX) {
+        newX = minX + bubbleRadius + 1;
+      }
+      if (newX + bubbleRadius > maxX) {
+        newX = maxX - bubbleRadius - 1;
+      }
+      
+      x = newX;
       y = nextY;
     } else {
       x = nextX;

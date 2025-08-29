@@ -20,6 +20,7 @@ export interface Translations {
   globalLeaderboard: string;
   best: string;
   current: string;
+  yourRank: string;
   tip: string;
   
   // Settings
@@ -99,6 +100,7 @@ export const translations: Record<Language, Translations> = {
     globalLeaderboard: '🏆 Global Leaderboard',
     best: 'Best',
     current: 'Current',
+    yourRank: 'Your Rank',
     tip: '💡 Tip: Keep playing to improve your score and climb the leaderboard!',
     
     // Settings
@@ -177,6 +179,7 @@ export const translations: Record<Language, Translations> = {
     globalLeaderboard: '🏆 全球排行榜',
     best: '最佳',
     current: '当前',
+    yourRank: '你的排名',
     tip: '💡 提示：继续游戏以提高分数并登上排行榜！',
     
     // Settings
@@ -255,6 +258,7 @@ export const translations: Record<Language, Translations> = {
     globalLeaderboard: '🏆 តារាងឈ្នះពិភពលោក',
     best: 'ល្អបំផុត',
     current: 'បច្ចុប្បន្ន',
+    yourRank: 'ចំណាត់ថ្នាក់របស់អ្នក',
     tip: '💡 ការណែនាំ៖ បន្តលេងដើម្បីកែលម្អពិន្ទុរបស់អ្នក និងឡើងដល់តារាងឈ្នះ!',
     
     // Settings

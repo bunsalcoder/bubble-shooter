@@ -974,6 +974,7 @@ const Board: React.FC = () => {
         p5.noStroke();
         p5.textAlign(p5.CENTER, p5.CENTER);
         p5.textSize(32); // Increased from 24
+        p5.textFont('"TypoGrotek", "Space Grotesk", "Poppins", "Segoe UI", "Roboto", "Helvetica Neue", Arial, sans-serif');
         p5.text(scoreAnim.value.toString(), 0, 0);
         p5.pop();
         
@@ -983,6 +984,7 @@ const Board: React.FC = () => {
         p5.noStroke();
         p5.textAlign(p5.CENTER, p5.CENTER);
         p5.textSize(30); // Increased from 22
+        p5.textFont('"TypoGrotek", "Space Grotesk", "Poppins", "Segoe UI", "Roboto", "Helvetica Neue", Arial, sans-serif');
         p5.text(scoreAnim.value.toString(), 0, 0);
         p5.pop();
         
@@ -993,6 +995,7 @@ const Board: React.FC = () => {
         p5.textAlign(p5.CENTER, p5.CENTER);
         p5.textSize(28); // Increased from 22
         p5.textStyle(p5.BOLD); // Make text bold
+        p5.textFont('"TypoGrotek", "Space Grotesk", "Poppins", "Segoe UI", "Roboto", "Helvetica Neue", Arial, sans-serif');
         p5.text(scoreAnim.value.toString(), 0, 0);
         p5.pop();
         
@@ -1002,6 +1005,7 @@ const Board: React.FC = () => {
         p5.noStroke();
         p5.textAlign(p5.CENTER, p5.CENTER);
         p5.textSize(26);
+        p5.textFont('"TypoGrotek", "Space Grotesk", "Poppins", "Segoe UI", "Roboto", "Helvetica Neue", Arial, sans-serif');
         p5.text("+", 0, 0);
         p5.pop();
         
@@ -1883,12 +1887,25 @@ const Board: React.FC = () => {
     // Update trajectory prediction
     updateTrajectoryPrediction(p5);
 
-    //check the bubble hit the wall
-    if (activeBubble.current && (
-      activeBubble.current.x - activeBubble.current.r <= 0 ||
-      activeBubble.current.x + activeBubble.current.r >= gameWidth
-    )) {
-      activeBubble.current.speedX = -activeBubble.current.speedX;
+    // HARD BOUNDARY CONSTRAINT: Use minimal margins to match external container
+    if (activeBubble.current) {
+      const bubbleRadius = activeBubble.current.r;
+      const externalContainerMargin = 5
+      const externalContainerLeft = externalContainerMargin;
+      const externalContainerRight = gameWidth - externalContainerMargin;
+      
+      const minX = externalContainerLeft + (-10) + bubbleRadius; // 10px from left border
+      const maxX = externalContainerRight - (-10) - bubbleRadius; // 10px from right border
+
+      if (activeBubble.current.x - bubbleRadius < minX || activeBubble.current.x + bubbleRadius > maxX) {
+        if (activeBubble.current.x - bubbleRadius < minX) {
+          activeBubble.current.x = minX + bubbleRadius + 1;
+          activeBubble.current.speedX = -activeBubble.current.speedX;
+        } else {
+          activeBubble.current.x = maxX - bubbleRadius - 1;
+          activeBubble.current.speedX = -activeBubble.current.speedX;
+        }
+      }
     }
 
     if (specialBubble.current.isAnswered === Answer.WRONG && activeBubble.current) {
@@ -2149,9 +2166,10 @@ const Board: React.FC = () => {
       p5.push();
       p5.fill(text.color + Math.floor(text.alpha * 80).toString(16).padStart(2, '0'));
       p5.noStroke();
-      p5.textSize(90);
+      p5.textSize(45); // Even smaller size
       p5.textAlign(p5.CENTER, p5.CENTER);
       p5.textStyle(p5.BOLD);
+      p5.textFont('"TypoGrotek", "Space Grotesk", "Poppins", "Segoe UI", "Roboto", "Helvetica Neue", Arial, sans-serif');
       p5.text(text.text, 0, 0);
       p5.pop();
       
@@ -2159,9 +2177,10 @@ const Board: React.FC = () => {
       p5.push();
       p5.fill(text.color + Math.floor(text.alpha * 150).toString(16).padStart(2, '0'));
       p5.noStroke();
-      p5.textSize(81);
+      p5.textSize(40); // Even smaller size
       p5.textAlign(p5.CENTER, p5.CENTER);
       p5.textStyle(p5.BOLD);
+      p5.textFont('"TypoGrotek", "Space Grotesk", "Poppins", "Segoe UI", "Roboto", "Helvetica Neue", Arial, sans-serif');
       p5.text(text.text, 0, 0);
       p5.pop();
       
@@ -2169,9 +2188,10 @@ const Board: React.FC = () => {
       p5.push();
       p5.fill(text.color + Math.floor(text.alpha * 255).toString(16).padStart(2, '0'));
       p5.noStroke();
-      p5.textSize(72);
+      p5.textSize(36); // Even smaller size
       p5.textAlign(p5.CENTER, p5.CENTER);
       p5.textStyle(p5.BOLD);
+      p5.textFont('"TypoGrotek", "Space Grotesk", "Poppins", "Segoe UI", "Roboto", "Helvetica Neue", Arial, sans-serif');
       p5.text(text.text, 0, 0);
       p5.pop();
       
@@ -2179,10 +2199,11 @@ const Board: React.FC = () => {
       p5.push();
       p5.fill(255, 255, 255, text.alpha * 100);
       p5.noStroke();
-      p5.textSize(69);
+      p5.textSize(34); // Even smaller size
       p5.textAlign(p5.CENTER, p5.CENTER);
       p5.textStyle(p5.BOLD);
-      p5.text(text.text, -3, -3);
+      p5.textFont('"TypoGrotek", "Space Grotesk", "Poppins", "Segoe UI", "Roboto", "Helvetica Neue", Arial, sans-serif');
+      p5.text(text.text, -1, -1);
       p5.pop();
       
       // Draw sparkle effect
@@ -2190,9 +2211,10 @@ const Board: React.FC = () => {
         p5.push();
         p5.fill(255, 255, 255, text.alpha * 150);
         p5.noStroke();
-        p5.textSize(63);
+        p5.textSize(30); // Even smaller size
         p5.textAlign(p5.CENTER, p5.CENTER);
         p5.textStyle(p5.BOLD);
+        p5.textFont('"TypoGrotek", "Space Grotesk", "Poppins", "Segoe UI", "Roboto", "Helvetica Neue", Arial, sans-serif');
         p5.text("✨", 0, 0);
         p5.pop();
       }
@@ -3433,7 +3455,9 @@ const Board: React.FC = () => {
                 textShadow: '0 1px 2px rgba(0, 0, 0, 0.3)',
                 fontSize: isMobile ? '12px' : '14px'
               }}>
-              <span>{t('current')}: {gameProperties.current.score}</span>
+              <span style={{ fontFamily: '"TypoGrotek", "Space Grotesk", "Poppins", "Segoe UI", "Roboto", "Helvetica Neue", Arial, sans-serif' }}>
+                {t('current')}: {gameProperties.current.score}
+              </span>
               {currentUserRank && (
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                   <AvatarDisplay
@@ -3442,7 +3466,9 @@ const Board: React.FC = () => {
                     size={20}
                     showBorder={true}
                   />
-                  <span>Rank: #{currentUserRank.rank}</span>
+                  <span style={{ fontFamily: '"TypoGrotek", "Space Grotesk", "Poppins", "Segoe UI", "Roboto", "Helvetica Neue", Arial, sans-serif' }}>
+                    {t('yourRank')}: #{currentUserRank.rank}
+                  </span>
                 </div>
               )}
             </div>
