@@ -40,6 +40,7 @@ import setting from "@public/bubble-shooter/icon/setting.png";
 import Image from "next/image";
 import { isMobile, isAndroid } from "react-device-detect";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { getLanguageFlag, getLanguageName } from "@/utils/languages";
 import LanguageSelector from "@/components/LanguageSelector";
 import { saveGameAPI, getGameAPI, clearGameAPI } from "@/services/mosAuth";
 import { useLeaderboard } from "@/hooks/useLeaderboard";
@@ -216,7 +217,7 @@ const Board: React.FC = () => {
   const [isLanguageSelectorOpen, setIsLanguageSelectorOpen] = useState<boolean>(false);
 
   // Language context
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const { currentUserRank, topPlayers, isLoading: leaderboardLoading, error: leaderboardError, refreshLeaderboard } = useLeaderboard();
   const gridBubble = useRef<Record<string, Bubble>>({});
   const specialBubble = useRef({
@@ -3914,11 +3915,11 @@ const Board: React.FC = () => {
                 fontSize: '18px',
                 filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.3))',
                 transition: 'transform 0.3s ease'
-              }}>🌐</span>
+              }}>{getLanguageFlag(language)}</span>
               <span style={{
                 textShadow: '0 2px 4px rgba(0,0,0,0.3)',
                 letterSpacing: '0.5px'
-              }}>{t('language')}</span>
+              }}>{getLanguageName(language)}</span>
             </button>
 
             {/* Mute Button Only */}
