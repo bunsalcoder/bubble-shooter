@@ -62,25 +62,46 @@ const Board: React.FC = () => {
   const [bubbleStartX, bubbleStartY] = setBubblePosition();
   const [gameWidth, gameHeight] = setGameSize();
   const girdColumns = setGridCols();
-  const [isMuted, setIsMuted] = useState(false);
-
-  // Check actual audio state to sync button
+    // Initialize mute button image on mount
   useEffect(() => {
-    const checkAudioState = () => {
-      if ((window as any).audioManager?.getAudioState) {
-        const audioState = (window as any).audioManager.getAudioState();
-        setIsMuted(!audioState.isPlaying);
+    if ((window as any).audioManager?.getAudioState) {
+      const audioState = (window as any).audioManager.getAudioState();
+      const muteButton = document.querySelector('.mute-unmute-icon') as HTMLImageElement;
+      if (muteButton) {
+        // Show unmute.png when muted (user clicks to unmute)
+        // Show mute.png when unmuted (user clicks to mute)
+        muteButton.src = audioState.isMuted ? "/bubble-shooter/unmute.png" : "/bubble-shooter/mute.png";
+        muteButton.alt = audioState.isMuted ? "Muted" : "Unmuted";
+        muteButton.title = audioState.isMuted ? "Click to unmute" : "Click to mute";
       }
-    };
-
-    // Check immediately
-    checkAudioState();
-
-    // Set up interval to check audio state
-    const interval = setInterval(checkAudioState, 500);
-
-    return () => clearInterval(interval);
+    }
   }, []);
+  
+  // Function to handle mute/unmute toggle
+  const handleMuteToggle = () => {
+    try {
+      if ((window as any).audioManager?.toggleMute) {
+        // Toggle mute in audio manager
+        (window as any).audioManager.toggleMute();
+        
+        // Wait a bit for the audio state to update, then sync the visual
+        setTimeout(() => {
+          const audioState = (window as any).audioManager.getAudioState();
+          // Directly update the button image without React re-render
+          const muteButton = document.querySelector('.mute-unmute-icon') as HTMLImageElement;
+          if (muteButton) {
+            // Show unmute.png when muted (user clicks to unmute)
+            // Show mute.png when unmuted (user clicks to mute)
+            muteButton.src = audioState.isMuted ? "/bubble-shooter/unmute.png" : "/bubble-shooter/mute.png";
+            muteButton.alt = audioState.isMuted ? "Muted" : "Unmuted";
+            muteButton.title = audioState.isMuted ? "Click to unmute" : "Click to mute";
+          }
+        }, 50); // Small delay to ensure audio state is updated
+      }
+    } catch (error) {
+      console.error('Failed to toggle mute:', error);
+    }
+  };
   let grid: Grid = {
     numRows: GRID_ROWS,
     numCols: girdColumns,
@@ -224,24 +245,7 @@ const Board: React.FC = () => {
   useEffect(() => {
     const initializeData = async () => {
       try {
-        // Load leaderboard data first
         await refreshLeaderboard();
-        
-        // Then load game data
-        const gameLoaded = await loadGameFromAPI();
-        if (gameLoaded) {
-          // Game was loaded from API
-        } else {
-          // Initialize fresh game state
-          gridBubble.current = createGridBubble(gridRef.current, gameProperties.current.color);
-          bubbleNext.current = createListBubbleNext(grid, bubbleStartX, bubbleStartY, gameProperties.current.color);
-          activeBubble.current = bubbleNext.current[0];
-          secondaryBubble.current = bubbleNext.current[1] || bubbleNext.current[0];
-          tertiaryBubble.current = bubbleNext.current[2] || bubbleNext.current[0];
-          setIsGameLoadedFromStorage(false);
-        }
-        
-        setIsGameLoading(false);
       } catch (error) {
         console.error('Failed to initialize data:', error);
         setIsGameLoading(false);
@@ -1831,6 +1835,22 @@ const Board: React.FC = () => {
     
     // Load highest score on startup
     loadHighestScore();
+
+    // Then load game data
+    const gameLoaded = await loadGameFromAPI();
+    if (gameLoaded) {
+      // Game was loaded from API
+    } else {
+      // Initialize fresh game state
+      gridBubble.current = createGridBubble(gridRef.current, gameProperties.current.color);
+      bubbleNext.current = createListBubbleNext(grid, bubbleStartX, bubbleStartY, gameProperties.current.color);
+      activeBubble.current = bubbleNext.current[0];
+      secondaryBubble.current = bubbleNext.current[1] || bubbleNext.current[0];
+      tertiaryBubble.current = bubbleNext.current[2] || bubbleNext.current[0];
+      setIsGameLoadedFromStorage(false);
+    }
+    
+    setIsGameLoading(false);
     
     // Initial check for disconnected bubbles
     verifyGrid(gridBubble.current, removeBubbles);
@@ -1873,20 +1893,20 @@ const Board: React.FC = () => {
     }
     
       // Update combo text
-  for (let i = comboText.length - 1; i >= 0; i--) {
-    const text = comboText[i];
-    text.duration--;
-    text.alpha = Math.max(0, text.alpha - 0.015); // Faster fade
-    text.scale += 0.008; // Faster scale
-    text.y -= 0.4; // Faster upward movement
-    text.rotation += text.rotationSpeed;
-    text.pulsePhase += 0.1;
-    text.glowIntensity = 1 + 0.3 * Math.sin(text.pulsePhase);
-    
-    if (text.duration <= 0) {
-      comboText.splice(i, 1);
+    for (let i = comboText.length - 1; i >= 0; i--) {
+      const text = comboText[i];
+      text.duration--;
+      text.alpha = Math.max(0, text.alpha - 0.015); // Faster fade
+      text.scale += 0.008; // Faster scale
+      text.y -= 0.4; // Faster upward movement
+      text.rotation += text.rotationSpeed;
+      text.pulsePhase += 0.1;
+      text.glowIntensity = 1 + 0.3 * Math.sin(text.pulsePhase);
+      
+      if (text.duration <= 0) {
+        comboText.splice(i, 1);
+      }
     }
-  }
 
     // check is win
     checkIsWin(gridBubble.current);
@@ -3138,7 +3158,7 @@ const Board: React.FC = () => {
                 fontWeight: '600',
                 textShadow: '0 2px 4px rgba(0, 0, 0, 0.5)',
                 lineHeight: '1.2',
-                maxWidth: '120px',
+                maxWidth: '200px !important',
                 overflow: 'hidden',
                 textOverflow: 'ellipsis',
                 whiteSpace: 'nowrap',
@@ -3214,22 +3234,36 @@ const Board: React.FC = () => {
           style={{ display: 'flex', alignItems: 'center', marginTop: '10px', gap: '5px' }}>
           
           {/* Mute/Unmute Icon */}
-          <div style={{
-            width: '55px',
-            height: '55px',
-            borderRadius: '50%',
-            background: '#7F4585',
-            border: '3px solid #E088E8',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            boxShadow: '0 8px 25px rgba(127, 69, 133, 0.4)'
-          }}>
+          <div 
+            onClick={handleMuteToggle}
+            style={{
+              width: '55px',
+              height: '55px',
+              borderRadius: '50%',
+              background: '#7F4585',
+              border: '3px solid #E088E8',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              boxShadow: '0 8px 25px rgba(127, 69, 133, 0.4)',
+              cursor: 'pointer',
+              transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.transform = 'scale(1.05)';
+              e.currentTarget.style.boxShadow = '0 10px 30px rgba(127, 69, 133, 0.6)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.transform = 'scale(1)';
+              e.currentTarget.style.boxShadow = '0 8px 25px rgba(127, 69, 133, 0.4)';
+            }}
+          >
             <Image
               width={24}
               height={24}
-              src={isMuted ? "/bubble-shooter/unmute.png" : "/bubble-shooter/mute.png"} 
-              alt={isMuted ? "Muted" : "Unmuted"} 
+              src="/bubble-shooter/mute.png"
+              alt="Unmuted"
+              title="Click to mute"
               className="mute-unmute-icon"
               style={{
                 width: '24px !important',

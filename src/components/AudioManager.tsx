@@ -16,7 +16,7 @@ const isIOS = () => {
 };
 
 const AudioManager = forwardRef<HTMLAudioElement, AudioManagerProps>(({
-    isMuted = false,
+    isMuted: initialIsMuted = false,
     onVolumeChange
 }, ref) => {
     const [isPlaying, setIsPlaying] = useState(false);
@@ -35,6 +35,7 @@ const AudioManager = forwardRef<HTMLAudioElement, AudioManagerProps>(({
     const [wasPlayingBeforeBackground, setWasPlayingBeforeBackground] = useState(false);
     const [isPageVisible, setIsPageVisible] = useState(true);
     const [isPageFocused, setIsPageFocused] = useState(true);
+    const [isMuted, setIsMuted] = useState(initialIsMuted);
 
     const audioRef = useRef<HTMLAudioElement | null>(null);
     const audioContextRef = useRef<AudioContext | null>(null);
@@ -395,6 +396,42 @@ const AudioManager = forwardRef<HTMLAudioElement, AudioManagerProps>(({
             setIsPlaying(true);
         }
     };
+    
+    // Toggle mute/unmute
+    const toggleMute = () => {
+        const newMutedState = !isMuted;
+        setIsMuted(newMutedState);
+        
+        if (newMutedState) {
+            // Muting: pause music
+            if (audioRef.current) {
+                audioRef.current.pause();
+                setIsPlaying(false);
+            }
+        } else {
+            // Unmuting: resume music if conditions are met
+            if (hasUserInteracted && isLoaded && isPageVisible && isPageFocused) {
+                resumeMusic();
+            }
+        }
+    };
+    
+    // Mute audio
+    const muteAudio = () => {
+        setIsMuted(true);
+        if (audioRef.current) {
+            audioRef.current.pause();
+            setIsPlaying(false);
+        }
+    };
+    
+    // Unmute audio
+    const unmuteAudio = () => {
+        setIsMuted(false);
+        if (hasUserInteracted && isLoaded && isPageVisible && isPageFocused) {
+            resumeMusic();
+        }
+    };
 
     // Set volume
     const setMusicVolume = (newVolume: number) => {
@@ -453,7 +490,10 @@ const AudioManager = forwardRef<HTMLAudioElement, AudioManagerProps>(({
             isLoaded: () => isLoaded,
             hasUserInteracted: () => hasUserInteracted,
             enableAudio,
-            getAudioState
+            getAudioState,
+            toggleMute,
+            muteAudio,
+            unmuteAudio
         };
 
         return () => {
