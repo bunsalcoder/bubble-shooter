@@ -94,18 +94,17 @@ const StartGameScreen: React.FC<StartGameScreenProps> = ({ onStart }) => {
       zIndex: 10000,
       overflow: 'hidden'
     }}>
-      {/* Flipped background */}
+      {/* Background */}
       <div style={{
         position: 'absolute',
         top: 0,
         left: 0,
         width: '100%',
         height: '100%',
-        background: 'url("/bubble-shooter/BG.png")',
+        background: 'url("/bubble-shooter/splashscreen-bg.png")',
         backgroundSize: 'cover',
         backgroundPosition: 'center',
         backgroundRepeat: 'no-repeat',
-        transform: 'scaleY(-1)', // Flip the background vertically
         zIndex: -1
       }} />
 

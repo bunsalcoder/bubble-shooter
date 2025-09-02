@@ -219,6 +219,49 @@ const Board: React.FC = () => {
   // Language context
   const { t, language } = useLanguage();
   const { currentUserRank, topPlayers, isLoading: leaderboardLoading, error: leaderboardError, refreshLeaderboard } = useLeaderboard();
+  
+  // Load leaderboard and game data on component mount
+  useEffect(() => {
+    const initializeData = async () => {
+      try {
+        // Load leaderboard data first
+        await refreshLeaderboard();
+        
+        // Then load game data
+        const gameLoaded = await loadGameFromAPI();
+        if (gameLoaded) {
+          // Game was loaded from API
+        } else {
+          // Initialize fresh game state
+          gridBubble.current = createGridBubble(gridRef.current, gameProperties.current.color);
+          bubbleNext.current = createListBubbleNext(grid, bubbleStartX, bubbleStartY, gameProperties.current.color);
+          activeBubble.current = bubbleNext.current[0];
+          secondaryBubble.current = bubbleNext.current[1] || bubbleNext.current[0];
+          tertiaryBubble.current = bubbleNext.current[2] || bubbleNext.current[0];
+          setIsGameLoadedFromStorage(false);
+        }
+        
+        setIsGameLoading(false);
+      } catch (error) {
+        console.error('Failed to initialize data:', error);
+        setIsGameLoading(false);
+      }
+    };
+
+    initializeData();
+  }, []); // Empty dependency array means this runs once on mount
+  
+  // Function to open leaderboard modal
+  const handleUserProfileClick = async () => {
+    try {
+      // Refresh leaderboard data when opened
+      await refreshLeaderboard();
+      setIsLeaderboardOpen(true);
+    } catch (error) {
+      console.error('Failed to refresh leaderboard:', error);
+    }
+  };
+  
   const gridBubble = useRef<Record<string, Bubble>>({});
   const specialBubble = useRef({
     isAnswered: Answer.NOT_YET,
@@ -1788,21 +1831,6 @@ const Board: React.FC = () => {
     
     // Load highest score on startup
     loadHighestScore();
-    const gameLoaded = await loadGameFromAPI();
-    if (gameLoaded) {
-
-    } else {
-      
-      // Initialize fresh game state
-      gridBubble.current = createGridBubble(gridRef.current, gameProperties.current.color);
-      bubbleNext.current = createListBubbleNext(grid, bubbleStartX, bubbleStartY, gameProperties.current.color);
-      activeBubble.current = bubbleNext.current[0];
-      secondaryBubble.current = bubbleNext.current[1] || bubbleNext.current[0];
-      tertiaryBubble.current = bubbleNext.current[2] || bubbleNext.current[0];
-      setIsGameLoadedFromStorage(false);
-    }
-
-    setIsGameLoading(false);
     
     // Initial check for disconnected bubbles
     verifyGrid(gridBubble.current, removeBubbles);
@@ -3040,98 +3068,181 @@ const Board: React.FC = () => {
                 <div 
           className="bubble-shooter__game-score-container" 
           onClick={(e) => e.stopPropagation()}
-          style={{ display: 'flex', alignItems: 'center', marginTop: '10px' }}>
-          {/* Score Display */}
+          style={{ display: 'flex', alignItems: 'center', marginTop: '10px', gap: '15px' }}>
+          
+          {/* User Avatar - Circular div like hamburger/mute buttons */}
           <div 
-            onClick={(e) => e.stopPropagation()}
+            onClick={handleUserProfileClick}
             style={{
-              background: '#D682DF',
-              borderRadius: '25px',
-              padding: '15px 25px',
+              width: '55px',
+              height: '55px',
+              borderRadius: '50%',
+              // background: '#7F4585',
+              border: '3px solid #E088E8',
               display: 'flex',
               alignItems: 'center',
-              gap: '15px',
-              boxShadow: 
-                '0 8px 25px rgba(214, 130, 223, 0.4), ' +
-                'inset 0 2px 4px rgba(255, 255, 255, 0.5), ' +
-                'inset 0 -2px 4px rgba(0, 0, 0, 0.1)',
-              border: 'none',
-              minWidth: '160px',
-              position: 'relative',
+              justifyContent: 'center',
+              boxShadow: '0 8px 25px rgba(127, 69, 133, 0.4)',
               overflow: 'hidden',
-              transform: 'translateY(0)',
-              transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
               cursor: 'pointer',
-              animation: 'scoreButtonGlow 3s ease-in-out infinite'
+              transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
             }}
             onMouseEnter={(e) => {
-              e.currentTarget.style.transform = 'translateY(-3px) scale(1.02)';
-              e.currentTarget.style.boxShadow = 
-                '0 12px 35px rgba(214, 130, 223, 0.6), ' +
-                'inset 0 2px 4px rgba(255, 255, 255, 0.6), ' +
-                'inset 0 -2px 4px rgba(0, 0, 0, 0.15)';
-              e.currentTarget.style.animation = 'scoreButtonPulse 0.5s ease-in-out';
+              e.currentTarget.style.transform = 'scale(1.05)';
+              e.currentTarget.style.boxShadow = '0 10px 30px rgba(127, 69, 133, 0.6)';
             }}
             onMouseLeave={(e) => {
-              e.currentTarget.style.transform = 'translateY(0) scale(1)';
-              e.currentTarget.style.boxShadow = 
-                '0 8px 25px rgba(214, 130, 223, 0.4), ' +
-                'inset 0 2px 4px rgba(255, 255, 255, 0.5), ' +
-                'inset 0 -2px 4px rgba(0, 0, 0, 0.1)';
-              e.currentTarget.style.animation = 'scoreButtonGlow 3s ease-in-out infinite';
-            }}
-            onMouseDown={(e) => {
-              e.currentTarget.style.transform = 'translateY(1px) scale(0.98)';
-            }}
-            onMouseUp={(e) => {
-              e.currentTarget.style.transform = 'translateY(-3px) scale(1.02)';
+              e.currentTarget.style.transform = 'scale(1)';
+              e.currentTarget.style.boxShadow = '0 8px 25px rgba(127, 69, 133, 0.4)';
             }}
           >
-            {/* 3D shine effect */}
+            {currentUserRank?.avatarUrl ? (
+              <Image
+                src={currentUserRank.avatarUrl}
+                alt="User Avatar"
+                width={45}
+                height={45}
+                style={{
+                  width: '45px',
+                  height: '45px',
+                  objectFit: 'cover',
+                  borderRadius: '50%'
+                }}
+              />
+            ) : (
+              <span style={{
+                fontSize: '24px',
+                color: '#FFFFFF'
+              }}>
+                👤
+              </span>
+            )}
+          </div>
+
+                      {/* Username and Score Badge - Stacked vertically */}
             <div style={{
-              position: 'absolute',
-              top: '0',
-              left: '0',
-              right: '0',
-              height: '50%',
-              background: 'linear-gradient(180deg, rgba(255, 255, 255, 0.15) 0%, transparent 100%)',
-              borderRadius: '25px 25px 0 0',
-              pointerEvents: 'none'
-            }} />
-            
-            <span style={{ 
-              fontSize: '24px', 
-              filter: 'drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3))',
-              zIndex: '1',
-              position: 'relative',
-              animation: 'coinSpin 2s linear infinite'
-            }}>🪙</span>
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'flex-start',
+              gap: '4px',
+              height: '55px',
+              justifyContent: 'space-between',
+              marginLeft: '-12px'
+            }}>
+            {/* Username */}
             <span 
-              id="score" 
-              className="custom-score"
-              style={{ 
-                fontSize: '26px', 
-                color: '#FFFFFF', 
-                fontWeight: 'bold',
-                textShadow: '0 2px 4px rgba(0, 0, 0, 0.5), 0 0 10px rgba(255, 255, 255, 0.3)',
+              onClick={handleUserProfileClick}
+              style={{
+                fontSize: '16px !important',
+                color: '#7F4585',
+                fontWeight: '600',
+                textShadow: '0 2px 4px rgba(0, 0, 0, 0.5)',
+                lineHeight: '1.2',
+                maxWidth: '120px',
                 overflow: 'hidden',
                 textOverflow: 'ellipsis',
                 whiteSpace: 'nowrap',
-                maxWidth: '100%',
-                top: 'auto',
-                left: 'auto',
-                zIndex: '1',
-                position: 'relative'
+                display: 'block',
+                cursor: 'pointer',
+                transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
               }}
-            >Score 0</span>
+              onMouseEnter={(e) => {
+                e.currentTarget.style.color = '#9B4DA3';
+                e.currentTarget.style.textShadow = '0 3px 6px rgba(0, 0, 0, 0.6)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.color = '#7F4585';
+                e.currentTarget.style.textShadow = '0 2px 4px rgba(0, 0, 0, 0.5)';
+              }}
+            >
+              {currentUserRank?.name || 'Player'}
+            </span>
+
+            {/* Score Badge */}
+            <div 
+              className="custom-score-container"
+              onClick={(e) => e.stopPropagation()}
+              style={{
+                background: '#7F4585',
+                borderRadius: '25px',
+                padding: '4px 4px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+                boxShadow: '0 3px 10px rgba(127, 69, 133, 0.4)',
+                border: '3px solid #E088E8',
+                minWidth: '120px',
+                height: '35px',
+                cursor: 'pointer',
+                transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.transform = 'translateY(-2px) scale(1.02)';
+                e.currentTarget.style.boxShadow = '0 4px 15px rgba(127, 69, 133, 0.6)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.transform = 'translateY(0) scale(1)';
+                e.currentTarget.style.boxShadow = '0 3px 10px rgba(127, 69, 133, 0.4)';
+              }}
+            >
+              <Image
+                src="/bubble-shooter/star-coin.png"
+                alt="Star Coin"
+                width={30}
+                height={30}
+                style={{
+                  filter: 'drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3))'
+                }}
+              />
+              <span 
+                id="score" 
+                className="custom-score"
+                style={{ 
+                  fontSize: '20px !important', 
+                  color: '#FFFFFF', 
+                  fontWeight: 'bold',
+                  textShadow: '0 2px 4px rgba(0, 0, 0, 0.5)'
+                }}
+              ></span>
+            </div>
           </div>
         </div>
-        
+
         <div 
           className="bubble-shooter__game-hamburger-bar" 
           onClick={(e) => e.stopPropagation()}
-          style={{ display: 'flex', alignItems: 'center', marginTop: '10px' }}>
+          style={{ display: 'flex', alignItems: 'center', marginTop: '10px', gap: '5px' }}>
+          
+          {/* Mute/Unmute Icon */}
+          <div style={{
+            width: '55px',
+            height: '55px',
+            borderRadius: '50%',
+            background: '#7F4585',
+            border: '3px solid #E088E8',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            boxShadow: '0 8px 25px rgba(127, 69, 133, 0.4)'
+          }}>
+            <Image
+              width={24}
+              height={24}
+              src={isMuted ? "/bubble-shooter/unmute.png" : "/bubble-shooter/mute.png"} 
+              alt={isMuted ? "Muted" : "Unmuted"} 
+              className="mute-unmute-icon"
+              style={{
+                width: '24px !important',
+                height: '24px !important',
+                minWidth: '24px !important',
+                minHeight: '24px !important',
+                maxWidth: '24px !important',
+                maxHeight: '24px !important'
+              }}
+            />
+          </div>
           <button 
+            className="hamburger-button"
             onClick={(e) => {
               e.stopPropagation();
               // Handle first interaction to start music
@@ -3139,64 +3250,24 @@ const Board: React.FC = () => {
               setIsMenuVisible(true);
             }}
             style={{
-              background: '#D682DF',
-              borderRadius: '20px',
-              padding: '15px',
+              background: '#7F4585',
+              borderRadius: '50%',
               color: 'white',
               fontSize: '20px',
               fontWeight: 'bold',
               cursor: 'pointer',
-              boxShadow: 
-                '0 8px 25px rgba(214, 130, 223, 0.4), ' +
-                'inset 0 2px 4px rgba(255, 255, 255, 0.5), ' +
-                'inset 0 -2px 4px rgba(0, 0, 0, 0.1)',
+              boxShadow: '0 8px 25px rgba(127, 69, 133, 0.4)',
               transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              minWidth: '60px',
-              height: '60px',
-              border: 'none',
+              width: '55px',
+              height: '55px',
+              border: '3px solid #E088E8',
               position: 'relative',
-              overflow: 'hidden',
-              transform: 'translateY(0)',
-              animation: 'menuButtonFloat 4s ease-in-out infinite'
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.transform = 'translateY(-3px) scale(1.05)';
-              e.currentTarget.style.boxShadow = 
-                '0 12px 35px rgba(214, 130, 223, 0.6), ' +
-                'inset 0 2px 4px rgba(255, 255, 255, 0.6), ' +
-                'inset 0 -2px 4px rgba(0, 0, 0, 0.15)';
-              e.currentTarget.style.animation = 'menuButtonPulse 0.5s ease-in-out';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.transform = 'translateY(0) scale(1)';
-              e.currentTarget.style.boxShadow = 
-                '0 8px 25px rgba(214, 130, 223, 0.4), ' +
-                'inset 0 2px 4px rgba(255, 255, 255, 0.5), ' +
-                'inset 0 -2px 4px rgba(0, 0, 0, 0.1)';
-              e.currentTarget.style.animation = 'menuButtonFloat 4s ease-in-out infinite';
-            }}
-            onMouseDown={(e) => {
-              e.currentTarget.style.transform = 'translateY(1px) scale(0.98)';
-            }}
-            onMouseUp={(e) => {
-              e.currentTarget.style.transform = 'translateY(-3px) scale(1.05)';
+              overflow: 'hidden'
             }}
           >
-            {/* 3D shine effect */}
-            <div style={{
-              position: 'absolute',
-              top: '0',
-              left: '0',
-              right: '0',
-              height: '50%',
-              background: 'linear-gradient(180deg, rgba(255, 255, 255, 0.15) 0%, transparent 100%)',
-              borderRadius: '20px 20px 0 0',
-              pointerEvents: 'none'
-            }} />
-            
             <span style={{ 
               fontSize: '28px', 
               color: '#FFFFFF',
@@ -3248,10 +3319,10 @@ const Board: React.FC = () => {
         }}
         style={{
           position: 'absolute',
-          bottom: '80px',
+          bottom: '40px',
           left: '30px',
           marginBottom: isAndroid ? '5px' : '60px',
-          background: '#D682DF',
+          background: '#7F4585',
           borderRadius: '50%',
           width: '60px',
           height: '60px',
@@ -3259,20 +3330,15 @@ const Board: React.FC = () => {
           alignItems: 'center',
           justifyContent: 'center',
           cursor: 'pointer',
-          boxShadow: 
-            '0 8px 25px rgba(214, 130, 223, 0.4), ' +
-            'inset 0 2px 4px rgba(255, 255, 255, 0.5), ' +
-            'inset 0 -2px 4px rgba(0, 0, 0, 0.1)',
-          border: 'none',
+          border: '4px solid #E088E8',
           transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
           transform: 'translateY(0)',
-          animation: 'infoButtonPulse 2s ease-in-out infinite',
           zIndex: 10
         }}
         onMouseEnter={(e) => {
           e.currentTarget.style.transform = 'translateY(-3px) scale(1.1)';
           e.currentTarget.style.boxShadow = 
-            '0 12px 35px rgba(214, 130, 223, 0.6), ' +
+            '0 12px 35px rgba(127, 69, 133, 0.6), ' +
             'inset 0 2px 4px rgba(255, 255, 255, 0.6), ' +
             'inset 0 -2px 4px rgba(0, 0, 0, 0.15)';
           e.currentTarget.style.animation = 'infoButtonGlow 0.5s ease-in-out';
@@ -3280,7 +3346,7 @@ const Board: React.FC = () => {
         onMouseLeave={(e) => {
           e.currentTarget.style.transform = 'translateY(0) scale(1)';
           e.currentTarget.style.boxShadow = 
-            '0 8px 25px rgba(214, 130, 223, 0.4), ' +
+            '0 8px 25px rgba(127, 69, 133, 0.4), ' +
             'inset 0 2px 4px rgba(255, 255, 255, 0.5), ' +
             'inset 0 -2px 4px rgba(0, 0, 0, 0.1)';
           e.currentTarget.style.animation = 'infoButtonPulse 2s ease-in-out infinite';
@@ -3299,21 +3365,6 @@ const Board: React.FC = () => {
           animation: 'infoIconSpin 3s linear infinite'
         }}>❓</span>
       </div>
-      
-      {/* Bottom Rectangle Background */}
-      <div 
-        style={{
-          position: 'absolute',
-          bottom: '0',
-          left: '0',
-          right: '0',
-          height: '80px',
-          backgroundColor: '#580062',
-          borderTopLeftRadius: '20px',
-          borderTopRightRadius: '20px',
-          zIndex: 5
-        }}
-      />
 
       <Monster />
 
@@ -3932,76 +3983,6 @@ const Board: React.FC = () => {
                 textShadow: '0 2px 4px rgba(0,0,0,0.3)',
                 letterSpacing: '0.5px'
               }}>{getLanguageName(language)}</span>
-            </button>
-
-            {/* Mute Button Only */}
-            <button
-              onClick={() => {
-                // Toggle mute functionality using the global audio manager
-                if ((window as any).audioManager) {
-                  const audioState = (window as any).audioManager.getAudioState();
-                  
-                  if (audioState.isPlaying) {
-                    // Music is playing, so mute it
-                    (window as any).audioManager.pauseMusic();
-                  } else {
-                    // Music is not playing, so unmute it
-                    (window as any).audioManager.resumeMusic();
-                  }
-                }
-                
-                // Also mute/unmute any regular audio elements
-                const audioElements = document.querySelectorAll('audio');
-                audioElements.forEach(audio => {
-                  audio.muted = !audio.muted;
-                });
-              }}
-              className="bubble-shooter__menu-button mute-button"
-              style={{
-                background: 'rgba(214, 130, 223, 0.7)',
-                color: 'white',
-                borderRadius: '12px',
-                padding: '12px 18px',
-                fontSize: '16px',
-                fontWeight: 'bold',
-                cursor: 'pointer',
-                transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
-                boxShadow: 'none',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '12px',
-                position: 'relative',
-                overflow: 'hidden',
-                border: '2px solid rgba(255, 255, 255, 0.2)',
-                fontFamily: '"TypoGrotek", "Space Grotesk", "Poppins", "Segoe UI", "Roboto", "Helvetica Neue", Arial, sans-serif'
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.transform = 'translateY(-4px) scale(1.02)';
-                e.currentTarget.style.boxShadow = 'none';
-                e.currentTarget.style.background = 'rgba(214, 130, 223, 0.7)';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.transform = 'translateY(0) scale(1)';
-                e.currentTarget.style.boxShadow = 'none';
-                e.currentTarget.style.background = 'rgba(214, 130, 223, 0.7)';
-              }}
-            >
-              <span 
-                className="mute-icon"
-                style={{ 
-                  fontSize: '18px',
-                  filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.3))',
-                  transition: 'transform 0.3s ease'
-                }}
-              >{isMuted ? '🔇' : '🔊'}</span>
-              <span 
-                className="mute-text"
-                style={{
-                  textShadow: '0 2px 4px rgba(0,0,0,0.3)',
-                  letterSpacing: '0.5px'
-                }}
-              >{isMuted ? t('unmute') : t('mute')}</span>
             </button>
           </div>
         </Modal>

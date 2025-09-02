@@ -171,10 +171,10 @@ $radius-size_base: 6px;
       left: 0;
       width: 100%;
       height: 100%;
-    background-image: url("/bubble-shooter/BG.png");
+    background-image: url("/bubble-shooter/game-bg.png");
     background-size: cover;
     background-position: center;
-      transform: scaleY(-1); // Flip the background vertically
+      // transform: scaleY(-1); // Flip the background vertically
       z-index: -1;
     }
   }
@@ -297,7 +297,7 @@ $radius-size_base: 6px;
           }
           
           #score {
-            font-size: 22px !important;
+            // font-size: 22px !important;
           }
         }
         
@@ -403,7 +403,7 @@ $radius-size_base: 6px;
           padding: 10px !important;
           
           span {
-            font-size: 22px !important;
+            // font-size: 22px !important;
           }
         }
       }
@@ -1127,7 +1127,7 @@ canvas {
   transform: translateX(-50%);
   width: 100%;
   max-width: 100vw;
-  background: linear-gradient(135deg, rgba(214, 130, 223, 0.75) 0%, rgba(214, 130, 223, 0.6) 100%);
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.4) 0%, rgba(248, 248, 248, 0.3) 100%);
   border: 5px solid rgba(255, 255, 255, 0.6);
   border-radius: 25px;
   box-shadow: 
@@ -1155,5 +1155,147 @@ canvas {
   @media only screen and (max-width: 359px) {
     top: -15px;
     height: 260px;
+  }
+}
+
+// Override for mute/unmute icon to prevent mobile CSS from overriding it
+.mute-unmute-icon {
+  width: 24px !important;
+  height: 24px !important;
+  min-width: 24px !important;
+  min-height: 24px !important;
+  max-width: 24px !important;
+  max-height: 24px !important;
+}
+
+// Mobile-specific override for mute/unmute icon
+@media only screen and (max-width: 576px) {
+  .bubble-shooter__game-header .mute-unmute-icon {
+    width: 24px !important;
+    height: 24px !important;
+    min-width: 24px !important;
+    min-height: 24px !important;
+    max-width: 24px !important;
+    max-height: 24px !important;
+  }
+}
+
+// Override mobile CSS for the new score container layout
+@media only screen and (max-width: 576px) {
+  .bubble-shooter__game-header .bubble-shooter__game-score-container {
+    // Override the problematic mobile rule
+    > div {
+      padding: 0 !important;
+      min-width: auto !important;
+      border-radius: 0 !important;
+    }
+    
+    // Ensure avatar div maintains its circular shape
+    > div:first-child {
+      width: 55px !important;
+      height: 55px !important;
+      min-width: 55px !important;
+      min-height: 55px !important;
+      max-width: 55px !important;
+      max-height: 55px !important;
+      border-radius: 50% !important;
+      padding: 0 !important;
+    }
+    
+    // Ensure username/score container maintains its layout
+    > div:last-child {
+      padding: 0 !important;
+      min-width: auto !important;
+      border-radius: 0 !important;
+    }
+  }
+  
+  // Override the img rule that affects avatar images
+  .bubble-shooter__game-header .bubble-shooter__game-score-container > div:first-child img {
+    width: 55px !important;
+    height: 55px !important;
+    min-width: 55px !important;
+    min-height: 55px !important;
+    max-width: 55px !important;
+    max-height: 55px !important;
+  }
+  
+  // Specific rule for star coin image in score badge
+  .bubble-shooter__game-header .bubble-shooter__game-score-container .custom-score-container img {
+    width: 30px !important;
+    height: 30px !important;
+    min-width: 30px !important;
+    min-height: 30px !important;
+    max-width: 30px !important;
+    max-height: 30px !important;
+  }
+  
+  // Override the span font-size rule that affects username
+  .bubble-shooter__game-header .bubble-shooter__game-score-container > div:last-child > span:first-child {
+    font-size: 16px !important;
+    min-width: auto !important;
+    max-width: 120px !important;
+  }
+  
+  // Responsive font sizing for score number
+  .bubble-shooter__game-header .bubble-shooter__game-score-container .custom-score {
+    font-size: 18px !important;
+  }
+}
+
+// Override for hamburger button to match mute/unmute icon styling
+.bubble-shooter__game-hamburger-bar button.hamburger-button {
+  background: #7F4585 !important;
+  border-radius: 50% !important;
+  width: 55px !important;
+  height: 55px !important;
+  min-width: 55px !important;
+  min-height: 55px !important;
+  max-width: 55px !important;
+  max-height: 55px !important;
+  border: 3px solid #E088E8 !important;
+  padding: 0 !important;
+  box-shadow: 0 8px 25px rgba(127, 69, 133, 0.4) !important;
+}
+
+// Mobile-specific override for hamburger button
+@media only screen and (max-width: 576px) {
+  .bubble-shooter__game-hamburger-bar button.hamburger-button {
+    background: #7F4585 !important;
+    border-radius: 50% !important;
+    width: 55px !important;
+    height: 55px !important;
+    min-width: 55px !important;
+    min-height: 55px !important;
+    max-width: 55px !important;
+    max-height: 55px !important;
+    border: 3px solid #E088E8 !important;
+    padding: 0 !important;
+    box-shadow: 0 8px 25px rgba(127, 69, 133, 0.4) !important;
+  }
+}
+
+// Responsive font sizing for different mobile screen sizes
+@media only screen and (max-width: 576px) {
+  .bubble-shooter__game-header .bubble-shooter__game-score-container .custom-score {
+    font-size: 18px !important;
+  }
+}
+
+@media only screen and (max-width: 480px) {
+  .bubble-shooter__game-header .bubble-shooter__game-score-container .custom-score {
+    font-size: 16px !important;
+  }
+}
+
+@media only screen and (max-width: 400px) {
+  .bubble-shooter__game-header .bubble-shooter__game-score-container .custom-score {
+    font-size: 14px !important;
+  }
+}
+
+@media only screen and (max-width: 360px) {
+  .bubble-shooter__game-header .bubble-shooter__game-score-container .custom-score {
+    font-size: 12px !important;
   }
 }
