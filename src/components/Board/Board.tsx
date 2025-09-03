@@ -2029,7 +2029,7 @@ const Board: React.FC = () => {
               x: activeBubble.current.x,
               y: comboY,
               alpha: 1.0,
-              scale: 0.5, // Start small for bounce effect
+              scale: 0.8, // Start small for bounce effect
               duration: 120,
               rotation: 0,
               rotationSpeed: 0, // No rotation
