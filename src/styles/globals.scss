@@ -270,86 +270,25 @@ $radius-size_base: 6px;
       padding: 0;
       &-header {
         width: 100% !important;
-        img {
-          width: 100px !important;
-          height: 50px !important;
-        }
-        p {
-          font-size: 1.2rem !important;
-          &#score {
-            top: 75px;
-            left: 60px;
-          }
-          &#time {
-            top: 82px;
-            right: 20px;
-          }
-        }
         
-        // Enhanced 3D buttons for mobile
-        .bubble-shooter__game-score-container > div {
-          padding: 12px 18px !important;
-          min-width: 130px !important;
-          border-radius: 20px !important;
-          
-          // span:first-child {
-          //   font-size: 20px !important;
-          // }
-          
-          #score {
-            // font-size: 22px !important;
-          }
-        }
-        
-        .bubble-shooter__game-hamburger-bar button {
-          min-width: 50px !important;
-          height: 50px !important;
-          border-radius: 18px !important;
-          padding: 12px !important;
-          
-          span {
-            font-size: 24px !important;
-          }
-        }
-      }
-      &-score-bar,
-      &-time-bar {
-        margin-top: 60px;
-      }
-      &-main {
-        &:before {
-          left: calc(50% - 50px);
-          width: 100px;
-          height: 150px;
-          // background-image: url("/bubble-shooter/background/shooter.png");
-          background-size: contain;
-          background-repeat: no-repeat;
-          content: "";
-        }
-      }
-      &-footer {
-        bottom: 90px;
-        width: 100%;
-        img {
-          width: 100px;
-          height: 60px;
-          &:first-child {
-            visibility: hidden;
-            width: 100px;
-            height: 100px;
-          }
-        }
-        #nextBubble {
-          right: 16px;
-          bottom: 15px;
-          width: 30px;
-          height: 30px;
-          img {
-            visibility: visible;
-            width: 30px;
-            height: 30px;
-          }
-        }
+        // Compact header paddings
+        padding: 16px 14px 10px 14px !important;
+        margin-top: 18px !important;
+
+        .header-left { gap: 10px !important; }
+        .header-right { gap: 8px !important; }
+
+        .avatar-wrapper { width: 46px !important; height: 46px !important; border-width: 2px !important; }
+        .avatar-image { width: 38px !important; height: 38px !important; }
+
+        .custom-score-container { height: 30px !important; min-width: 110px !important; border-width: 2px !important; padding: 3px 6px !important; }
+        .score-coin { width: 26px !important; height: 26px !important; }
+        .custom-score { font-size: 18px !important; }
+
+        .mute-wrapper { width: 46px !important; height: 46px !important; border-width: 2px !important; }
+        .hamburger-button { width: 46px !important; height: 46px !important; border-width: 2px !important; }
+        .hamburger-icon-wrapper { font-size: 24px !important; }
+        .menu-icon-img { width: 24px !important; height: 24px !important; margin-top: 7px !important; }
       }
     }
   }
@@ -382,7 +321,7 @@ $radius-size_base: 6px;
         }
         
         // Enhanced 3D buttons for smaller mobile
-        .bubble-shooter__game-score-container > div {
+        .custom-score-container {
           padding: 10px 15px !important;
           min-width: 120px !important;
           border-radius: 18px !important;
@@ -1182,28 +1121,28 @@ canvas {
 
 // Override mobile CSS for the new score container layout
 @media only screen and (max-width: 576px) {
-  .bubble-shooter__game-header .bubble-shooter__game-score-container {
-    // Override the problematic mobile rule
-    > div {
+  .bubble-shooter__game-header {
+    /* Override the problematic mobile rule */
+    .bubble-shooter__game-score-container > div {
       padding: 0 !important;
       min-width: auto !important;
       border-radius: 0 !important;
     }
     
     // Ensure avatar div maintains its circular shape
-    > div:first-child {
-      width: 55px !important;
-      height: 55px !important;
-      min-width: 55px !important;
-      min-height: 55px !important;
-      max-width: 55px !important;
-      max-height: 55px !important;
+    .bubble-shooter__game-score-container > div:first-child {
+      width: var(--circle-size) !important;
+      height: var(--circle-size) !important;
+      min-width: var(--circle-size) !important;
+      min-height: var(--circle-size) !important;
+      max-width: var(--circle-size) !important;
+      max-height: var(--circle-size) !important;
       border-radius: 50% !important;
-      padding: 0 !important;
+      border-width: 3px !important;
     }
     
     // Ensure username/score container maintains its layout
-    > div:last-child {
+    .bubble-shooter__game-score-container > div:last-child {
       padding: 0 !important;
       min-width: auto !important;
       border-radius: 0 !important;
@@ -1212,22 +1151,22 @@ canvas {
   
   // Override the img rule that affects avatar images
   .bubble-shooter__game-header .bubble-shooter__game-score-container > div:first-child img {
-    width: 55px !important;
-    height: 55px !important;
-    min-width: 55px !important;
-    min-height: 55px !important;
-    max-width: 55px !important;
-    max-height: 55px !important;
+    width: var(--avatar-img-size) !important;
+    height: var(--avatar-img-size) !important;
+    min-width: var(--avatar-img-size) !important;
+    min-height: var(--avatar-img-size) !important;
+    max-width: var(--avatar-img-size) !important;
+    max-height: var(--avatar-img-size) !important;
   }
   
   // Specific rule for star coin image in score badge
   .bubble-shooter__game-header .bubble-shooter__game-score-container .custom-score-container img {
-    width: 30px !important;
-    height: 30px !important;
-    min-width: 30px !important;
-    min-height: 30px !important;
-    max-width: 30px !important;
-    max-height: 30px !important;
+    width: 25px !important;
+    height: 25px !important;
+    min-width: 25px !important;
+    min-height: 25px !important;
+    max-width: 25px !important;
+    max-height: 25px !important;
   }
   
   // Override the span font-size rule that affects username
@@ -1247,12 +1186,12 @@ canvas {
 .bubble-shooter__game-hamburger-bar button.hamburger-button {
   background: #7F4585 !important;
   border-radius: 50% !important;
-  width: 55px !important;
-  height: 55px !important;
-  min-width: 55px !important;
-  min-height: 55px !important;
-  max-width: 55px !important;
-  max-height: 55px !important;
+  width: var(--circle-size) !important;
+  height: var(--circle-size) !important;
+  min-width: var(--circle-size) !important;
+  min-height: var(--circle-size) !important;
+  max-width: var(--circle-size) !important;
+  max-height: var(--circle-size) !important;
   border: 3px solid #E088E8 !important;
   padding: 0 !important;
   box-shadow: 0 8px 25px rgba(127, 69, 133, 0.4) !important;
@@ -1263,12 +1202,12 @@ canvas {
   .bubble-shooter__game-hamburger-bar button.hamburger-button {
     background: #7F4585 !important;
     border-radius: 50% !important;
-    width: 55px !important;
-    height: 55px !important;
-    min-width: 55px !important;
-    min-height: 55px !important;
-    max-width: 55px !important;
-    max-height: 55px !important;
+    width: var(--circle-size) !important;
+    height: var(--circle-size) !important;
+    min-width: var(--circle-size) !important;
+    min-height: var(--circle-size) !important;
+    max-width: var(--circle-size) !important;
+    max-height: var(--circle-size) !important;
     border: 3px solid #E088E8 !important;
     padding: 0 !important;
     box-shadow: 0 8px 25px rgba(127, 69, 133, 0.4) !important;
@@ -1297,5 +1236,287 @@ canvas {
 @media only screen and (max-width: 360px) {
   .bubble-shooter__game-header .bubble-shooter__game-score-container .custom-score {
     font-size: 12px !important;
+  }
+}
+
+.bubble-shooter__game-header {
+  /* Variable-driven sizing for consistent alignment */
+  --circle-size: 55px; /* default desktop/tablet */
+  --avatar-img-size: calc(var(--circle-size) - 12px);
+  --menu-icon-size: calc(var(--circle-size) * 0.46);
+  --score-height: calc(var(--circle-size) * 0.55);
+  --score-font-size: calc(var(--circle-size) * 0.38);
+  --score-coin-size: calc(var(--circle-size) * 0.48);
+  
+  .avatar-image { width: var(--avatar-img-size) !important; height: var(--avatar-img-size) !important; border-radius: 50% !important; object-fit: cover !important; }
+}
+
+/* Mobile variable overrides (re-add) */
+@media only screen and (max-width: 576px) {
+  .bubble-shooter__game-header {
+    --circle-size: 46px; /* small phones */
+  }
+}
+@media only screen and (max-width: 385px) {
+  .bubble-shooter__game-header {
+    --circle-size: 42px; /* extra small */
+  }
+}
+
+/* Hard-equalize avatar and menu button sizes to mute button */
+.bubble-shooter__game-header {
+  .mute-wrapper { width: var(--circle-size) !important; height: var(--circle-size) !important; }
+  .avatar-wrapper { width: var(--circle-size) !important; height: var(--circle-size) !important; }
+  .hamburger-button { width: var(--circle-size) !important; height: var(--circle-size) !important; }
+}
+
+@media only screen and (max-width: 576px) {
+  .bubble-shooter__game-header {
+    .mute-wrapper { width: var(--circle-size) !important; height: var(--circle-size) !important; }
+    .avatar-wrapper { width: var(--circle-size) !important; height: var(--circle-size) !important; }
+    .hamburger-button { width: var(--circle-size) !important; height: var(--circle-size) !important; }
+  }
+}
+
+@media only screen and (max-width: 385px) {
+  .bubble-shooter__game-header {
+    .mute-wrapper { width: var(--circle-size) !important; height: var(--circle-size) !important; }
+    .avatar-wrapper { width: var(--circle-size) !important; height: var(--circle-size) !important; }
+    .hamburger-button { width: var(--circle-size) !important; height: var(--circle-size) !important; }
+  }
+}
+
+.bubble-shooter__game-header {
+  /* Ensure avatar strictly conforms to responsive circle size */
+  .avatar-wrapper {
+    width: var(--circle-size) !important;
+    height: var(--circle-size) !important;
+    min-width: var(--circle-size) !important;
+    min-height: var(--circle-size) !important;
+    max-width: var(--circle-size) !important;
+    max-height: var(--circle-size) !important;
+  }
+  .avatar-image {
+    width: var(--avatar-img-size) !important;
+    height: var(--avatar-img-size) !important;
+    min-width: var(--avatar-img-size) !important;
+    min-height: var(--avatar-img-size) !important;
+    max-width: var(--avatar-img-size) !important;
+    max-height: var(--avatar-img-size) !important;
+  }
+  /* Score badge strict sizing */
+  .custom-score-container {
+    height: var(--score-height) !important;
+    min-width: 120px; /* desktop/tablet baseline */
+  }
+}
+
+@media only screen and (max-width: 576px) {
+  .bubble-shooter__game-header {
+    /* Reduce score width on small screens and enforce */
+    .custom-score-container {
+      min-width: 96px !important;
+      height: 26px !important;
+      padding: 2px 6px !important;
+      border-width: 2px !important;
+      gap: 4px !important;
+    }
+    .score-coin { width: 22px !important; height: 22px !important; }
+    .custom-score { font-size: 16px !important; }
+  }
+}
+
+@media only screen and (max-width: 576px) {
+  .bubble-shooter__game-header {
+    /* Reduce vertical gap between username row and score badge */
+    .header-left > div:nth-child(2) {
+      gap: 0 !important;
+    }
+
+    /* Smaller, tighter score badge */
+    .custom-score-container {
+      min-width: 92px !important;
+      height: 24px !important;
+      padding: 2px 6px !important;
+      gap: 3px !important;
+      margin-top: 2px !important;
+    }
+    .score-coin { width: 20px !important; height: 20px !important; }
+    .custom-score { font-size: 15px !important; }
+  }
+}
+
+/* Restore core header visuals and layout with safe fallbacks */
+.bubble-shooter__game-header {
+  .header-left {
+    display: flex;
+    align-items: center;
+    margin-top: 10px;
+    gap: 15px;
+  }
+  .header-right {
+    display: flex;
+    align-items: center;
+    margin-top: 10px;
+    gap: 5px;
+  }
+  .avatar-wrapper {
+    border-radius: 50%;
+    border: 3px solid #E088E8;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 8px 25px rgba(127, 69, 133, 0.4);
+    overflow: hidden;
+    width: var(--circle-size, 55px);
+    height: var(--circle-size, 55px);
+  }
+  .avatar-image {
+    width: var(--avatar-img-size, 45px);
+    height: var(--avatar-img-size, 45px);
+    border-radius: 50%;
+    object-fit: cover;
+  }
+  .custom-score-container {
+    background: #7F4585;
+    border-radius: 25px;
+    padding: 4px 4px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    box-shadow: 0 3px 10px rgba(127, 69, 133, 0.4);
+    border: 3px solid #E088E8;
+    min-width: 120px;
+    height: var(--score-height, 35px);
+  }
+  .score-coin { filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3)); width: var(--score-coin-size, 30px); height: var(--score-coin-size, 30px); }
+  .custom-score { color: #fff; font-weight: bold; text-shadow: 0 2px 4px rgba(0,0,0,0.5); font-size: var(--score-font-size, 20px); }
+  .mute-wrapper,
+  .hamburger-button {
+    border-radius: 50%;
+    background: #7F4585;
+    border: 3px solid #E088E8;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 8px 25px rgba(127, 69, 133, 0.4);
+    width: var(--circle-size, 55px);
+    height: var(--circle-size, 55px);
+    position: relative;
+    overflow: hidden;
+  }
+  .hamburger-icon-wrapper { font-size: var(--menu-icon-size, 28px); color: #fff; text-shadow: 0 2px 4px rgba(0,0,0,0.5), 0 0 10px rgba(255,255,255,0.3); filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3)); z-index: 1; position: relative; }
+  .menu-icon-img { width: var(--menu-icon-size, 28px); height: var(--menu-icon-size, 28px); }
+}
+
+.bubble-shooter__game-header {
+  /* Requested spacing for the name/score block */
+  .name-score-column { margin-left: -8px !important; }
+
+  /* Username color */
+  .username { color: #7F4585 !important; }
+
+  /* Rank badge circular with gradient background */
+  .rank-badge {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    line-height: 24px; /* center single-line digit vertically */
+    text-align: center;
+    border-radius: 50%;
+    color: #ffffff;
+    font-weight: 600;
+    background: linear-gradient(135deg, rgb(255, 215, 0), rgb(255, 165, 0));
+    border: 2px solid #E088E8;
+  }
+
+  /* Ensure avatar border width is exactly 3px */
+  .avatar-wrapper { border-width: 3px !important; border-style: solid; border-color: #E088E8; }
+}
+
+@media only screen and (max-width: 576px) {
+  .bubble-shooter__game-header {
+    /* Make star coin and score number slightly smaller */
+    .score-coin { width: 16px !important; height: 16px !important; }
+    .custom-score { font-size: 13px !important; }
+    /* Ensure rank digit centered at mobile size */
+    .rank-badge { width: 20px !important; height: 20px !important; line-height: 20px !important; text-align: center !important; }
+  }
+}
+
+/* Larger phone / phablet: increase control sizes */
+@media only screen and (min-width: 412px) and (max-width: 767px) {
+  .bubble-shooter__game-header {
+    --circle-size: 55px;
+    /* Slightly larger text and coin for readability */
+    .custom-score { font-size: 18px !important; }
+    .score-coin { width: 28px !important; height: 28px !important; }
+    .username { font-size: 17px !important; }
+  }
+}
+
+/* Tablets and larger: keep 55px control size */
+@media only screen and (min-width: 768px) {
+  .bubble-shooter__game-header {
+    --circle-size: 55px;
+    .custom-score { font-size: 18px !important; }
+    .score-coin { width: 28px !important; height: 28px !important; }
+    .username { font-size: 18px !important; }
+  }
+}
+
+/* ========================= */
+/* Responsive adjustments    */
+/* ========================= */
+
+/* ✅ Small screens (≤ 576px) */
+@media only screen and (min-width: 412px) and (max-width: 576px) {
+  .bubble-shooter__game-header .custom-score-container {
+    min-width: 92px !important;
+    height: 30px !important;
+    padding: 2px 6px !important;
+    gap: 3px !important;
+    margin-top: 2px !important;
+  }
+
+  .bubble-shooter__game-header .bubble-shooter__game-score-container .custom-score-container img {
+    width: 30px !important;
+    height: 30px !important;
+    min-width: 30px !important;
+    min-height: 30px !important;
+    max-width: 30px !important;
+    max-height: 30px !important;
+  }
+
+  .bubble-shooter__game-header .rank-badge {
+    width: 24px !important;
+    height: 24px !important;
+    text-align: center !important;
+  }
+}
+
+/* ✅ Medium–large screens (≥ 412px) */
+@media only screen and (min-width: 412px) {
+  .bubble-shooter__game-header .username {
+    font-size: 18px !important;
+  }
+}
+
+@media only screen and (min-width: 412px) and (max-width: 576px) {
+  .bubble-shooter__game-header .bubble-shooter__game-score-container > div:first-child img {
+    width: 55px !important;
+    height: 55px !important;
+    min-width: 55px !important;
+    min-height: 55px !important;
+    max-width: 55px !important;
+    max-height: 55px !important;
+  }
+}
+
+@media only screen and (max-width: 767px) {
+  .bubble-shooter__game-header {
+    margin-top: 30px !important;
   }
 }

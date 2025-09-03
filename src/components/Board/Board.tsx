@@ -1497,8 +1497,8 @@ const Board: React.FC = () => {
     }
     
     // Draw animated dots with consistent spacing regardless of trajectory length
-    const dotSpacing = 12; // Reduced spacing for more dots
-    const dotCount = Math.max(12, Math.min(80, Math.floor(totalLength / dotSpacing))); // More dots for longer trajectories
+    const dotSpacing = 10; // Tighter spacing for denser dots
+    const dotCount = Math.max(12, Math.min(150, Math.floor(totalLength / dotSpacing))); // Allow more dots for long trajectories
     
     // Dynamic speed based on trajectory length - longer trajectories move slower
     const baseSpeed = 0.002; // Slower base speed
@@ -3061,30 +3061,26 @@ const Board: React.FC = () => {
         alignItems: 'center', 
         padding: '25px 20px 15px 20px',
         borderRadius: '0 0 20px 20px',
-        marginTop: '30px'
-      }}>
+        marginTop: '30px',
+        // CSS variables for responsive sizing
+        // Defaults here; overridden in CSS for small screens
+        // @ts-ignore
+        ['--header-circle-size' as any]: '55px',
+        ['--avatar-img-size' as any]: '45px',
+        ['--menu-icon-size' as any]: '28px',
+        ['--mute-icon-size' as any]: '28px',
+        ['--score-height' as any]: '35px',
+        ['--score-coin-size' as any]: '30px',
+        ['--score-font-size' as any]: '20px'
+      } as React.CSSProperties}>
         <div 
-          className="bubble-shooter__game-score-container" 
-          onClick={(e) => e.stopPropagation()}
-          style={{ display: 'flex', alignItems: 'center', marginTop: '10px', gap: '15px' }}>
+          className="bubble-shooter__game-score-container header-left" 
+          onClick={(e) => e.stopPropagation()}>
           
           {/* User Avatar - Circular div like hamburger/mute buttons */}
           <div 
+            className="avatar-wrapper"
             onClick={handleUserProfileClick}
-            style={{
-              width: '55px',
-              height: '55px',
-              borderRadius: '50%',
-              // background: '#7F4585',
-              border: '3px solid #E088E8',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              boxShadow: '0 8px 25px rgba(127, 69, 133, 0.4)',
-              overflow: 'hidden',
-              cursor: 'pointer',
-              transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
-            }}
             onMouseEnter={(e) => {
               e.currentTarget.style.transform = 'scale(1.05)';
               e.currentTarget.style.boxShadow = '0 10px 30px rgba(127, 69, 133, 0.6)';
@@ -3100,12 +3096,7 @@ const Board: React.FC = () => {
                 alt="User Avatar"
                 width={45}
                 height={45}
-                style={{
-                  width: '45px',
-                  height: '45px',
-                  objectFit: 'cover',
-                  borderRadius: '50%'
-                }}
+                className="avatar-image"
               />
             ) : (
               <span style={{
@@ -3118,51 +3109,17 @@ const Board: React.FC = () => {
           </div>
 
             {/* Username and Score Badge - Stacked vertically */}
-            <div style={{
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'flex-start',
-              gap: '1px',
-              height: '55px',
-              justifyContent: 'space-between',
-              marginLeft: '-12px'
-            }}>
+            <div className="name-score-column">
             {/* Rank & Username */}
             <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
               <span 
-                style={{
-                  fontSize: '14px !important',
-                  color: 'white',
-                  fontWeight: '600', 
-                  textShadow: '0 2px 4px rgba(0, 0, 0, 0.5)',
-                  width: '24px',
-                  height: '24px',
-                  borderRadius: '50%',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  background: 'linear-gradient(135deg, rgb(255, 215, 0), rgb(255, 165, 0))',
-                  border: '2px solid #E088E8'
-                }}
+                className="rank-badge"
               >
                 { currentUserRank?.rank || 'N/A' }
               </span>
               <span 
+                className="username"
                 onClick={handleUserProfileClick}
-                style={{
-                  fontSize: '16px !important',
-                  color: '#7F4585',
-                  fontWeight: '600',
-                  textShadow: '0 2px 4px rgba(0, 0, 0, 0.5)',
-                  lineHeight: '1.2',
-                  maxWidth: '200px !important',
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
-                  whiteSpace: 'nowrap',
-                  display: 'block',
-                  cursor: 'pointer',
-                  transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
-                }}
                 onMouseEnter={(e) => {
                   e.currentTarget.style.color = '#9B4DA3';
                   e.currentTarget.style.textShadow = '0 3px 6px rgba(0, 0, 0, 0.6)';
@@ -3180,20 +3137,6 @@ const Board: React.FC = () => {
             <div 
               className="custom-score-container"
               onClick={(e) => e.stopPropagation()}
-              style={{
-                background: '#7F4585',
-                borderRadius: '25px',
-                padding: '4px 4px',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '6px',
-                boxShadow: '0 3px 10px rgba(127, 69, 133, 0.4)',
-                border: '3px solid #E088E8',
-                minWidth: '120px',
-                height: '35px',
-                cursor: 'pointer',
-                transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
-              }}
               onMouseEnter={(e) => {
                 e.currentTarget.style.transform = 'translateY(-2px) scale(1.02)';
                 e.currentTarget.style.boxShadow = '0 4px 15px rgba(127, 69, 133, 0.6)';
@@ -3208,45 +3151,25 @@ const Board: React.FC = () => {
                 alt="Star Coin"
                 width={30}
                 height={30}
-                style={{
-                  filter: 'drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3))'
-                }}
+                className="score-coin"
               />
               <span 
                 id="score" 
                 className="custom-score"
-                style={{ 
-                  fontSize: '20px !important', 
-                  color: '#FFFFFF', 
-                  fontWeight: 'bold',
-                  textShadow: '0 2px 4px rgba(0, 0, 0, 0.5)'
-                }}
               ></span>
             </div>
           </div>
         </div>
 
         <div 
-          className="bubble-shooter__game-hamburger-bar" 
+          className="bubble-shooter__game-hamburger-bar header-right" 
           onClick={(e) => e.stopPropagation()}
-          style={{ display: 'flex', alignItems: 'center', marginTop: '10px', gap: '5px' }}>
+        >
           
           {/* Mute/Unmute Icon */}
           <div 
             onClick={handleMuteToggle}
-            style={{
-              width: '55px',
-              height: '55px',
-              borderRadius: '50%',
-              background: '#7F4585',
-              border: '3px solid #E088E8',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              boxShadow: '0 8px 25px rgba(127, 69, 133, 0.4)',
-              cursor: 'pointer',
-              transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
-            }}
+            className="mute-wrapper"
             onMouseEnter={(e) => {
               e.currentTarget.style.transform = 'scale(1.05)';
               e.currentTarget.style.boxShadow = '0 10px 30px rgba(127, 69, 133, 0.6)';
@@ -3281,33 +3204,16 @@ const Board: React.FC = () => {
               handleFirstInteraction();
               setIsMenuVisible(true);
             }}
-            style={{
-              background: '#7F4585',
-              borderRadius: '50%',
-              color: 'white',
-              fontSize: '20px',
-              fontWeight: 'bold',
-              cursor: 'pointer',
-              boxShadow: '0 8px 25px rgba(127, 69, 133, 0.4)',
-              transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              width: '55px',
-              height: '55px',
-              border: '3px solid #E088E8',
-              position: 'relative',
-              overflow: 'hidden'
-            }}
           >
-            <span style={{ 
-              fontSize: '28px', 
-              color: '#FFFFFF',
-              textShadow: '0 2px 4px rgba(0, 0, 0, 0.5), 0 0 10px rgba(255, 255, 255, 0.3)',
-              filter: 'drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3))',
-              zIndex: '1',
-              position: 'relative'
-            }}>☰</span>
+            <span className="hamburger-icon-wrapper">
+              <Image 
+                className="menu-icon-img"
+                width={28}
+                height={28}
+                src="/bubble-shooter/menu.png"
+                alt="Menu"
+              />
+            </span>
           </button>
         </div>
       </header>
