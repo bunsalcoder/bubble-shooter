@@ -161,11 +161,17 @@ const Board: React.FC = () => {
     spriteAtlas: null,
     spriteData: null,
     spritesLoaded: false,
+    // Combo images
+    comboNice: null,
+    comboGreat: null,
+    comboAmazing: null,
+    comboIncredible: null,
+    comboLegendary: null,
   };
   
-  // Screen effects and combo text
+  // Screen effects and combo images
   let flashEffect: { alpha: number, duration: number } = { alpha: 0, duration: 0 };
-  let comboText: { text: string, color: string, x: number, y: number, alpha: number, scale: number, duration: number, rotation: number, rotationSpeed: number, pulsePhase: number, glowIntensity: number }[] = [];
+  let comboImages: { image: any, x: number, y: number, alpha: number, scale: number, duration: number, rotation: number, rotationSpeed: number, pulsePhase: number, glowIntensity: number }[] = [];
   
   // Function to get the visual color for a bubble (for trajectory and visual consistency)
   const getVisualColor = (color: string): string => {
@@ -1785,6 +1791,13 @@ const Board: React.FC = () => {
         image.imageDraw.resize(bubbleDiameter, bubbleDiameter);
       }
     );
+    
+    // Load combo images
+    image.comboNice = p5.loadImage("/bubble-shooter/nice.png");
+    image.comboGreat = p5.loadImage("/bubble-shooter/great.png");
+    image.comboAmazing = p5.loadImage("/bubble-shooter/amazing.png");
+    image.comboIncredible = p5.loadImage("/bubble-shooter/incredible.png");
+    image.comboLegendary = p5.loadImage("/bubble-shooter/legendary.png");
   };
 
   const setup = async (p5: p5Types, canvasParentRef: Element) => {
@@ -1892,21 +1905,20 @@ const Board: React.FC = () => {
       flashEffect.alpha = Math.max(0, flashEffect.alpha - 0.1);
     }
     
-      // Update combo text
-    for (let i = comboText.length - 1; i >= 0; i--) {
-      const text = comboText[i];
-      text.duration--;
-      text.alpha = Math.max(0, text.alpha - 0.015); // Faster fade
-      text.scale += 0.008; // Faster scale
-      text.y -= 0.4; // Faster upward movement
-      text.rotation += text.rotationSpeed;
-      text.pulsePhase += 0.1;
-      text.glowIntensity = 1 + 0.3 * Math.sin(text.pulsePhase);
-      
-      if (text.duration <= 0) {
-        comboText.splice(i, 1);
+            // Update combo images
+      for (let i = comboImages.length - 1; i >= 0; i--) {
+        const comboImage = comboImages[i];
+        comboImage.duration--;
+        comboImage.alpha = Math.max(0, comboImage.alpha - 0.015); // Faster fade
+        comboImage.scale += 0.008; // Faster scale
+        comboImage.y -= 0.4; // Faster upward movement
+        comboImage.pulsePhase += 0.1;
+        comboImage.glowIntensity = 1 + 0.3 * Math.sin(comboImage.pulsePhase);
+        
+        if (comboImage.duration <= 0) {
+          comboImages.splice(i, 1);
+        }
       }
-    }
 
     // check is win
     checkIsWin(gridBubble.current);
@@ -1989,42 +2001,43 @@ const Board: React.FC = () => {
           const totalBubblesBroke = pop + extra;
           if ((window as any).soundEffects && totalBubblesBroke > 0) {
             (window as any).soundEffects.playPopSound(totalBubblesBroke);
-
           }
           
           // Update highest score if current score is higher
           updateHighestScore();
-          
 
-          
           // Trigger flash effect for large explosions
           if (pop + extra >= 8) {
             flashEffect.alpha = 0.3;
             flashEffect.duration = 5;
           }
           
-          // Add combo text for multiple bubbles
+          // Add combo images for multiple bubbles
           if (pop + extra >= 4) {
-            const comboMessages = [t('nice'), t('great'), t('amazing'), t('incredible'), t('legendary')];
-            const messageIndex = Math.min(comboMessages.length - 1, Math.floor((pop + extra - 4) / 2));
+            const comboImagesList = [image.comboNice, image.comboGreat, image.comboAmazing, image.comboIncredible, image.comboLegendary];
+            const messageIndex = Math.min(comboImagesList.length - 1, Math.floor((pop + extra - 4) / 2));
             
-            // Get the color of the popped bubbles
-            const firstPoppedBubble = removeBubbles[0];
-            const bubbleColor = firstPoppedBubble?.color || '#FFFFFF';
+            // Calculate better position to avoid canvas cutoff
+            let comboY = activeBubble.current.y - 50;
+            const minY = 100; // Minimum distance from top of canvas
+            if (comboY < minY) {
+              comboY = minY;
+            }
             
-            comboText.push({
-              text: comboMessages[messageIndex].toUpperCase() + '!',
-              color: bubbleColor,
+            comboImages.push({
+              image: comboImagesList[messageIndex],
               x: activeBubble.current.x,
-              y: activeBubble.current.y - 50,
+              y: comboY,
               alpha: 1.0,
               scale: 0.5, // Start small for bounce effect
               duration: 120,
               rotation: 0,
-              rotationSpeed: p5.random(-0.02, 0.02),
+              rotationSpeed: 0, // No rotation
               pulsePhase: 0,
               glowIntensity: 1.0
             });
+
+            (window as any).soundEffects.playExcitingSound();
           }
         } else {
           // Shot attached but didn't break bubbles - count this shot
@@ -2204,71 +2217,36 @@ const Board: React.FC = () => {
     // Draw score animations
     drawScoreAnimations(p5);
     
-    // Draw combo text on top
-    for (const text of comboText) {
-      p5.push();
-      p5.translate(text.x, text.y);
-      p5.scale(text.scale);
-      p5.rotate(text.rotation);
-      
-      // Draw outer glow effect
-      p5.push();
-      p5.fill(text.color + Math.floor(text.alpha * 80).toString(16).padStart(2, '0'));
-      p5.noStroke();
-      p5.textSize(45); // Even smaller size
-      p5.textAlign(p5.CENTER, p5.CENTER);
-      p5.textStyle(p5.BOLD);
-      p5.textFont('"TypoGrotek", "Space Grotesk", "Poppins", "Segoe UI", "Roboto", "Helvetica Neue", Arial, sans-serif');
-      p5.text(text.text, 0, 0);
-      p5.pop();
-      
-      // Draw middle glow effect
-      p5.push();
-      p5.fill(text.color + Math.floor(text.alpha * 150).toString(16).padStart(2, '0'));
-      p5.noStroke();
-      p5.textSize(40); // Even smaller size
-      p5.textAlign(p5.CENTER, p5.CENTER);
-      p5.textStyle(p5.BOLD);
-      p5.textFont('"TypoGrotek", "Space Grotesk", "Poppins", "Segoe UI", "Roboto", "Helvetica Neue", Arial, sans-serif');
-      p5.text(text.text, 0, 0);
-      p5.pop();
-      
-      // Draw main text with glow
-      p5.push();
-      p5.fill(text.color + Math.floor(text.alpha * 255).toString(16).padStart(2, '0'));
-      p5.noStroke();
-      p5.textSize(36); // Even smaller size
-      p5.textAlign(p5.CENTER, p5.CENTER);
-      p5.textStyle(p5.BOLD);
-      p5.textFont('"TypoGrotek", "Space Grotesk", "Poppins", "Segoe UI", "Roboto", "Helvetica Neue", Arial, sans-serif');
-      p5.text(text.text, 0, 0);
-      p5.pop();
-      
-      // Draw inner highlight
-      p5.push();
-      p5.fill(255, 255, 255, text.alpha * 100);
-      p5.noStroke();
-      p5.textSize(34); // Even smaller size
-      p5.textAlign(p5.CENTER, p5.CENTER);
-      p5.textStyle(p5.BOLD);
-      p5.textFont('"TypoGrotek", "Space Grotesk", "Poppins", "Segoe UI", "Roboto", "Helvetica Neue", Arial, sans-serif');
-      p5.text(text.text, -1, -1);
-      p5.pop();
-      
-      // Draw sparkle effect
-      if (text.glowIntensity > 1.2) {
+    // Draw combo images on top
+    for (const comboImage of comboImages) {
+      if (comboImage.image) {
         p5.push();
-        p5.fill(255, 255, 255, text.alpha * 150);
-        p5.noStroke();
-        p5.textSize(30); // Even smaller size
-        p5.textAlign(p5.CENTER, p5.CENTER);
-        p5.textStyle(p5.BOLD);
-        p5.textFont('"TypoGrotek", "Space Grotesk", "Poppins", "Segoe UI", "Roboto", "Helvetica Neue", Arial, sans-serif');
-        p5.text("✨", 0, 0);
+        p5.translate(comboImage.x, comboImage.y);
+        p5.scale(comboImage.scale);
+        
+        // Set image mode to center for proper positioning
+        p5.imageMode(p5.CENTER);
+        
+        // Draw the combo image with alpha transparency
+        p5.tint(255, comboImage.alpha * 255);
+        p5.image(comboImage.image, 0, 0);
+        p5.noTint();
+        
+        // Draw sparkle effect
+        if (comboImage.glowIntensity > 1.2) {
+          p5.push();
+          p5.fill(255, 255, 255, comboImage.alpha * 150);
+          p5.noStroke();
+          p5.textSize(30);
+          p5.textAlign(p5.CENTER, p5.CENTER);
+          p5.textStyle(p5.BOLD);
+          p5.textFont('"TypoGrotek", "Space Grotesk", "Poppins", "Segoe UI", "Roboto", "Helvetica Neue", Arial, sans-serif');
+          p5.text("✨", 0, 0);
+          p5.pop();
+        }
+        
         p5.pop();
       }
-      
-      p5.pop();
     }
   };
 

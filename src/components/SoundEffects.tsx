@@ -15,6 +15,7 @@ const SoundEffects: React.FC<SoundEffectsProps> = ({
   const popSoundRef = useRef<HTMLAudioElement | null>(null);
   const gameWinSoundRef = useRef<HTMLAudioElement | null>(null);
   const gameOverSoundRef = useRef<HTMLAudioElement | null>(null);
+  const excitingSoundRef = useRef<HTMLAudioElement | null>(null);
 
   const isIOS = () => {
     if (typeof window === 'undefined') return false;
@@ -27,12 +28,14 @@ const SoundEffects: React.FC<SoundEffectsProps> = ({
       pop: 1.0,       // Max volume for pop sounds on iOS
       win: 1.0,      // Max volume for win sound on iOS
       over: 1.0,      // Max volume for game over on iOS
-      background: 0.005 // Extremely low background music volume on iOS
+      background: 0.005, // Extremely low background music volume on iOS
+      exciting: 1.0,
     } : {
       pop: 0.7,
       win: 0.8,
       over: 0.8,
-      background: 0.15
+      background: 0.15,
+      exciting: 1.0,
     };
   };
 
@@ -84,6 +87,10 @@ const SoundEffects: React.FC<SoundEffectsProps> = ({
         gameOverSoundRef.current.preload = 'auto';
         gameOverSoundRef.current.volume = getSoundVolumes().over;
 
+        excitingSoundRef.current = new Audio('/bubble-shooter/audio/multi-pop.mp3');
+        excitingSoundRef.current.preload = 'auto';
+        excitingSoundRef.current.volume = getSoundVolumes().exciting;
+
         adjustBackgroundMusic();
 
         // Handle loading
@@ -97,7 +104,7 @@ const SoundEffects: React.FC<SoundEffectsProps> = ({
           }
         };
 
-        [popSoundRef, gameWinSoundRef, gameOverSoundRef].forEach(ref => {
+        [popSoundRef, gameWinSoundRef, gameOverSoundRef, excitingSoundRef].forEach(ref => {
           ref.current?.addEventListener('canplaythrough', checkAllLoaded);
           ref.current?.addEventListener('error', checkAllLoaded);
         });
@@ -128,7 +135,7 @@ const SoundEffects: React.FC<SoundEffectsProps> = ({
     });
 
     return () => {
-      [popSoundRef, gameWinSoundRef, gameOverSoundRef].forEach(ref => {
+      [popSoundRef, gameWinSoundRef, gameOverSoundRef, excitingSoundRef].forEach(ref => {
         if (ref.current) {
           ref.current.pause();
           ref.current = null;
@@ -154,6 +161,12 @@ const SoundEffects: React.FC<SoundEffectsProps> = ({
       }
     }
     return true;
+  };
+
+  const playExcitingSound = async () => {
+    if (!excitingSoundRef.current || !isLoaded || isMuted) return;
+    await ensureAudioContextReady();
+    excitingSoundRef.current.play();
   };
 
   const playPopSound = async (count: number = 1) => {
@@ -251,6 +264,7 @@ const SoundEffects: React.FC<SoundEffectsProps> = ({
       playGameWinSound,
       stopGameWinSound,
       playGameOverSound,
+      playExcitingSound,
       isLoaded: () => isLoaded,
       hasUserInteracted: () => hasUserInteracted,
       enableAudio
