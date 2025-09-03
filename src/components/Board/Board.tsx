@@ -3063,7 +3063,7 @@ const Board: React.FC = () => {
         borderRadius: '0 0 20px 20px',
         marginTop: '30px'
       }}>
-                <div 
+        <div 
           className="bubble-shooter__game-score-container" 
           onClick={(e) => e.stopPropagation()}
           style={{ display: 'flex', alignItems: 'center', marginTop: '10px', gap: '15px' }}>
@@ -3117,44 +3117,64 @@ const Board: React.FC = () => {
             )}
           </div>
 
-                      {/* Username and Score Badge - Stacked vertically */}
+            {/* Username and Score Badge - Stacked vertically */}
             <div style={{
               display: 'flex',
               flexDirection: 'column',
               alignItems: 'flex-start',
-              gap: '4px',
+              gap: '1px',
               height: '55px',
               justifyContent: 'space-between',
               marginLeft: '-12px'
             }}>
-            {/* Username */}
-            <span 
-              onClick={handleUserProfileClick}
-              style={{
-                fontSize: '16px !important',
-                color: '#7F4585',
-                fontWeight: '600',
-                textShadow: '0 2px 4px rgba(0, 0, 0, 0.5)',
-                lineHeight: '1.2',
-                maxWidth: '200px !important',
-                overflow: 'hidden',
-                textOverflow: 'ellipsis',
-                whiteSpace: 'nowrap',
-                display: 'block',
-                cursor: 'pointer',
-                transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.color = '#9B4DA3';
-                e.currentTarget.style.textShadow = '0 3px 6px rgba(0, 0, 0, 0.6)';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.color = '#7F4585';
-                e.currentTarget.style.textShadow = '0 2px 4px rgba(0, 0, 0, 0.5)';
-              }}
-            >
-              {currentUserRank?.name || 'Player'}
-            </span>
+            {/* Rank & Username */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+              <span 
+                style={{
+                  fontSize: '14px !important',
+                  color: 'white',
+                  fontWeight: '600', 
+                  textShadow: '0 2px 4px rgba(0, 0, 0, 0.5)',
+                  width: '24px',
+                  height: '24px',
+                  borderRadius: '50%',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  background: 'linear-gradient(135deg, rgb(255, 215, 0), rgb(255, 165, 0))',
+                  border: '2px solid #E088E8'
+                }}
+              >
+                { currentUserRank?.rank || 'N/A' }
+              </span>
+              <span 
+                onClick={handleUserProfileClick}
+                style={{
+                  fontSize: '16px !important',
+                  color: '#7F4585',
+                  fontWeight: '600',
+                  textShadow: '0 2px 4px rgba(0, 0, 0, 0.5)',
+                  lineHeight: '1.2',
+                  maxWidth: '200px !important',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  whiteSpace: 'nowrap',
+                  display: 'block',
+                  cursor: 'pointer',
+                  transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.color = '#9B4DA3';
+                  e.currentTarget.style.textShadow = '0 3px 6px rgba(0, 0, 0, 0.6)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.color = '#7F4585';
+                  e.currentTarget.style.textShadow = '0 2px 4px rgba(0, 0, 0, 0.5)';
+                }}
+              >
+                {currentUserRank?.name || 'Player'}
+              </span>
+            </div>
 
             {/* Score Badge */}
             <div 
