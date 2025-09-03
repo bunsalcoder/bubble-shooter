@@ -45,8 +45,11 @@ const StartGameScreen: React.FC<StartGameScreenProps> = ({ onStart }) => {
         (window as any).soundEffects.enableAudio();
       }
 
-      // Start background music
-      if ((window as any).audioManager?.startMusic) {
+      // Check if audio should be muted based on localStorage
+      const isMuted = localStorage.getItem('bubbleShooterAudioMuted') === '1';
+      
+      // Start background music only if not muted
+      if (!isMuted && (window as any).audioManager?.startMusic) {
         (window as any).audioManager.startMusic();
       }
 

@@ -9,6 +9,21 @@ interface AudioManagerProps {
 // Check if we're in a browser environment
 const isBrowser = typeof window !== 'undefined';
 
+// Local storage key
+const STORAGE_KEY = 'bubbleShooterAudioMuted';
+
+// Get initial mute state from localStorage
+const getInitialMuteState = (): boolean => {
+    if (!isBrowser) return false;
+    
+    try {
+        const storedValue = localStorage.getItem(STORAGE_KEY);
+        return storedValue === '1'; // Return true if value is '1', false otherwise
+    } catch (error) {
+        return false;
+    }
+};
+
 const isIOS = () => {
     if (!isBrowser) return false;
     return /iPad|iPhone|iPod/.test(navigator.userAgent) ||
@@ -16,7 +31,7 @@ const isIOS = () => {
 };
 
 const AudioManager = forwardRef<HTMLAudioElement, AudioManagerProps>(({
-    isMuted: initialIsMuted = false,
+    isMuted: initialIsMuted = getInitialMuteState(), // Use localStorage value as default
     onVolumeChange
 }, ref) => {
     const [isPlaying, setIsPlaying] = useState(false);
@@ -402,6 +417,13 @@ const AudioManager = forwardRef<HTMLAudioElement, AudioManagerProps>(({
         const newMutedState = !isMuted;
         setIsMuted(newMutedState);
         
+        // Save to localStorage
+        try {
+            localStorage.setItem(STORAGE_KEY, newMutedState ? '1' : '0');
+        } catch (error) {
+            console.error('Error saving to localStorage:', error);
+        }
+        
         if (newMutedState) {
             // Muting: pause music
             if (audioRef.current) {
@@ -419,6 +441,13 @@ const AudioManager = forwardRef<HTMLAudioElement, AudioManagerProps>(({
     // Mute audio
     const muteAudio = () => {
         setIsMuted(true);
+        // Save to localStorage
+        try {
+            localStorage.setItem(STORAGE_KEY, '1');
+        } catch (error) {
+            console.error('Error saving to localStorage:', error);
+        }
+        
         if (audioRef.current) {
             audioRef.current.pause();
             setIsPlaying(false);
@@ -428,6 +457,13 @@ const AudioManager = forwardRef<HTMLAudioElement, AudioManagerProps>(({
     // Unmute audio
     const unmuteAudio = () => {
         setIsMuted(false);
+        // Save to localStorage
+        try {
+            localStorage.setItem(STORAGE_KEY, '0');
+        } catch (error) {
+            console.error('Error saving to localStorage:', error);
+        }
+        
         if (hasUserInteracted && isLoaded && isPageVisible && isPageFocused) {
             resumeMusic();
         }
